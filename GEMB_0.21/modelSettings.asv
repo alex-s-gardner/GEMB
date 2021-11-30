@@ -1,0 +1,81 @@
+%% MODEL INITIALIZATION
+
+% Description: 
+% this file sets initial user specified parameters of the Alberta Glacier
+% Surface Mass Balance Model
+
+%% MODEL SETUP
+% unique model run ID to save output as
+runID = 'S2A1s0';
+
+% specify met station 
+    % * automatically generated met data = 0
+    % * Devon Site 1,2,3 = 1,2,3
+S.site = 3; 
+
+% Daily (1) or hourly (2) data
+S.dataFreq = 2;
+
+% spin up parameters
+S.spinUp = 8;    % number of cycles of met data run before output 
+                 % calcualted, set spinUp = 0 for no spin up
+
+% select method of calculating albedo and subsurface absorption
+%   1 : effective grain radius (Gardner & Sharp, 2009)
+%   2 : effective grain radius (Brun et al., 2009)
+%   3 : density and cloud amount (Greuell & Konzelmann, 1994)
+%   4 : exponential time decay & wetness (Bougamont & Bamber, 2005)
+S.aIdx = 1;
+
+% apply all SW to top grid cell (0) or allow SW to penetrate surface (1) 
+S.swIdx = 1;
+
+%% FIXED VARIABLES
+% RADIATION CORRECTION FACTORS
+S.cldFrac = 0.1;        % average cloud amount
+% albedo tuning parameters
+% for methods of calculating albedo see albedo function
+% METHOD 1 & 2
+S.aSnow = 0.85;         % new snow albedo (0.64 - 0.89) 
+S.aIce = 0.48;          % range 0.27-0.58 for old snow
+
+% METHOD 1
+% additonal tuning parameters albedo as a funtion of age and water content 
+% (Bougamont et al., 2005)
+S.t0wet = 15;           % time scale for wet snow (15-21.9) [d]
+S.t0dry = 30;           % warm snow timescale (30) [d]
+S.K = 7;                % time scale temperature coef. (7) [d]
+
+%% GRID INITIALIZATION
+% set depth of top grid cell structure (constant grid length) [m]
+S.zTop = 10;
+
+% set initial top vertical and min allowable grid spacings [m]
+S.dzTop = 0.05;
+S.dzMin = S.dzTop / 2;
+
+% set initial/max and min model depth [m]
+S.zMax = 30;
+S.zMin = 20;
+
+% strech grid cells bellow top_z by a [top_dz * y ^ (cells bellow top_z)]
+S.zY = 1.10;
+
+%% OTHER
+% specify mean annual temperature [K]
+S.meanT = -18 + 273.15;
+
+% height above ground at which temperature (T) and wind (v) were measured [m]
+S.Vz = 2;
+S.Tz = 2;
+
+% specify mean annual snow accumulation [mm w.e. yr-1]
+S.meanSnow = 250;
+
+% specify frequency to save subsurface data (density, grid length, and
+% temperature) relative to data frequency
+if S.dataFreq == 2;
+    S.saveFreq = 24;
+else
+    S.saveFreq = 1;
+end
