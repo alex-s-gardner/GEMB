@@ -1,3 +1,6 @@
+[![DOI](https://zenodo.org/badge/433556103.svg)](https://zenodo.org/badge/latestdoi/433556103)
+
+
 # GEMB
 A 1D column that simulates snow/firn/ice processes and surface-atmosphere mass and energy exchanges
 
