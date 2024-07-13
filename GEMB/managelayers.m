@@ -84,18 +84,18 @@ end
 
 % delete combined cells
 D = (m <= Delflag+Wtol);
-m(D) = []; 
-W(D) = []; 
-dz(D) = []; 
-d(D) = []; 
-T(D) = []; 
-a(D) = [];
-re(D) = []; 
-gdn(D) = []; 
-gsp(D) = []; 
-adiff(D) = []; 
-EI(D) = []; 
-EW(D) = [];
+m(D)      = []; 
+W(D)      = []; 
+dz(D)     = []; 
+d(D)      = []; 
+T(D)      = []; 
+a(D)      = [];
+re(D)     = []; 
+gdn(D)    = []; 
+gsp(D)    = []; 
+adiff(D)  = []; 
+EI(D)     = []; 
+EW(D)     = [];
 dzMin2(D) = []; % <- EDIT This line added by Chad Greene, July 2024.
 
 % check if any of the cell depths are too large
@@ -145,8 +145,8 @@ f = find((1:n)'<X & ( dz > dzMax2+Dtol) | (dz > dzMax2*zY2+Dtol));
 
 % Conserve quantities among the cells that will be split: 
 dz(f) = dz(f)/2; 
-W(f) = W(f)/2; 
-m(f) = m(f)/2; 
+W(f)  =  W(f)/2; 
+m(f)  =  m(f)/2; 
 EI(f) = EI(f)/2; 
 EW(f) = EW(f)/2; 
 
@@ -154,18 +154,18 @@ EW(f) = EW(f)/2;
 fs = sort([(1:n)';f]); 
 
 % Recreate the variables with split cells: 
-dz = dz(fs); 
-W = W(fs); 
-m = m(fs); 
-T = T(fs); 
-d = d(fs); 
-a = a(fs); 
+dz    =    dz(fs); 
+W     =     W(fs); 
+m     =     m(fs); 
+T     =     T(fs); 
+d     =     d(fs); 
+a     =     a(fs); 
 adiff = adiff(fs); 
-EI = EI(fs); 
-EW = EW(fs); 
-re = re(fs); 
-gdn = gdn(fs); 
-gsp = gsp(fs); 
+EI    =    EI(fs); 
+EW    =    EW(fs); 
+re    =    re(fs); 
+gdn   =   gdn(fs); 
+gsp   =   gsp(fs); 
 
 %% CORRECT FOR TOTAL MODEL DEPTH
 % WORKS FINE BUT HAS BEEN DISABLED FOR CONVIENCE OF MODEL OUTPUT
