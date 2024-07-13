@@ -1,5 +1,5 @@
 function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta, V, eAir, pAir, tcIdx, eIdx, ...
-		teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup)
+        teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup)
 
 %% ENGLACIAL THERMODYNAMICS
  
@@ -57,10 +57,10 @@ TCs = d(1)*dz(1)*CI;
 m = length(d);
 
 % initialize Evaporation - Condenstation 
-EC = 0.0;
-ulwrf=0.0;
-lhf_cum=0.0;
-shf_cum=0.0;
+EC      = 0.0;
+ulwrf   = 0.0;
+lhf_cum = 0.0;
+shf_cum = 0.0;
 
 % check if all SW applied to surface or distributed throught subsurface
 % swIdx = length(swf) > 1
@@ -76,9 +76,9 @@ else
 end
 
 % zT and zQ are percentage of z0 (Foken 2008)
-zratio=10.0;
-zT=z0/zratio;
-zQ=z0/zratio;
+zratio = 10.0;
+zT = z0/zratio;
+zQ = z0/zratio;
 
 % if V = 0 goes to infinity therfore if V = 0 change
 V(V < 0.01-Dtol) = 0.01;
@@ -100,9 +100,9 @@ K = zeros(m,1);
 
 % for snow and firn (density < 910 kg m-3) (Sturm et al, 1997) or (Calonne et al., 2011)
 if tcIdx == 2
-	K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
+    K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
 else %default (Sturm et al, 1997)
-	K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
+    K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
 end
 
 % for ice (density >= 910 kg m-3)
@@ -137,9 +137,9 @@ dzD = [dz(2:m) ; NaN];
  
 % determine minimum acceptable delta t (diffusion number > 1/2) [s]
 if m>0
-	dt = min(CI * dz.^2 .* d  ./ (3 * K) .* dtScaling);
+    dt = min(CI * dz.^2 .* d  ./ (3 * K) .* dtScaling);
 else
-	dt=1e12;
+    dt=1e12;
 end
 
 % smallest possible even integer of 60 min where diffusion number > 1/2
@@ -153,24 +153,24 @@ f = [1 2 3 4 5 6 8 9 10 12 15 16 18 20 24 25 30 36 40 45 48 50 60 ...
 % return the min integer factor that is < dt
 I=f<dt-Dtol;
 if sum(I)
-	dt = max(f(I));
+    dt = max(f(I));
 else
-	dt = 1;
-	display([' WARNING: calculated timestep for thermal loop is < 1 second.' sprintf('\n')])
+    dt = 1;
+    display([' WARNING: calculated timestep for thermal loop is < 1 second.' newline])
 end
 
 if m>0
-	% determine mean (harmonic mean) of K/dz for u, d, & p
-	Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
-	Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
-	Ap = (d.*dz*CI)/dt;
+    % determine mean (harmonic mean) of K/dz for u, d, & p
+    Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
+    Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
+    Ap = (d.*dz*CI)/dt;
 
-	% create "neighbor" coefficient matrix
-	Nu = Au ./ Ap;
-	Nd = Ad ./ Ap;
-	Np = 1 - Nu - Nd;
+    % create "neighbor" coefficient matrix
+    Nu = Au ./ Ap;
+    Nd = Ad ./ Ap;
+    Np = 1 - Nu - Nd;
 else
-	Au=0; Ad=0; Ap=0; Nu=0; Nd=0; Np=0;
+    Au=0; Ad=0; Ap=0; Nu=0; Nd=0; Np=0;
 end
 
 % specify boundary conditions
@@ -185,7 +185,6 @@ Np(1) = 1 - Nd(1);
 % tridiagonal matrix
 Nu(1) = 0;
 Nd(m) = 0;
-
 
 %% RADIATIVE FLUXES
 
@@ -218,7 +217,7 @@ for i = 1:dt:dt0
     % when incoming SW radition is allowed to penetrate the surface,
     % the modeled energy balance becomes very sensitive to how Ts is
     % calculated.  Here, we take the surface temperature to be T(1), but
-	 % note that the estimated enegy balance & melt are significanly
+     % note that the estimated enegy balance & melt are significanly
     % less when Ts is taken as the mean of the x top grid cells (T(1) + T(2))/2.0.
     Ts = T(1);
     Ts = min(273.15,Ts);    % don't allow Ts to exceed 273.15 K (0 deg C)
@@ -231,167 +230,169 @@ for i = 1:dt:dt0
     % Journal of Climatology, 2, 65-84.
     
     % calculate the Bulk Richardson Number (Ri)
-	 Ri = ((100000./pAir).^0.286).*(2.0*9.81*(Ta - Ts)) ./ (Tz.*(Ta + Ts).*(((V/Vz).^2.0)));
+    Ri = ((100000./pAir).^0.286).*(2.0*9.81*(Ta - Ts)) ./ (Tz.*(Ta + Ts).*(((V/Vz).^2.0)));
 
-	 % calculate Monin-Obukhov stability factors 'coefM' and 'coefH'
-	 if (false)
-		 % do not allow Ri to exceed 0.16
-		 Ri = min(Ri, 0.16); %Ohmura, 1982
+    % calculate Monin-Obukhov stability factors 'coefM' and 'coefH'
+    if (false)
+        % do not allow Ri to exceed 0.16
+        Ri = min(Ri, 0.16); %Ohmura, 1982
 
-		 % calculate momentum 'coefM' stability factor
-		 if (Ri > 0.0+Ttol)
-			 % if stable
-			 coefM = 1.0/(1.0-5.2*Ri);
-		 else 
-			 coefM = (1.0-18.0*Ri).^-0.25;
-		 end
+        % calculate momentum 'coefM' stability factor
+        if (Ri > 0.0+Ttol)
+            % if stable
+            coefM = 1.0/(1.0-5.2*Ri);
+        else 
+            coefM = (1.0-18.0*Ri).^-0.25;
+        end
 
-		 % calculate heat/wind 'coef_H' stability factor
-		 if (Ri <= -0.03+Ttol) coefH = coefM/1.3;
-		 else coefH = coefM; end
+        % calculate heat/wind 'coef_H' stability factor
+        if (Ri <= -0.03+Ttol) 
+            coefH = coefM/1.3;
+         else 
+             coefH = coefM; 
+        end
 
-		 coefHT = coefH.*An_den_T;
-		 coefHQ = coefH.*An_den_Q;
+         coefHT = coefH.*An_den_T;
+         coefHQ = coefH.*An_den_Q;
 
-	 elseif(false)
+    elseif (false)
 
-		 % do not allow Ri to exceed 0.19
-		 Ri = min(Ri, 0.19); %Ohmura, 1982
+         % do not allow Ri to exceed 0.19
+         Ri = min(Ri, 0.19); %Ohmura, 1982
 
-		 % calculate momentum 'coefM' stability factor
-		 if (Ri > 0.0+Ttol)
-			 % if stable
-			 %coefM = pow(1.0-5.0*Ri,2.0); //Fitzpatrick et al., 2017, from Brock et al., 2010
-			 coefM=1.0+5.3*min((Ri./(1.0-5.0*Ri)),0.5);
-			 coefH=1.0+8.0*min((Ri./(1.0-5.0*Ri)),0.5);
-		 else 
-			 %coefM =pow(1.0-16.0*max(Ri,-1.0),0.75); //Fitzpatrick et al., 2017, from Brock et al., 2010
-			 coefM=(1.0-19.0*max(Ri/1.5,-2.0)).^-0.25;
-			 coefH=0.95*(1.0-11.6*max(Ri/1.5,-2.0)).^-0.5;
-		 end
+         % calculate momentum 'coefM' stability factor
+         if (Ri > 0.0+Ttol)
+             % if stable
+             %coefM = pow(1.0-5.0*Ri,2.0); //Fitzpatrick et al., 2017, from Brock et al., 2010
+             coefM = 1.0+5.3*min((Ri./(1.0-5.0*Ri)),0.5);
+             coefH = 1.0+8.0*min((Ri./(1.0-5.0*Ri)),0.5);
+         else 
+             %coefM =pow(1.0-16.0*max(Ri,-1.0),0.75); //Fitzpatrick et al., 2017, from Brock et al., 2010
+             coefM = (1.0-19.0*max(Ri/1.5,-2.0)).^-0.25;
+             coefH = 0.95*(1.0-11.6*max(Ri/1.5,-2.0)).^-0.5;
+         end
 
-		 coefHT = coefH.*An_den_T;
-		 coefHQ = coefH.*An_den_Q;
+         coefHT = coefH.*An_den_T;
+         coefHQ = coefH.*An_den_Q;
 
-	 elseif(false)
-		 % Greuell and Konzelman, 1994
-		 % calculate momentum 'coefM' stability factor
+     elseif(false)
+         % Greuell and Konzelman, 1994
+         % calculate momentum 'coefM' stability factor
 
-		 if (Ri > 0.0+Ttol)
-			 % if stable
-			 coefM=1.0+15.0*Ri.*(1.0+Ri).^(1./2.);
-			 coefH=1.0;
-		 else 
-			 coefM=(1.0-15.0*Ri./(1.0+75.0.*((0.4/log(Tz./zT)).^2).*((Tz./zT.*abs(Ri)).^(1./2.)))).^(-1);
-			 coefH=1.0;
-		 end
+         if (Ri > 0.0+Ttol)
+             % if stable
+             coefM = 1.0+15.0*Ri.*(1.0+Ri).^(1./2.);
+             coefH = 1.0;
+         else 
+             coefM = (1.0-15.0*Ri./(1.0+75.0.*((0.4/log(Tz./zT)).^2).*((Tz./zT.*abs(Ri)).^(1./2.)))).^(-1);
+             coefH = 1.0;
+         end
 
-		 coefHT = coefH.*An_den_T;
-		 coefHQ = coefH.*An_den_Q;
+         coefHT = coefH.*An_den_T;
+         coefHQ = coefH.*An_den_Q;
 
-	 else 
+     else 
 
-		 a1=1.0;
-		 b1=2.0/3.0;
-		 c1=5.0;
-		 d1=0.35;
-		 PhiMz=0.0;
-		 PhiHz=0.0;
-		 PhiMz0=0.0;
-		 PhiHzT=0.0;
-		 PhiHzQ=0.0;
-		 zL=0.0;
-		 zLT=0.0;
-		 zLM=0.0;
+         a1     = 1.0;
+         b1     = 2.0/3.0;
+         c1     = 5.0;
+         d1     = 0.35;
+         PhiMz  = 0.0;
+         PhiHz  = 0.0;
+         PhiMz0 = 0.0;
+         PhiHzT = 0.0;
+         PhiHzQ = 0.0;
+         zL     = 0.0;
+         zLT    = 0.0;
+         zLM    = 0.0;
 
-		 if (Ri > 0.0+Ttol)
+        if (Ri > 0.0+Ttol)
+             % if stable
 
-			 % if stable
-			 if(Ri < 0.2-Ttol)
-				 zL = Ri./(1.0-5.0*Ri);
-			 else
-				 zL=Ri;
-			 end
+            if(Ri < 0.2-Ttol)
+                zL = Ri./(1.0-5.0*Ri);
+            else
+                zL = Ri;
+            end
 
-			 %zL = min(zL, 0.5); %Sjoblom, 2014
-			 zLM=max(zL./Vz.*z0,1e-3);
-			 zLT=max(zL./Tz.*zT,1e-3);
+            %zL = min(zL, 0.5); %Sjoblom, 2014
+            zLM = max(zL./Vz.*z0,1e-3);
+            zLT = max(zL./Tz.*zT,1e-3);
 
-			 %Ding et al. 2020, from Beljaars and Holtslag (1991)
-			 PhiMz=-1.*(a1*zL + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1);
-			 PhiHz=-1.*((1.+2.*a1*zL/3.).^1.5 + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1 - 1.0);
-			 PhiMz0=-1.*(a1*zLM + b1*(zLM-c1/d1)*exp(-1.*d1*zLM) + b1*c1/d1);
-			 PhiHzT=-1.*((1.+2.*a1*zLT/3.).^1.5 + b1*(zLT-c1/d1)*exp(-1.*d1*zLT) + b1*c1/d1 - 1.0);
+            % Ding et al. 2020, from Beljaars and Holtslag (1991)
+            PhiMz  = -1.*(a1*zL + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1);
+            PhiHz  = -1.*((1.+2.*a1*zL/3.).^1.5 + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1 - 1.0);
+            PhiMz0 = -1.*(a1*zLM + b1*(zLM-c1/d1)*exp(-1.*d1*zLM) + b1*c1/d1);
+            PhiHzT = -1.*((1.+2.*a1*zLT/3.).^1.5 + b1*(zLT-c1/d1)*exp(-1.*d1*zLT) + b1*c1/d1 - 1.0);
 
-			 PhiHzQ=PhiHzT;
+            PhiHzQ=PhiHzT;
 
-		 else 
+        else 
 
-			 zL = Ri/1.5; %max(Ri, -0.5+Ttol)/1.5; %Hogstrom (1996)
-			 %zL = max(zL, -2.0); %Sjoblom, 2014
-			 zLM=min(zL./Vz.*z0,-1e-3);
-			 zLT=min(zL./Tz.*zT,-1e-3);
+            zL  = Ri/1.5; %max(Ri, -0.5+Ttol)/1.5; % Hogstrom (1996)
+            %zL = max(zL, -2.0); % Sjoblom, 2014
+            zLM = min(zL./Vz.*z0,-1e-3);
+            zLT = min(zL./Tz.*zT,-1e-3);
 
-			 if (true) %Sjoblom, 2014
-				 xm=(1.0-19.0*zL).^-0.25;
-				 PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.*atan(xm) + pi/2.;
+            if (true) %Sjoblom, 2014
+                xm=(1.0-19.0*zL).^-0.25;
+                PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.*atan(xm) + pi/2.;
 
-				 xh=0.95*(1.0-11.6*zL).^(-0.5);
-				 PhiHz=2.0*log((1.0+xh.^2)/2.0);
-			 else %Ding et al., 2020
-				 xm=(1.0-16*zL).^0.25;
-				 xmM=(1.0-16*zLM).^0.25;
-				 xmT=(1.0-16*zLT).^0.25;
-				 PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.0*atan(xm) + pi/2.0;
-				 PhiMz0=2.0*log((1.+xmM)/2.0) + log((1.+xmM.^2)/2.0) - 2.0*atan(xmM) + pi/2.0;
+                xh=0.95*(1.0-11.6*zL).^(-0.5);
+                PhiHz=2.0*log((1.0+xh.^2)/2.0);
+             else % Ding et al., 2020
+                xm=(1.0-16*zL).^0.25;
+                xmM=(1.0-16*zLM).^0.25;
+                xmT=(1.0-16*zLT).^0.25;
+                PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.0*atan(xm) + pi/2.0;
+                PhiMz0=2.0*log((1.+xmM)/2.0) + log((1.+xmM.^2)/2.0) - 2.0*atan(xmM) + pi/2.0;
 
-				 PhiHz=2.0*log((1.+xm.^2)/2.0);
-				 PhiHzT=2.0*log((1.+xmT.^2)/2.0);
+                PhiHz=2.0*log((1.+xm.^2)/2.0);
+                PhiHzT=2.0*log((1.+xmT.^2)/2.0);
 
-				 PhiHzQ=PhiHzT;
-			 end
-		 end
+                PhiHzQ=PhiHzT;
+            end
+        end
 
-		 PhiM=PhiMz;
-		 PhiH=PhiHz;
-		 coefM = log(Vz./z0) - PhiMz + PhiMz0; %Ding et al., 2019
-		 coefHT = log(Tz./zT) - PhiHz + PhiHzT; %Sjoblom, 2014, after Foken 2008
-		 coefHQ = log(Tz./zQ) - PhiHz + PhiHzQ; %Sjoblom, 2014, after Foken 2008
+        PhiM   = PhiMz;
+        PhiH   = PhiHz;
+        coefM  = log(Vz./z0) - PhiMz + PhiMz0; % Ding et al., 2019
+        coefHT = log(Tz./zT) - PhiHz + PhiHzT; % Sjoblom, 2014, after Foken 2008
+        coefHQ = log(Tz./zQ) - PhiHz + PhiHzQ; % Sjoblom, 2014, after Foken 2008
+     end
 
-	 end
+     %% Sensible Heat
+     % calculate the sensible heat flux [W m-2](Patterson, 1998)
+     shf = dAir .* C .* CA .* (Ta - Ts) .* (100000./pAir).^0.286;
 
-	 %% Sensible Heat
-	 % calculate the sensible heat flux [W m-2](Patterson, 1998)
-	 shf = dAir .* C .* CA .* (Ta - Ts) .* (100000./pAir).^0.286;
+     % adjust using Monin-Obukhov stability theory
+     shf = shf./(coefM.*coefHT);
 
-	 % adjust using Monin-Obukhov stability theory
-	 shf = shf./(coefM.*coefHT);
+     %% Latent Heat
+     %   determine if snow pack is melting & calcualte surface vapour pressure over ice or liquid water
+     if (Ts >= CtoK-Ttol)
+         L = LV; %for liquid water at 273.15 k to vapor
 
-	 %% Latent Heat
-	 %   determine if snow pack is melting & calcualte surface vapour pressure over ice or liquid water
-	 if (Ts >= CtoK-Ttol)
-		 L = LV; %for liquid water at 273.15 k to vapor
+         %for liquid surface (assume liquid on surface when Ts == 0 deg C)
+         % Wright (1997), US Meteorological Handbook from Murphy and Koop, 2005 Appendix A
+         %eS = 611.21 * exp(17.502 * (Ts - CtoK) / (240.97 + Ts - CtoK));
+         % Murray 1967, https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
+         eS = 610.78 * exp(17.2693882 .* (Ts - CtoK - 0.01) ./ (Ts - 35.86));
+     else
+         L = LS; % latent heat of sublimation
 
-		 %for liquid surface (assume liquid on surface when Ts == 0 deg C)
-		 % Wright (1997), US Meteorological Handbook from Murphy and Koop, 2005 Appendix A
-		 %eS = 611.21 * exp(17.502 * (Ts - CtoK) / (240.97 + Ts - CtoK));
-		 % Murray 1967, https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
-		 eS = 610.78 * exp(17.2693882 .* (Ts - CtoK - 0.01) ./ (Ts - 35.86));
-	 else
-		 L = LS; % latent heat of sublimation
+         % for an ice surface Murphy and Koop, 2005 [Equation 7]
+         %eS = exp(9.550426 - 5723.265/Ts + 3.53068 * log(Ts) - 0.00728332 * Ts);
+         % for an ice surface Ding et al., 2019 after Bolton, 1980
+         eS = 610.78 * exp(21.8745584 .* (Ts - CtoK - 0.01) ./ (Ts - 7.66));
+     end
 
-		 % for an ice surface Murphy and Koop, 2005 [Equation 7]
-		 %eS = exp(9.550426 - 5723.265/Ts + 3.53068 * log(Ts) - 0.00728332 * Ts);
-		 % for an ice surface Ding et al., 2019 after Bolton, 1980
-		 eS = 610.78 * exp(21.8745584 .* (Ts - CtoK - 0.01) ./ (Ts - 7.66));
-	 end
+    %Latent heat flux [W m-2]
+    lhf = C .* L .* (eAir - eS) / (461.9*(Ta+Ts)/2.0);
 
-	 %Latent heat flux [W m-2]
-	 lhf = C .* L .* (eAir - eS) / (461.9*(Ta+Ts)/2.0);
-
-	 % adjust using Monin-Obukhov stability theory (if lhf '+' then there is energy and mass gained at the surface,
-	 % if '-' then there is mass and energy loss at the surface.
-	 lhf = lhf./(coefM.*coefHQ);
+    % adjust using Monin-Obukhov stability theory (if lhf '+' then there is energy and mass gained at the surface,
+    % if '-' then there is mass and energy loss at the surface.
+    lhf = lhf./(coefM.*coefHQ);
 
     % mass loss (-)/acreation(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
@@ -400,17 +401,23 @@ for i = 1:dt:dt0
     turb = (shf + lhf)* dt;
     dT_turb = turb  / TCs;
 
-	 % upward longwave contribution
-	 deltaULW=0.0;
-	 emissivity=1.0;
-	 %If user wants to set a upward long wave bias
-	 if(isdeltaLWup) deltaULW = dulwrfValue; end
-	 %If user wants to directly set emissivity, or grain radius is larger than the
-	 %threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
-	 if(eIdx==0 | (teThresh - re(1))<=Gdntol | (eIdx==2 & z0>0.001+Gdntol)) emissivity = teValue; end
-	 ulw = - (SB * Ts.^4.0 * emissivity + deltaULW) * dt;
-	 ulwrf = ulwrf - ulw/dt0;
+    % upward longwave contribution
+    deltaULW   = 0.0;
+    emissivity = 1.0;
 
+    %If user wants to set a upward long wave bias
+    if isdeltaLWup
+        deltaULW = dulwrfValue; 
+    end
+
+    %If user wants to directly set emissivity, or grain radius is larger than the
+    %threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
+    if (eIdx==0 | (teThresh - re(1))<=Gdntol | (eIdx==2 & z0>0.001+Gdntol)) 
+        emissivity = teValue; 
+    end
+
+    ulw    = - (SB * Ts.^4.0 * emissivity + deltaULW) * dt;
+    ulwrf  = ulwrf - ulw/dt0;
     dT_ulw = ulw / TCs;
     
     % new grid point temperature
@@ -421,18 +428,18 @@ for i = 1:dt:dt0
     
     % temperature diffusion
     T0(2:m+1) = T;
-	 T0(1)=Ta;
-	 T0(m+2)=T(m);
-    Tu = T0(1:m);
-    Td = T0(3:m+2);
+    T0(1)     = Ta;
+    T0(m+2)   = T(m);
+    Tu        = T0(1:m);
+    Td        = T0(3:m+2);
     
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
 
     % calculate cumulative evaporation (+)/condensation(-)
-	 EC = EC + (EC_day/86400)*dt;
+    EC = EC + (EC_day/86400)*dt;
 
-	 lhf_cum=lhf_cum+lhf*dt/dt0;
-	 shf_cum=shf_cum+shf*dt/dt0;
+    lhf_cum = lhf_cum+lhf*dt/dt0;
+    shf_cum = shf_cum+shf*dt/dt0;
     
      %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
 %     % energy flux across lower boundary (energy supplied by underling ice)
