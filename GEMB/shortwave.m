@@ -12,7 +12,7 @@ function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
 %   swIdx   = shortwave allowed to penetrate surface (0 = No, 1 = Yes)
 %   aIdx    = method for calculating albedo (1-4)
 %   dsw     = downward shortwave radiative flux [w m-2]
-%   dswdiff  = downward shortwave diffuse radiative flux [w m-2]
+%   dswdiff = downward shortwave diffuse radiative flux [w m-2]
 %   as      = surface albedo
 %   asdiff  = surface albedo for diffuse radiation
 %   d       = grid cell density [kg m-3]
@@ -24,18 +24,19 @@ function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
 
 %% SHORTWAVE FUNCTION
 Dtol = 1e-11;
-% initialize variables
+
+% Initialize variables:
 m = length(d);
 swf = zeros(m,1);
 
 if ((swIdx == 0)) | ((dIce - d(1))<Dtol)  % all sw radation is absorbed in by the top grid cell
 
-	% calculate surface shortwave radiation fluxes [W m-2]
-	if (aIdx == 1)
-		swf(1) = (1.0 - as) * max(0.0,(dsw - dswdiff)) +  (1.0 - asdiff) * dswdiff;
-	else
-		swf(1) = (1 - as) * dsw;
-	end
+    % calculate surface shortwave radiation fluxes [W m-2]
+    if (aIdx == 1)
+        swf(1) = (1.0 - as) * max(0.0,(dsw - dswdiff)) +  (1.0 - asdiff) * dswdiff;
+    else
+        swf(1) = (1 - as) * dsw;
+    end
     
 else % sw radation is absorbed at depth within the glacier
     
@@ -55,8 +56,10 @@ else % sw radation is absorbed at depth within the glacier
         % spectral albedos:
         % 0.3 - 0.8um
         a1 = min(0.98, 0.95 - 1.58 *gsz(1)^0.5);
+
         % 0.8 - 1.5um
         a2 = max(0, 0.95 - 15.4 *gsz(1)^0.5);
+        
         % 1.5 - 2.8um
         a3 = max(0.127, 0.88 + 346.3*gsz(1) - 32.31*gsz(1)^0.5);
         

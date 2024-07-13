@@ -72,11 +72,11 @@ zGPC = (cumsum(dz) - dz/2);
 % Take forward differences on left and right edges
 m=length(zGPC);
 if m>2
-	dT(1) = (T(3) - T(1))/(zGPC(3)-zGPC(1));
-	dT(m) = (T(m) - T(m-2))/(zGPC(m)-zGPC(m-2));
+    dT(1) = (T(3) - T(1))/(zGPC(3)-zGPC(1));
+    dT(m) = (T(m) - T(m-2))/(zGPC(m)-zGPC(m-2));
 elseif m>1
-	dT(1) = (T(2) - T(1))/(zGPC(2)-zGPC(1));
-	dT(m) = (T(m) - T(m-1))/(zGPC(m)-zGPC(m-1));
+    dT(1) = (T(2) - T(1))/(zGPC(2)-zGPC(1));
+    dT(m) = (T(m) - T(m-1))/(zGPC(m)-zGPC(m-1));
 end
 
 % Take centered differences on interior points
@@ -95,8 +95,8 @@ J = ~G;
 
 % if there is snow dentricity > 0
 if sum(G) ~= 0
-%    disp ('DENDRITIC DRY SNOW METAMORPHISM')
-	 % index for dentricity > 0 and T gradients < 5 degC m-1 and >= 5 degC m-1
+    % disp ('DENDRITIC DRY SNOW METAMORPHISM')
+    % index for dentricity > 0 and T gradients < 5 degC m-1 and >= 5 degC m-1
     H = abs(dT) <= 5+Ttol & G & W <= 0+Wtol; % asg not wet accounted for on 19/08/29
     I = abs(dT) > 5+Ttol & G & W <= 0+Wtol;
     
@@ -120,7 +120,7 @@ if sum(G) ~= 0
     
     % check if snowpack is wet
     if sum(L) ~= 0
-%        disp('DENDRITIC WET SNOW METAMORPHISM')
+        %        disp('DENDRITIC WET SNOW METAMORPHISM')
         % determine coefficient
         D = (1/16) * (lwc(L) .^ 3) * dt;
         
@@ -136,40 +136,40 @@ if sum(G) ~= 0
     gsp(gsp >= 1-Gdntol) = 1;
     
     % determine new grain size (mm)
-	 gsz(G) = max(0.1*(gdn(G)/.99+(1.0-1.0*gdn(G)/.99).*(gsp(G)/.99*3.0+(1.0-gsp(G)/.99)*4.0)),Gdntol*2);
+    gsz(G) = max(0.1*(gdn(G)/.99+(1.0-1.0*gdn(G)/.99).*(gsp(G)/.99*3.0+(1.0-gsp(G)/.99)*4.0)),Gdntol*2);
 end
 
 % if there is snow dentricity == 0
 if sum(J) ~= 0
-	 % disp('NONDENDRITIC SNOW METAMORPHISM')
-
-	 % When wet-snow grains (class 6) are submitted to a
-	 % temperature gradient higher than 5 degC m-1, their sphericity
-	 % decreases according to Equations (4). When sphericity
-	 % reaches 0, their size increases according to the functions
-	 % determined by Marbouty. (Brun et al., 1992)
-	 P1 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT) > 5+Ttol; 
-	 P2 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT) <= 5+Ttol & W > 0+Wtol;
-	 P3 = J & gsp>0+Gdntol & gsp<1-Gdntol & ~P1 & ~P2;
-
-	 F1 = (-2e8 .* exp(-6e3 ./ T(P1)) .* dt) .* abs(dT(P1)).^(.4);
-	 F2 = (1.0/16.0) * lwc(P2).^(3.0) * dt;
-	 F3 = 1e9 * exp(-6e3 ./ T(P3)) * dt;
-
-	 gsp(P1) = gsp(P1) + F1;
-	 gsp(P2) = gsp(P2) + F2;
-	 gsp(P3) = gsp(P3) + F3;
-
-	 % sphericity can not be > 1 or < 0
-	 gsp(gsp <= 0+Gdntol) = 0;
-	 gsp(gsp >= 1-Gdntol) = 1;
-
+    % disp('NONDENDRITIC SNOW METAMORPHISM')
+    
+    % When wet-snow grains (class 6) are submitted to a
+    % temperature gradient higher than 5 degC m-1, their sphericity
+    % decreases according to Equations (4). When sphericity
+    % reaches 0, their size increases according to the functions
+    % determined by Marbouty. (Brun et al., 1992)
+    P1 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT) > 5+Ttol; 
+    P2 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT) <= 5+Ttol & W > 0+Wtol;
+    P3 = J & gsp>0+Gdntol & gsp<1-Gdntol & ~P1 & ~P2;
+    
+    F1 = (-2e8 .* exp(-6e3 ./ T(P1)) .* dt) .* abs(dT(P1)).^(.4);
+    F2 = (1.0/16.0) * lwc(P2).^(3.0) * dt;
+    F3 = 1e9 * exp(-6e3 ./ T(P3)) * dt;
+    
+    gsp(P1) = gsp(P1) + F1;
+    gsp(P2) = gsp(P2) + F2;
+    gsp(P3) = gsp(P3) + F3;
+    
+    % sphericity can not be > 1 or < 0
+    gsp(gsp <= 0+Gdntol) = 0;
+    gsp(gsp >= 1-Gdntol) = 1;
+    
     % DRY SNOW METAMORPHISM (Marbouty, 1980)
     % grouped model coefficinets from Marbouty, 1980: Figure 9
     P = J & (W <= 0+Wtol | (gsp <=0+Gdntol & abs(dT) > 5+Ttol)); % asg not wet accounted for on 19/08/29
-	 dTi=dT;
+    dTi=dT;
     Q = Marbouty(Ti(P), d(P), dTi(P));
- 
+    
     % calculate grain growth
     gsz(P) = gsz(P) + Q * dt;
     
@@ -180,14 +180,14 @@ if sum(J) ~= 0
     
     % check if snowpack is wet
     if sum(K) ~= 0
-%        disp('NONDENDRITIC WET SNOW METAMORPHISM')
+        %        disp('NONDENDRITIC WET SNOW METAMORPHISM')
         % wet rate of change coefficient
         E = (1.28E-8 + 4.22E-10 * (lwc(K).^3))* (dt *86400);   % [mm^3 s^-1]
         
         % calculate change in grain volume and convert to grain size
         gsz(K) = 2 * (3/(pi * 4)*((4 / 3)*pi*(gsz(K)/2).^3 + E)).^(1/3);
     end
-
+    
     % grains with sphericity == 1 can not have grain sizes > 2 mm (Brun, 1992)
     gsz(abs(gsp-1)<Wtol & gsz > 2-Wtol) = 2;
     
@@ -204,45 +204,56 @@ function Q = Marbouty(T, d, dT)
 %% calculates grain growth according to Fig. 9 of Marbouty, 1980
 % ------NO GRAIN GROWTH FOR d > 400 kg m-3 because (H is set to zero)------
 % ---------------this is a major limitation of the model-------------------
-% initialize
+
+%% Initialize
+
 Ttol = 1e-10;
 Dtol = 1e-11;
-F = zeros( size(T));
-H = F;
-G = F;
 
-% convert T from K to ºC
-T = T - 273.15;
-% convert dT from degC/m to degC/cm
-dT = dT/100.0;
+F    = zeros(size(T));
+H    = F;
+G    = F;
 
-% temperature coefficient F
-I = T > -6+Ttol;
+E    = 0.09;       % model time growth constant [mm d-1]
+T    = T - 273.15; % converts T from K to ºC
+dT   = dT/100.0;   % convert dT from degC/m to degC/cm
+
+%% Temperature coefficient F
+
+I    = T > -6+Ttol;
 F(I) =  0.7 + ((T(I)/-6) * 0.3);
-I = T <= -6+Ttol & T > -22+Ttol;
+
+I    = T <= -6+Ttol & T > -22+Ttol;
 F(I) =  1 - ((T(I)+6)/-16 * 0.8);
-I = T <= -22+Ttol & T > -40+Ttol;
+
+I    = T <= -22+Ttol & T > -40+Ttol;
 F(I) =  0.2 - ((T(I)+22)/-18 * 0.2);
 
-% density coefficient F
+%% Density coefficient H
+
 H(d < 150-Dtol) = 1;
-I = d >= 150-Dtol & d < 400-Dtol;
+
+I    = d >= 150-Dtol & d < 400-Dtol;
 H(I) = 1 - ((d(I)-150)/250);
 
-% temperature gradient coefficient G
-I = dT >= 0.16-Ttol & dT < 0.25-Ttol;
+%% Temperature gradient coefficient G
+
+I    = dT >= 0.16-Ttol & dT < 0.25-Ttol;
 G(I) = ((dT(I) - 0.16)/0.09) * 0.1;
-I = dT >= 0.25-Ttol & dT < 0.4-Ttol;
+
+I    = dT >= 0.25-Ttol & dT < 0.4-Ttol;
 G(I) = 0.1 + (((dT(I) - 0.25)/0.15) * 0.57);
-I = dT >= 0.4-Ttol & dT < 0.5-Ttol;
+
+I    = dT >= 0.4-Ttol & dT < 0.5-Ttol;
 G(I) = 0.67 + (((dT(I) - 0.4)/0.1) * 0.23);
-I = dT >= 0.5-Ttol & dT < 0.7-Ttol;
+
+I    = dT >= 0.5-Ttol & dT < 0.7-Ttol;
 G(I) = 0.9 + (((dT(I) - 0.5)/0.2) * 0.1);
+
 G(dT >= 0.7-Ttol) = 1;
 
-% model time growth constat E
-E = 0.09;        %[mm d-1]
+%% Grouped coefficient Q
 
-% grouped coefficinet Q
 Q = F.*H.*G.*E;
+
 end
