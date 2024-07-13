@@ -8,7 +8,7 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
 %%
 % *Description:*                                                             
 %%
-% This program calculates a detailed 1-D surface glacier mass balance and 
+% This program calculates a 1-D surface glacier mass balance and 
 % includes detailed representation of subsurface process. Key features:
 %
 % * melt water percolation and refreeze
@@ -260,58 +260,59 @@ for yIdx = 1:S.spinUp + 1
         % variables to albedo function
         switch S.aIdx
             case {1,2}
-					 % if we are provided with cc and cot values, extract for the timestep
-					 if prod(size(S.ccsnowValue))>1
-						 ccsnowValue = S.ccsnowValue(dIdx);
-					 else
-						 ccsnowValue = S.ccsnowValue;
-					 end
+				 % if we are provided with cc and cot values, extract for the timestep
+				 if numel(S.ccsnowValue)>1
+					 ccsnowValue = S.ccsnowValue(dIdx);
+				 else
+					 ccsnowValue = S.ccsnowValue;
+				 end
 
-					 if prod(size(S.cciceValue))>1
-						 cciceValue = S.cciceValue(dIdx);
-					 else
-						 cciceValue = S.cciceValue;
-					 end
+				 if numel(S.cciceValue)>1
+					 cciceValue = S.cciceValue(dIdx);
+				 else
+					 cciceValue = S.cciceValue;
+				 end
 
-					 if prod(size(S.cotValue))>1
-						 cotValue = S.cotValue(dIdx);
-					 else
-						 cotValue = S.cotValue;
-					 end
+				 if numel(S.cotValue)>1
+					 cotValue = S.cotValue(dIdx);
+				 else
+					 cotValue = S.cotValue;
+				 end
 
-					 if prod(size(S.szaValue))>1
-						 szaValue = S.szaValue(dIdx);
-					 else
-						 szaValue = S.szaValue;
-					 end
+				 if numel(S.szaValue)>1
+					 szaValue = S.szaValue(dIdx);
+				 else
+					 szaValue = S.szaValue;
+				 end
 
-					 if prod(size(S.dswdiffrf))>1
-						 dswdiffrf = S.dswdiffrf(dIdx);
-					 else
-						 dswdiffrf = S.dswdiffrf;
-					 end
+				 if numel(S.dswdiffrf)>1
+					 dswdiffrf = S.dswdiffrf(dIdx);
+				 else
+					 dswdiffrf = S.dswdiffrf;
+				 end
 
                 % snow grain metamorphism
                 [re, gdn, gsp]  = ...
                     grainGrowth(T, dz, d, W, re, gdn, gsp, dt, S.aIdx);
 
                 % calculate snow, firn and ice albedo
-					 [a adiff] = albedo(S.aIdx, re, dz, d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, W, P, EC, ...
+					 [a, adiff] = albedo(S.aIdx, re, dz, d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, W, P, EC, ...
 						     Msurf, ccsnowValue, cciceValue, szaValue, cotValue, [], [], [], dt, dIce);
 
             case 3   
-					 if prod(size(S.cldFrac))>1
-						 cldFrac = S.cldFrac(dIdx);
-					 else
-						 cldFrac = S.cldFrac;
-					 end
+				 if numel(S.cldFrac)>1
+					 cldFrac = S.cldFrac(dIdx);
+				 else
+					 cldFrac = S.cldFrac;
+                 end
+                 
                 % calculate snow, firn and ice albedo
-                [a adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh,...
+                [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh,...
 						 a, adiff, [], [], [], [], [], [], [], [], [], [], [], [], [], dIce);
                 
             case 4
                 % calculate snow, firn and ice albedo
-                [a adiff] = albedo(S.aIdx, [], [], d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, ...
+                [a, adiff] = albedo(S.aIdx, [], [], d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, ...
                     W, P, EC, [], [], [], [], [], S.t0wet, S.t0dry, S.K, dt, dIce);
         end
         
@@ -341,7 +342,7 @@ for yIdx = 1:S.spinUp + 1
         % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2] 
         % and resulting changes in density and determine wet compaction [m]
         comp2 = sum(dz); 
-        [M, Msurf, R, F, T, d, dz, W, mAdd, dz_add, a, adiff re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
+        [M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
              S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce);
 
         comp2 = (comp2 - sum(dz));
