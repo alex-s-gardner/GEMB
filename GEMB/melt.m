@@ -7,31 +7,30 @@ function [sumM, Msurf, Rsum, Fsum, T, d, dz, W, mAdd, dz_add, a, adiff, re, gdn,
 % computes the quantity of meltwater due to snow temperature in excess of
 % 0 deg C, determines pore water content and adjusts grid spacing
  
-
 %% INITIALIZATION
 
 Ttol = 1e-10;
 Dtol = 1e-11;
 Wtol = 1e-13;
 
-ER    = 0.0;
-sumM  = 0.0;
-sumER = 0.0;
-addE  = 0.0;
-mSum0 = 0.0;
-sumE0 = 0.0;
-mSum1 = 0.0;
-sumE1 = 0.0;
-dE    = 0.0;
-dm    = 0.0;
+ER    = 0;
+sumM  = 0;
+sumER = 0;
+addE  = 0;
+mSum0 = 0;
+sumE0 = 0;
+mSum1 = 0;
+sumE1 = 0;
+dE    = 0;
+dm    = 0;
 X     = 0;
-Wi    = 0.0;
+Wi    = 0;
 
 % Specify constants:
 CtoK = 273.15;   % Celsius to Kelvin conversion
 CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 k-1)
-LF   = 0.3345E6; % latent heat of fusion(J kg-1)
-dPHC = 830.0;    % pore hole close off density[kg m-3]
+LF   = 0.3345E6; % latent heat of fusion (J kg-1)
+dPHC = 830.0;    % pore hole close off density [kg m-3]
 
 n    = length(T);
 M    = zeros(n,1);
@@ -47,18 +46,18 @@ mSum0 = sum(W) + sum(m);       % total mass [kg]
 sumE0 = sum(EI) + sum(EW);     % total energy [J]
 
 % initialize melt and runoff scalars
-R      = 0;     % runoff [kg]
-Rsum   = 0.0;   % sum runoff [kg]
-Fsum   = 0.0;   % sum refreeze [kg]
-sumM   = 0;     % total melt [kg]
-mAdd   = 0.0;   % mass added/removed to/from base of model [kg]
-addE   = 0;     % energy added/removed to/from base of model [J]
-dz_add = 0.0;   % thickness of the layer added/removed to/from base of model [m]
-Msurf  = 0.0;   % surface layer melt
+R      = 0;   % runoff [kg]
+Rsum   = 0;   % sum runoff [kg]
+Fsum   = 0;   % sum refreeze [kg]
+sumM   = 0;   % total melt [kg]
+mAdd   = 0;   % mass added/removed to/from base of model [kg]
+addE   = 0;   % energy added/removed to/from base of model [J]
+dz_add = 0;   % thickness of the layer added/removed to/from base of model [m]
+Msurf  = 0;   % surface layer melt
 
 % output
-surplusE = 0.0;
-surplusT = 0.0;
+surplusE = 0;
+surplusT = 0;
 
 % calculate temperature excess above 0 degC
 exsT = max(0, T - CtoK);        % [K] to [degC]
@@ -72,7 +71,7 @@ Swi = 0.07;                     % assumed constant after Colbeck, 1974
 %% REFREEZE PORE WATER
 % check if any pore water
 if sum(W) > 0+Wtol
-     % disp('PORE WATER REFREEZE')
+    % disp('PORE WATER REFREEZE')
     % calculate maximum freeze amount, maxF [kg]
     maxF = max(0, -((T - CtoK) .* m * CI) / LF);
     
@@ -141,10 +140,10 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     end
 
     % convert temperature excess to melt [kg]
-    Mmax = exsT .* d .* dz * CI / LF;  
-    M=min(Mmax, m);                    % melt
-    Msurf=M(1);
-    sumM = max(0,sum(M)-Ra);           % total melt [kg] minus the liquid rain that had been added 
+    Mmax  = exsT .* d .* dz * CI / LF;  
+    M     = min(Mmax, m);               % melt
+    Msurf = M(1);
+    sumM  = max(0,sum(M)-Ra);           % total melt [kg] minus the liquid rain that had been added 
     
     % calculate maximum refreeze amount, maxF [kg]
     maxF = max(0, -((T - CtoK) .* d .* dz * CI)/ LF);
@@ -157,7 +156,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     X = find((M > 0.0+Wtol | exsW > 0.0+Wtol), 1, 'last');
     X(isempty(X)) = 1;
         
-    depthice = 0.0;
+    depthice = 0;
     Xi=1;
     n=length(T);
 
@@ -166,7 +165,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
         % calculate total melt water entering cell
         inM = M(i)+ flxDn(i);
 
-        depthice=0.0;
+        depthice=0;
         if d(i) >= dPHC-Dtol
             for l=i:n
                 if d(l)>=dPHC-Dtol
@@ -203,7 +202,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             Wi = (dIce-d(i)) * Swi * (m(i)/d(i));     % irreducible water
             dW(i) = max(min(inM, Wi - W(i)),-1*W(i)); % change in pore water
             flxDn(i+1) = max(0.0, inM - dW(i));       % meltwater out
-            R(i) = 0.0;
+            R(i) = 0;
  
             % some or all meltwater refreezes
         else
@@ -220,7 +219,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             %-----------------------pore water-----------------------------
             Wi = (dIce-d(i))* Swi * dz_0;                % irreducible water
             dW(i) = max(min(inM - F1, Wi-W(i)),-1*W(i)); % change in pore water
-            F2 = 0.0;
+            F2 = 0;
             
             %% ---------------- THIS HAS NOT BEEN CHECKED-----------------_
             if dW(i) < 0.0-Wtol                     % excess pore water
@@ -250,12 +249,13 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
                 flxDn(i+1) = 0;
             end
         end
-          Xi=Xi+1;
+        
+        Xi=Xi+1;
     end
 
     %% GRID CELL SPACING AND MODEL DEPTH
 
-    if sum(W < 0.0-Wtol)
+    if any(W < 0.0-Wtol)
         error('Negative pore water generated in melt equations.')
     end
 
@@ -299,7 +299,7 @@ if dm ~= 0 || dE ~= 0
         num2str(dm) ' dE: ' num2str(dE) newline])
 end
 
-if sum(W < 0.0-Wtol)
+if any(W < 0.0-Wtol)
     error('Negative pore water generated in melt equations.')
 end
 
