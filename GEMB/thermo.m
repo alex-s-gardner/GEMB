@@ -149,14 +149,16 @@ end
 f = [1 2 3 4 5 6 8 9 10 12 15 16 18 20 24 25 30 36 40 45 48 50 60 ...
     72 75 80 90 100 120 144 150 180 200 225 240 300 360 400 450 600 ...
     720 900 1200 1800 3600];
+fi=1./f(end-12:-1:2);
+f = [fi((fi*1e12-floor(fi*1e12)) == 0) f];
 
 % return the min integer factor that is < dt
 I=f<dt-Dtol;
 if sum(I)
-    dt = max(f(I));
+	dt = max(f(I));
 else
-    dt = 1;
-    display([' WARNING: calculated timestep for thermal loop is < 1 second.' newline])
+	dt = f(1);
+	display([' WARNING: calculated timestep for thermal loop is < ' num2str(f(1)) ' second. (' num2str(dt) ' sec) ' sprintf('\n')])
 end
 
 if m>0
