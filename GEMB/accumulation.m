@@ -34,12 +34,7 @@ dSnow  = 150;    % density of snow [kg m-3]
 reNew  = 0.05;   % new snow grain size [mm]
 gdnNew = 1.0;    % new snow dendricity 
 gspNew = 0.5;    % new snow sphericity 
-
-mass      = 0.0;
-massinit  = 0.0;
-mass_diff = 0.0;
-
-Ra=0.0;
+Ra     = 0;      % rainfall [mm w.e. or kg m^-3] 
 
 % Density of fresh snow [kg m-3]
 switch (dsnowIdx)
@@ -138,7 +133,7 @@ if P > 0+Ptol
             dz(1) = mass / d(1);   % dz is adjusted to conserve mass
         end
         
-        Ra=P;
+        Ra = P;
     end
     
     %% check for conservation of mass
