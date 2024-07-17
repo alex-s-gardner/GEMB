@@ -1,7 +1,7 @@
 %Test Name: SquareShelfSMBGemb
-ISSM_compare=true; %Set to true to run ISSM for comparison benchmark
+ISSM_compare=false; %Set to true to run ISSM for comparison benchmark
 
-addpath ISSMclasses
+addpath ../
 mdt=load('GEMBrestart.mat');
 
 % Use of Gemb method for SMB computation
@@ -22,8 +22,8 @@ isrestart=false;
 %smb.adThresh = 700;
 %smb.aIdx=0;
 
-% load hourly surface forcing date from 1979 to 2009:
-inputs=load('../TEST_DATA/gemb_input.mat');
+% load hourly surface forcing data from 1965 to 1967:
+inputs=load('../../TEST_DATA/gemb_input.mat');
 
 % setup the inputs (duplicated for all the elements of an ISSM shelf model in case these are needed):
 smb.Ta=[repmat(inputs.Ta0',mdt.mdmesh.numberofelements,1);inputs.dateN'];
@@ -45,14 +45,14 @@ smb.cciceValue=[repmat(0*inputs.Ta0',mdt.mdmesh.numberofelements,1);inputs.dateN
 smb.szaValue=[repmat(0*inputs.Ta0',mdt.mdmesh.numberofelements,1);inputs.dateN'];
 
 if issza
-	addpath ../TEST_DATA/SolarAzEl/
+	addpath ../../TEST_DATA/SolarAzEl/
 
-	xer=mean(md.mesh.x(md.mesh.elements),2);
-	yer=mean(md.mesh.y(md.mesh.elements),2);
+	xer=mean(mdt.mdmesh.x(mdt.mdmesh.elements),2);
+	yer=mean(mdt.mdmesh.x(mdt.mdmesh.elements),2);
 	[later,loner]=xy2ll(xer,yer,+1);
-	surfe=mean(md.geometry.surface(md.mesh.elements),2);
+	surfe=mean(mdt.mdgeometry.surface(mdt.mdmesh.elements),2);
 
-	DateVec=datenum([md.timestepping.start_time,1,1,0,0,0])+180/1440*[0:(size(smb.Ta,2)-1)];
+	DateVec=datenum([inputs.dateN(1),1,1,0,0,0])+180/1440*[0:(size(smb.Ta,2)-1)];
 	for ne=1:(size(smb.szaValue,1)-1)
 		[Az El]=SolarAzEl(DateVec,zeros(1,size(DateVec,2))+later(ne),zeros(1,size(DateVec,2))+loner(ne),zeros(1,size(DateVec,2))+surfe(ne)/1000);
 		smb.szaValue(ne,:)=max(min(90-El,90),0);
