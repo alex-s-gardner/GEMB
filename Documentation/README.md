@@ -17,7 +17,7 @@ The simplest example of how to use GEMB can be found in `MASTER_RUN.m`, which lo
 
 **`grainGrowth`** models the effective snow grain size.
 
-**`gridInitialize`** sets up the initial grid spacing and total grid depth.  
+[**`gridInitialize`**](gridInitialize_documentation.md) sets up the initial grid spacing and total grid depth.  
 
 **`managelayers`** adjusts the depth and number of vertical layers in the model to ensure  that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
 
