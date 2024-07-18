@@ -3,6 +3,9 @@
 The simplest example of how to use GEMB can be found in `MASTER_RUN.m`, which loads some local climate data, defines some constants, and enters all of that into the `GEMB` function. The dependency graph above shows that `GEMB` calls several other functions that each model a given process such as accumulation, densification, melt, shortwave radiation. etc.
 
 # Function List 
+
+**`GEMB`** is the main function in this package. 
+
 **`accumulation`** adds precipitation and deposition to the model grid.
 
 **`albedo`** calculates snow, firn, and ice albedo.
@@ -13,30 +16,28 @@ The simplest example of how to use GEMB can be found in `MASTER_RUN.m`, which lo
 
 **`gardnerAlb`** models a broadband albedo parameterization described in [*Gardner & Sharp*, 2010](doi.org/10.1029/2009jf001444). 
 
-**`GEMB`** is the main function in this package. 
-
 **`grainGrowth`** models the effective snow grain size.
 
-[**`gridInitialize`**](gridInitialize_documentation.md) sets up the initial grid spacing and total grid depth.  
+[**`gridInitialize`**](gridInitialize_documentation.md) sets up the initial layer thickness and total grid depth.  
 
-**`managelayers`** adjusts the depth and number of vertical layers in the model to ensure  that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
+**`managelayers`** adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
 
 **`melt`** computes the quantity of meltwater due to snow temperature in excess of 0 deg C, determines pore water content and adjusts grid spacing.
 
-**`plotgemb`** 
+**`plotgemb`** plots GEMB output.
 
-**`shortwave`** distributes absorbed shortwave radiation within snow/ice.
+**`shortwave`** distributes absorbed shortwave radiation vertically within snow/ice.
 
 **`thermo`** computes new temperature profile accounting for energy absorption and thermal diffusion.
 
-**`turbulentFlux`** computes the surface sensible and latent heat fluxes [W m-2] and calculates the mass loss/accretion due to condensation/evaporation [kg].
+**`turbulentFlux`** computes the surface sensible and latent heat fluxes [W m-2] and calculates the mass loss/accretion due to condensation/evaporation.
 
 # Output Data 
 
 GEMB output, value summed per output timestep. For values with layers, above the surface is padded with NaN, e.g., to get the full layer of densities for time step 1: `density_column=d(end-m+1:end,1);` and the surface density at time step 1 (or d1(1) ) should be equal to `density_column(1)`.
 
 * EC: surface evaporation (-) condensation (+) [kg m-2]
-* F: refreeze of column [kg m-2]
+* F: refreeze within column [kg m-2]
 * FAC: firn air content within column [m]
 * M: melt of column [kg m-2]
 * P: precipitation input [kg m-2]
@@ -57,15 +58,15 @@ GEMB output, value summed per output timestep. For values with layers, above the
 * lhf: latent heat flux [W m-2]
 * m: number of snow layers
 * mAdd: mass added/removed to/from base of model [kg m-2]
-* netLW: net longwave radiation [W m-2]
-* netQ: net energy (netSW + netLW + shf + lhf) [W m-2]
-* netSW: net shortwave radiation [W m-2]
+* netLW: net longwave radiation between atmosphere and top layer [W m-2]
+* netQ: net energy between atmosphere and top layer (netSW + netLW + shf + lhf) [W m-2]
+* netSW: net shortwave radiation between atmosphere and top layer [W m-2]
 * ps: pore space within each layer [m^3/m^2]
 * re: optically equivelant grain radius within each layer [mm]
 * re1: optically equivelant grain radius of the top layer [mm]
-* shf: sensible heat flux [W m-2]
+* shf: sensible heat flux between atmosphere and top layer [W m-2]
 * time: time since beginning of simulation [day]
-* ulw: upward longwave radiation [W m-2]
+* ulw: upward longwave radiation between atmosphere and top layer [W m-2]
 
 
 # Basic theory

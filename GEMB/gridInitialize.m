@@ -1,5 +1,5 @@
 function [dz, z_center] = gridInitialize(z_top, dz_top, z_max, beta)
-% gridInitialize sets up the initial grid spacing and total grid depth.  
+% gridInitialize sets up the initial layer thickness and total grid depth.  
 % 
 %% Syntax 
 % 

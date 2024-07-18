@@ -1,5 +1,5 @@
 # Documentation for `gridInitialize`
-The `gridInitialize` function gridInitialize sets up the initial grid spacing and total grid depth. 
+The `gridInitialize` function gridInitialize sets up the initial layer thickness and total grid depth. 
 
 # Syntax 
 
