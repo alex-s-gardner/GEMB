@@ -1,6 +1,6 @@
 function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt, re, Tmean, dIce)
 
-%% THIS NEEDS TO BE DOUBLE CHECKED AS THERE SEAMS TO BE LITTLE DENSIFICATION IN THE MODEL OUTOUT [MAYBE COMPATION IS COMPNSATED FOR BY TRACES OF SNOW???]
+%% THIS NEEDS TO BE DOUBLE CHECKED AS THERE SEEMS TO BE LITTLE DENSIFICATION IN THE MODEL OUTOUT [MAYBE COMPATION IS COMPENSATED FOR BY TRACES OF SNOW???]
 
 %% FUNCTION INFO
 
@@ -50,7 +50,6 @@ CtoK    = 273.15;      % Kelvin to Celcius conversion/ice melt. point T in K
 % Ec    = 60           % activation energy for self-diffusion of water
 %                      % molecules through the ice tattice [kJ mol-1]
 % Eg    = 42.4         % activation energy for grain growth [kJ mol-1]
-
 
 % initial mass
 mass_init = d .* dz;
@@ -184,4 +183,3 @@ d(d > dIce-Ptol) = dIce;
 
 % calculate new grid cell length
 dz = mass_init ./ d;
-

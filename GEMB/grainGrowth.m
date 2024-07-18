@@ -98,11 +98,11 @@ if sum(G) ~= 0
     % disp ('DENDRITIC DRY SNOW METAMORPHISM')
     % index for dentricity > 0 and T gradients < 5 degC m-1 and >= 5 degC m-1
     H = abs(dT) <= 5+Ttol & G & W <= 0+Wtol; % asg not wet accounted for on 19/08/29
-    I = abs(dT) > 5+Ttol & G & W <= 0+Wtol;
+    I = abs(dT)  > 5+Ttol & G & W <= 0+Wtol;
     
     % determine coefficients
     A = - 2E8 * exp(-6E3 ./ T(H)) * dt;
-    B = 1E9 * exp(-6E3 ./ T(H)) * dt;
+    B =   1E9 * exp(-6E3 ./ T(H)) * dt;
     C = (-2E8 * exp(-6E3 ./ T(I)) * dt) .* (abs(dT(I)) .^ 0.4);
     
     % new dentricity and sphericity for dT < 5 degC m-1 
@@ -148,7 +148,7 @@ if sum(J) ~= 0
     % decreases according to Equations (4). When sphericity
     % reaches 0, their size increases according to the functions
     % determined by Marbouty. (Brun et al., 1992)
-    P1 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT) > 5+Ttol; 
+    P1 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT)  > 5+Ttol; 
     P2 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT) <= 5+Ttol & W > 0+Wtol;
     P3 = J & gsp>0+Gdntol & gsp<1-Gdntol & ~P1 & ~P2;
     
@@ -241,14 +241,14 @@ H(I) = 1 - ((d(I)-150)/250);
 I    = dT >= 0.16-Ttol & dT < 0.25-Ttol;
 G(I) = ((dT(I) - 0.16)/0.09) * 0.1;
 
-I    = dT >= 0.25-Ttol & dT < 0.4-Ttol;
-G(I) = 0.1 + (((dT(I) - 0.25)/0.15) * 0.57);
+I    = dT >= 0.25-Ttol & dT < 0.40-Ttol;
+G(I) = 0.10 + (((dT(I) - 0.25)/0.15) * 0.57);
 
-I    = dT >= 0.4-Ttol & dT < 0.5-Ttol;
-G(I) = 0.67 + (((dT(I) - 0.4)/0.1) * 0.23);
+I    = dT >= 0.40-Ttol & dT < 0.50-Ttol;
+G(I) = 0.67 + (((dT(I) - 0.40)/0.10) * 0.23);
 
-I    = dT >= 0.5-Ttol & dT < 0.7-Ttol;
-G(I) = 0.9 + (((dT(I) - 0.5)/0.2) * 0.1);
+I    = dT >= 0.50-Ttol & dT < 0.70-Ttol;
+G(I) = 0.90 + (((dT(I) - 0.50)/0.20) * 0.1);
 
 G(dT >= 0.7-Ttol) = 1;
 

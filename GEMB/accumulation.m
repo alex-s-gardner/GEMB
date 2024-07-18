@@ -1,7 +1,6 @@
 function [T, dz, d, Ra, W, a, adiff, re, gdn, gsp] = ...
     accumulation(aIdx, dsnowIdx, Tmean, T_air, T, dz, d, P, W, dz_min, C, V, Vmean, a, adiff, a_SNOW, re, gdn, gsp, dIce)
-
-%% Adds precipitation and deposition to the model grid
+% accumulation adds precipitation and deposition to the model grid.
 
 % Author: Alex Gardner, University of Alberta
 % Date last modified: JAN, 2008

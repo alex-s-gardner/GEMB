@@ -1,12 +1,14 @@
 %% merge GEMB model output for each point and save to netcdf
 
 %% USER INPUT
+
 varMerge = {'Ta','P','M','R','EC','elev','a1', 'comp1', ...
     'comp2', 'd_50m','netSW', 'netLW', 'shf', 'lhf',};
 S.runPfx = 'S2A1D2';
 S.inputDIR = '../input/CFSR/T62';
 
 %% Combine output and place into a netcdf
+
 load(fullfile(S.inputDIR, 'mask'))
 
 % find all output data files
@@ -159,7 +161,7 @@ for v = 1:length(varMerge)
             end
             
         else
-            [rIdx cIdx] = find(mask.lat == O.S.lat & mask.lon == O.S.lon);
+            [rIdx, cIdx] = find(mask.lat == O.S.lat & mask.lon == O.S.lon);
         end
         
         if monolevel
@@ -176,7 +178,7 @@ for v = 1:length(varMerge)
     
     %% place into netcdf file
     outFileName = fullfile('..','Output', [S.runPfx '_' var '.nc']);
-    [numrow numcol]= size(mask.value);
+    [numrow, numcol]= size(mask.value);
     ncid = netcdf.create(outFileName,'NC_SHARE');
     
     if size(mask.lat,1) == size(OUT,1)
@@ -226,10 +228,10 @@ for v = 1:length(varMerge)
     end
     
     %  define variables in the new file
-    varid = netcdf.defVar(ncid, shortName, 'NC_DOUBLE', dims);
-    varidY = netcdf.defVar(ncid, yName, 'NC_DOUBLE', ncY);
-    varidX = netcdf.defVar(ncid, xName, 'NC_DOUBLE', ncX);
-    varidT = netcdf.defVar(ncid, 'time', 'NC_INT', ncT);
+    varid  = netcdf.defVar(ncid, shortName, 'NC_DOUBLE', dims);
+    varidY = netcdf.defVar(ncid,     yName, 'NC_DOUBLE',  ncY);
+    varidX = netcdf.defVar(ncid,     xName, 'NC_DOUBLE',  ncX);
+    varidT = netcdf.defVar(ncid,    'time',    'NC_INT',  ncT);
     
     % add attributes
     netcdf.putAtt(ncid, varid, 'long_name', longName)
