@@ -1,26 +1,16 @@
 function [re, gdn, gsp]  = grainGrowth(T, dz, d, W, re, gdn, gsp, dt, aIdx)
-
-%% Function Documentation
-% *Created by*: Alex S. Gardner, University of Alberta
+% grainGrowth models the effective snow grain size. 
+% 
+%% Syntax 
+% 
+% 
 %
-% *Description*: models the effective snow grain size
-%
-% *Reference:*
-% DENDRITIC SNOW METAMORPHISM:
-% Brun, E., P. David, M. Sudul, and G. Brunot, 1992: A numerical model to
-% simulate snow-cover stratigraphy for operational avalanche forecasting.
-% Journal of Glaciology, 38, 13-22.
-%
-% NONDENDRITIC SNOW METAMORPHISM:
-% Dry snow metamorphism:
-% Marbouty, D., 1980: An experimental study of temperature-gradient
-% metamorphism. Journal of Glaciology, 26, 303-312.
-%
-% WET SNOW METAMORPHISM:
-% Brun, E., 1989: Investigation on wet-snow metamorphism in respect of
-% liquid-water content. Annals of Glaciology, 13, 22-26.
-
-%% INPUTS
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
 % * T: grid cell temperature [K]
 % * dz: grid cell depth [m]
 % * d: grid cell density [kg m-3]
@@ -29,11 +19,38 @@ function [re, gdn, gsp]  = grainGrowth(T, dz, d, W, re, gdn, gsp, dt, aIdx)
 % * gdn: grain dentricity
 % * gsp: grain sphericity
 % * dt: time step of input data [s]
-
-%% OUTPUTS
+% 
+%% Outputs 
+% 
 % * re: effective grain size [mm]
 % * gdn: grain dentricity
 % * gsp: grain sphericity
+%
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References
+% Formulations in this function are from the following: 
+% 
+% DENDRITIC SNOW METAMORPHISM:
+% Brun, E., P. David, M. Sudul, and G. Brunot, 1992: A numerical model to
+% simulate snow-cover stratigraphy for operational avalanche forecasting.
+% Journal of Glaciology, 38, 13-22.
+%
+% NONDENDRITIC SNOW METAMORPHISM:
+% Marbouty, D., 1980: An experimental study of temperature-gradient
+% metamorphism. Journal of Glaciology, 26, 303-312.
+%
+% WET SNOW METAMORPHISM:
+% Brun, E., 1989: Investigation on wet-snow metamorphism in respect of
+% liquid-water content. Annals of Glaciology, 13, 22-26.
+%
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 Ttol = 1e-10;
 Gdntol = 1e-10;
@@ -215,7 +232,7 @@ H    = F;
 G    = F;
 
 E    = 0.09;       % model time growth constant [mm d-1]
-T    = T - 273.15; % converts T from K to �C
+T    = T - 273.15; % converts T from K to ºC
 dT   = dT/100.0;   % convert dT from degC/m to degC/cm
 
 %% Temperature coefficient F

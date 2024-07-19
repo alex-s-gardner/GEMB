@@ -1,13 +1,18 @@
 function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta, V, eAir, pAir, tcIdx, eIdx, ...
         teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup)
-
-%% ENGLACIAL THERMODYNAMICS
- 
-% Description: 
-% computes new temperature profile accounting for energy absorption and 
-% thermal diffusion.
-
-%% INPUTS
+% thermo computes new temperature profile accounting for energy absorption 
+% and thermal diffusion.
+%
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
 % * T: grid cell temperature [k]
 % * dz: grid cell depth [m]
 % * d: grid cell density [kg m-3]
@@ -20,11 +25,23 @@ function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta,
 % * dt0: time step of input data [s]
 % * Vz: air temperature height above surface [m]
 % * Tz: wind height above surface [m]
-
-%% OUTPUTS
+% 
+%% Outputs
+% 
 % * T: grid cell temperature [k]
 % * EC: evaporation/condensation [kg]
 % * ulwrf: upward longwave radiation flux [W m-2]
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 %% INITIALIZE
 

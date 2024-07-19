@@ -1,123 +1,70 @@
 function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
-%% Glacier Energy and Mass Balance (GEMB) Model
-
-%% Model Documentation
-% *Created by*: Alex S. Gardner, JPL/Caltech
-% 
-% Date last modified: May 19, 2015                                    
-%%
-% *Description:*                                                             
-%%
-% This program calculates a 1-D surface glacier mass balance and 
-% includes detailed representation of subsurface process. Key features:
+% GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023. 
+%                                   
+% GEMB calculates a 1-D surface glacier mass balance, includes detailed 
+% representation of subsurface processes, and key features include: 
 %
 % * melt water percolation and refreeze
 % * pore water retention                                               
 % * dynamic albedo with long-term memory                               
 % * subsurface temperature diffusion                                   
-% * subsurface penetration of shortwave radiation                       
-%%
+% * subsurface penetration of shortwave radiation   
+% 
+%% Syntax 
+% 
+% 
 %
-% *Reference:*
-%
-% Many aspects of the general model structure and specific 
-% parameterizations are taken from:
-%
-% Bassford, R. P., 2002: Geophysical and numerical modelling investigations
-% of the ice caps on Severnaya Zemlya, Bristol Glaciology Centre, School of
-% Geographical Sciences, University of Bristol 220.
-%
-% Bougamont, M. and J. L. Bamber, 2005: A surface mass balance model for
-% the Greenland Ice Sheet. Journal of Geophysical Research-Earth Surface,
-% 110, doi:10.1029/2003JD004451.
-%
-% Greuell, W.; Konzelmann, T., 1994. Numerical Modeling of the
-% Energy-Balance and the Englacial Temperature of the Greenland Ice-Sheet -
-% Calculations for the Eth-Camp Location (west Greenland, 1155M Asl).
-% Global and Planetary Change. 9(1994)
-%%
-%
-% *Model variables:*
-%
-% * z   = grid cell depth below surface [m]
-% * dz  = grid cell size [m]
-% * a   = albedo [fraction]
-% * EC  = evaporation (-) & condensation (+) [kg m^-^2]
-% * d   = denity [kg m^-^3]
-% * mass   = mass [kg m^-^2]
-% * M   = melt [kg m^-^2]
-% * W   = liquid water content [kg m^-^2]
-% * re  = optically equivelant grain radius [mm]
-% * gdn = grain dentricity
-% * gsp = grain sphericity
-% * R   = runoff [kg m-2] 
-% * ps  = pore space [m^3/m^2] 
-%
-% *Output variables:*
-%
-% * comp1 = dry snow ccompaction [m]
-% * comp2 = melt compaction [m]
-%
-%% Input
-%
-% * dateN : date/time [UTC: days since ...]
-% * Ta: 2m air temperature [K]
-% * V: wind speed [m s^-^1]
-% * dsw: downward shortwave radiation flux [W m^-^2]
-% * dlw: downward longwave radiation flux [W m^-^2] 
-% * P: precipitation [kg m^-^2]
-% * eAir: screen level vapor pressure [Pa]
-% * pAir: surface pressure [Pa]
-% * S.Tmean: mean annual temperature [K]
-% * S.C = mean annual snow accumulation [kg m-2 yr-1]
-% * S.Tz: height above ground at which temperature (T) was sampled [m]
-% * S.Vz: height above ground at which wind (V) eas sampled [m]
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
+% 
+% 
+%% Outputs
+% 
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
-% specify met station 
-    % * automatically generated met data = 0
-    % * Devon Site 1,2,3 = 1,2,3
-    % * CFSR extracted climate forcing = 999
-% S.site = 999; 
-
-% Daily (1) or hourly (2) data
-% S.dataFreq = 2;
-% if S.site < 999
-%      S.saveFreq = 24
-%     [dateN, Ta0, V0, dsw0, dlw0, P0, eAir0, pAir0, dt, LP] = ...
-%         loadMetData(S.cldFrac, S.site, S.dataFreq, S.saveFreq);
-% else
-%     runIdx = 1;
-%     load(fullfile(S.cfsrForcingDIR,['input_' sprintf('%06d', runIdx)]))
-% end
 
 disp(['------------------ STARTING RUN # ' num2str(S.runID) ' --------------------' ])
 tic                                     % start timer
 dt = (dateN(2)-dateN(1)) * (60*60*24);  % input time step in seconds
 
-% test switches
-checkInput      = false;
-overridePrecip  = false;
+% % test switches
+% checkInput      = false;
+% overridePrecip  = false;
 
 % Constants
 dIce = 910;     % density of ice [kg m-3]
 
-if overridePrecip
-    % override pricipitiation data for testing
-    disp('--> setting precipitation to annual mean <--')
-    P0(:) = S.C*(dt/(60*60*24*364.25)); % FIX NUM DAYS IN YEAR
-end
-
-if checkInput
-    % display input parameter ranges to screen for sanity check
-    disp(' - - - - - check input forcing - - - - - ')
-    X = {'dateN', 'Ta0', 'V0', 'dsw0', 'dlw0', 'P0', 'eAir0', 'pAir0', 'dt'};
-    for i = 1:length(X)
-        
-        fprintf('%s \t : %6.2f - %6.2f \t size : [%7.0f %7.0f]\n', ...
-            X{i}, min(eval(X{i})), max(eval(X{i})), size(eval(X{i}),1), ...
-            size(eval(X{i}),2))
-    end
-end
+% if overridePrecip
+%     % override pricipitiation data for testing
+%     disp('--> setting precipitation to annual mean <--')
+%     P0(:) = S.C*(dt/(60*60*24*364.25)); % FIX NUM DAYS IN YEAR
+% end
+% 
+% if checkInput
+%     % display input parameter ranges to screen for sanity check
+%     disp(' - - - - - check input forcing - - - - - ')
+%     X = {'dateN', 'Ta0', 'V0', 'dsw0', 'dlw0', 'P0', 'eAir0', 'pAir0', 'dt'};
+%     for i = 1:length(X)
+% 
+%         fprintf('%s \t : %6.2f - %6.2f \t size : [%7.0f %7.0f]\n', ...
+%             X{i}, min(eval(X{i})), max(eval(X{i})), size(eval(X{i}),1), ...
+%             size(eval(X{i}),2))
+%     end
+% end
 
 %% Generate model grid
 
@@ -136,42 +83,36 @@ dz = gridInitialize(S.zTop, S.dzTop, S.zMax, S.zY);
 % -------------------------------------------------------------------------
 
 % initialize profile variables
-if ~isrestart
-    m = length(dz);
-    Z = zeros(m,1);         % create zeros matrix
-    d = Z + dIce;           % density to that of ice [kg m-3]
-    re = Z + 2.5;           % set grain size to old snow [mm]
-    gdn = Z;                % set grain dentricity to old snow 
-    gsp = Z;                % set grain sphericity to old snow 
-    EC = 0;                 % surface evaporation (-) condensation (+) [kg m-2]
-    W = Z;                  % set water content to zero [kg m-2]
-    M = Z;                  % set melt water to zero [kg m-2]
-    Ra = Z;                 % set rain amount to zero [kg m-2]
-    F = Z;                  % set refreeze to zero [kg m-2]
-    a = Z + S.aSnow;        % set albedo equal to fresh snow [fraction]
-    adiff = Z + S.aSnow;    % set albedo equal to fresh snow [fraction]
-    Msurf = 0.0;            % initialize surface melt for albedo parameterization
 
-    % set initial grid cell temperature to the annual mean temperature [K]
-    T = Z + S.Tmean;
+if isrestart
+    m     = S.Sizeini;
+    a     = S.Aini;               % albedo [fraction]
+    adiff = S.Adiffini;           % albedo [fraction]
+    dz    = S.Dzini;              % layering
+    d     = S.Dini;               % density [kg m-3]
+    EC    = S.ECini;              % surface evaporation (-) condensation (+) [kg m-2]
+    gdn   = S.Gdnini;             % grain dentricity
+    gsp   = S.Gspini;             % grain sphericity
+    re    = S.Reini;              % grain size [mm]
+    T     = S.Tini;               % snow temperature [K]
+    W     = S.Wini;               % water content [kg m-2]
 else
-    m = S.Sizeini;
-    Z = zeros(m,1);         % create zeros matrix
-    dz = S.Dzini;           % set layering
-    d = S.Dini;             % set density [kg m-3]
-    re = S.Reini;           % set grain size [mm]
-    gdn = S.Gdnini;         % set grain dentricity
-    gsp = S.Gspini;         % set grain sphericity
-    EC = S.ECini;           % surface evaporation (-) condensation (+) [kg m-2]
-    W = S.Wini;             % set water content [kg m-2]
-    T = S.Tini;             % set snow temperature [K]
-    M = Z;                  % set melt water to zero [kg m-2]
-    Ra = Z;                 % set rain amount to zero [kg m-2]
-    F = Z;                  % set refreeze to zero [kg m-2]
-    a = S.Aini;             % set albedo [fraction]
-    adiff = S.Adiffini;     % set albedo [fraction]
-    Msurf = 0.0;            % initialize surface melt for albedo parameterization
+    m     = length(dz);
+    a     = zeros(m,1) + S.aSnow; % albedo equal to fresh snow [fraction]
+    adiff = zeros(m,1) + S.aSnow; % albedo equal to fresh snow [fraction]
+    d     = zeros(m,1) + dIce;    % density to that of ice [kg m-3]
+    EC    = 0;                    % surface evaporation (-) condensation (+) [kg m-2]
+    gdn   = zeros(m,1);           % grain dentricity to old snow 
+    gsp   = zeros(m,1);           % grain sphericity to old snow 
+    re    = zeros(m,1) + 2.5;     % grain size to old snow [mm]
+    T     = zeros(m,1) + S.Tmean; % initial grid cell temperature to the annual mean temperature [K]
+    W     = zeros(m,1);           % water content to zero [kg m-2]
 end
+
+F     = zeros(m,1);               % refreeze to zero [kg m-2]
+M     = zeros(m,1);               % melt water to zero [kg m-2]
+Msurf = 0;                        % initialize surface melt for albedo parameterization
+Ra    = zeros(m,1);               % rain amount to zero [kg m-2]
 
 % fixed lower temperature bounday condition - T is fixed
 T_bottom = T(end);  
@@ -257,7 +198,7 @@ OV.count = 0;
 for yIdx = 1:S.spinUp + 1
 
     % Determine initial mass [kg]:
-    initMass = sum (dz .* d) + sum(W);
+    initMass   = sum (dz .* d) + sum(W);
     
     % Initialize cumulative variables:
     sumR       = 0; 

@@ -1,12 +1,34 @@
 function [sumM, Msurf, Rsum, Fsum, T, d, dz, W, mAdd, dz_add, a, adiff, re, gdn, gsp] = ...
     melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, gsp, dIce)
+% melt computes the quantity of meltwater due to snow temperature in excess 
+% of 0 deg C, determines pore water content and adjusts grid spacing
+%
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
+% 
+% 
+%% Outputs
+% 
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
-%% MELT ROUTINE
-
-% Description:
-% computes the quantity of meltwater due to snow temperature in excess of
-% 0 deg C, determines pore water content and adjusts grid spacing
- 
 %% INITIALIZATION
 
 Ttol = 1e-10;

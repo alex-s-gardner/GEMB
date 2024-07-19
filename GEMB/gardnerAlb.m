@@ -1,31 +1,49 @@
 function [a] = gardnerAlb(re, dz, d, c1, c2, SZA, t)
- 
-% This is a Matlab implementation of the snow and ice broadband albedo 
+% gardnerAlb is a Matlab implementation of the snow and ice broadband albedo 
 % parameterization developed by Alex Gardner.
-
-% Created By: Alex S. Gardner, Jet Propulsion Laboratory [alex.s.gardner@jpl.nasa.gov]
-
-% Last Modified: June, 2014
-
-% Full Reference: Gardner, A. S., and Sharp, M. J.: A review of snow and
-% ice albedo and the development of a new physically based broadband albedo
-% parameterization, J. Geophys. Res., 115, F01009, 10.1029/2009jf001444,
-% 2010. 
- 
-%% INPUTS
- 
+% 
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
 % ONE LAYER
 %   - re    : effective radius [mm] to calculate S1 and S2 (specific surface area of the snow or ice [cm^2 g-1])
-%   - c1    : concentration of light absorbing carbon  [ppm1]
-%   - c2    : concentration of light absorbing carbon of bottom ice layer [ppm1]
+%   - c1    : concentration of light absorbing carbon  [ppmw]
+%   - c2    : concentration of light absorbing carbon of bottom ice layer [ppmw]
 %   - SZA   : solar zenith angle of the incident radiation [deg]
 %   - t     : cloud optical thickness
- 
+%
 % TWO LAYER
 %   - z1    : depth of snow suface layer [mm w.e.]
 %   - c2    : concentration of light absorbing carbon of bottom ice
-%             layer [ppm1]
- 
+%             layer [ppmw]
+% 
+%% Outputs
+% 
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% The formulations in this function are described in: 
+% 
+% Gardner, A. S., and Sharp, M. J.: A review of snow and ice albedo and the 
+% development of a new physically based broadband albedo parameterization, 
+% J. Geophys. Res., 115, F01009, 10.1029/2009jf001444, 2010. 
+% 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+
 %% Single layer albedo parameterization
 
 Dtol = 1e-11;
@@ -54,7 +72,7 @@ m=length(d);
 if (m>0 & lice(1)<=m & z1 > Dtol)
     
     % determine albedo values for bottom layer
-	 S2 = 3.0 / (0.091 * re(lice(1)));
+    S2 = 3.0 / (0.091 * re(lice(1)));
 
     % pure snow albedo
     as2 = (1.48 - S2.^-0.07);
@@ -76,4 +94,7 @@ dasz = 0.53 * as .* (1 - (as + dac)) .* (1 - u) .^ 1.2;
 dat = (0.1 * t .* (as + dac).^ 1.3) ./ ((1 + 1.5*t).^as);
  
 %% Broadband albedo 
+
 a = as + dac + dasz + dat;
+
+end

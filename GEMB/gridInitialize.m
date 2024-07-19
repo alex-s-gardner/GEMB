@@ -55,6 +55,16 @@ function [dz, z_center] = gridInitialize(z_top, dz_top, z_max, beta)
 % yline(-z_top,'color',0.5*[1 1 1])
 % text(max(xlim),-z_top,'-z_{top}','color',0.5*[1 1 1],'horiz','right','vert','top')
 % 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 %% Error checks: 
 

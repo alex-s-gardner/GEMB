@@ -1,24 +1,32 @@
 function [T, dz, d, Ra, W, a, adiff, re, gdn, gsp] = ...
     accumulation(aIdx, dsnowIdx, Tmean, T_air, T, dz, d, P, W, dz_min, C, V, Vmean, a, adiff, a_SNOW, re, gdn, gsp, dIce)
 % accumulation adds precipitation and deposition to the model grid.
-
-% Author: Alex Gardner, University of Alberta
-% Date last modified: JAN, 2008
-
-% Description:
-% adjusts the properties of the top grid cell to account for accumulation
-% T_air & T = Air and top grid cell temperatures [K]
-% Tmean =  average surface temperature [K]
-% Vmean =  average wind velocity [m s-1]
-% V =  wind velocity [m s-1]
-% C =  average accumulation rate [kg m-2 yr-1]
-% dz = topgrid cell length [m]
-% d = density of top grid gell [kg m-3]
-% P = precipitation [mm w.e.] or [kg m-3]
-% Ra = rainfall [mm w.e.] or [kg m-3]
-% re = effective grain radius [mm]
-% gdn = grain dentricity
-% gsp = grain sphericity
+% 
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
+% 
+% 
+%% Outputs
+% 
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 %% MAIN FUNCTION
 

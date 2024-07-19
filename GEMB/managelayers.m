@@ -1,18 +1,34 @@
 function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = ...
     managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, CI, LF, CtoK)
-%% MANAGE LAYERS
-
-% Description:
-% Manages the depth and number of vertical layers in the model
-
-%%%%%%%%%%%%%%%%%% TEST %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%zY = 1.025;
-%dzMin = zeros(size(dz))+dzMin;
-%z = cumsum(dz);
-%n1 = sum(z<10)+1;
-%n2 = length(z);
-%dzMin(n1:n2) = zY.^(1:(n2-n1+1));
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% managelayers adjusts the depth and number of vertical layers in the model 
+% to ensure that the thickness of any single layer does not exceed thresholds 
+% set for the minimum and maximum allowable layer thickness.
+%
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
+% 
+% 
+%% Outputs
+% 
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 Dtol = 1e-11;
 Wtol = 1e-13;

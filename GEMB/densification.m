@@ -2,16 +2,12 @@ function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt,
 
 %% THIS NEEDS TO BE DOUBLE CHECKED AS THERE SEEMS TO BE LITTLE DENSIFICATION IN THE MODEL OUTOUT [MAYBE COMPATION IS COMPENSATED FOR BY TRACES OF SNOW???]
 
-%% FUNCTION INFO
-
-% Author: Alex Gardner, University of Alberta
-% Date last modified: FEB, 2008 
-
+%
 % Description: 
 %   computes the densification of snow/firn using the emperical model of
 %   Herron and Langway (1980) or the semi-emperical model of Anthern et al.
 %   (2010)
-
+%
 % Inputs:
 %   denIdx = densification model to use:
 %       1 = emperical model of Herron and Langway (1980)
@@ -24,10 +20,10 @@ function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt,
 %   dt  = time lapsed [s]
 %   re  = effective grain radius [mm];
 %   Ta  = mean annual temperature                                          
-
+%
 % Reference: 
 % Herron and Langway (1980), Anthern et al. (2010)
-
+%
 %% FOR TESTING
 % denIdx = 2;
 % d = 800;
@@ -37,6 +33,32 @@ function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt,
 % dt = 60*60;
 % re = 0.7;
 % Tmean = 273.15-18;
+% 
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
+% 
+% 
+%% Outputs
+% 
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 %% MAIN FUNCTION
 
@@ -183,3 +205,5 @@ d(d > dIce-Ptol) = dIce;
 
 % calculate new grid cell length
 dz = mass_init ./ d;
+
+end

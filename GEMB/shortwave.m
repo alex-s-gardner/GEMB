@@ -1,14 +1,16 @@
 function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
-
-%% DISTRIBUTES ABSORBED SHORTWAVE RADIATION WITHIN SNOW/ICE
-
-% swIdx = 0 : all absorbed SW energy is assigned to the top grid cell
-
-% swIdx = 1 : absorbed SW is distributed with depth as a function of:
-%   default   : snow density (taken from Bassford, 2002)
-%   if aIdx=2 : grain size in 3 spectral bands (Brun et al., 1992)
-
+% shortwave distributes absorbed shortwave radiation vertically within snow/ice.
+%
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
 %% Inputs
+% 
 %   swIdx   = shortwave allowed to penetrate surface (0 = No, 1 = Yes)
 %   aIdx    = method for calculating albedo (1-4)
 %   dsw     = downward shortwave radiative flux [w m-2]
@@ -18,9 +20,32 @@ function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
 %   d       = grid cell density [kg m-3]
 %   dz      = grid cell depth [m]
 %   re      = grid cell effective grain radius [mm]
-
+% 
+% swIdx = 0 : all absorbed SW energy is assigned to the top grid cell
+%
+% swIdx = 1 : absorbed SW is distributed with depth as a function of:
+%   default   : snow density (taken from Bassford, 2002)
+%   if aIdx=2 : grain size in 3 spectral bands (Brun et al., 1992)
+%
 %% Outputs
-%   swf     = absorbed shortwave radiation [W m-2]
+% 
+% swf     = absorbed shortwave radiation [W m-2]
+%
+%% Example 
+% 
+% plotgemb(a,'T','numlevels',150,'zerolevel',0,'figure',1); 
+% colorbar
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 %% SHORTWAVE FUNCTION
 Dtol = 1e-11;

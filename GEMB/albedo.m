@@ -1,12 +1,11 @@
 function [a, adiff] = albedo(aIdx, re, dz, d, n, aIce, aSnow, aValue, adThresh, a, adiff, TK, W, P, EC,...
     Ms, clabSnow, clabIce, SZA, COT, t0wet, t0dry, K, dt, dIce)
-
-%% Calculates Snow, firn and ice albedo as a function of:
+% albedo calculates snow, firn and ice albedo as a function of:
 %   1 : effective grain radius (Gardner & Sharp, 2009)
 %   2 : effective grain radius (Brun et al., 2009)
 %   3 : density and cloud amount (Greuell & Konzelmann, 1994)
 %   4 : exponential time decay & wetness (Bougamont & Bamber, 2005)
-
+%
 %% Inputs
 % aIdx      = albedo method to use
 
@@ -45,9 +44,31 @@ function [a, adiff] = albedo(aIdx, re, dz, d, n, aIce, aSnow, aValue, adThresh, 
 %   t0dry   = warm snow timescale [15] [d]
 %   K       = time scale temperature coef. (7) [d]
 %   dt      = time step of input data [s]
-
-%% Output
-%   a       = grid cell albedo
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
+%% Inputs
+% 
+% 
+% 
+%% Outputs
+% 
+% 
+%% Documentation
+% 
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
+% 
+%% References 
+% If you use GEMB, please cite the following: 
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 %% Usage
 % Method 1
@@ -126,7 +147,7 @@ else
             
             % determine timescale for albedo decay
             t0(W > 0+Wtol) = t0wet;               % wet snow timescale
-            T = TK - 273.15;                       % change T from K to �C
+            T = TK - 273.15;                       % change T from K to °C
             t0warm = abs(T) * K + t0dry;          % 'warm' snow timescale
             t0(abs(W)<Wtol & T >= -10-Ttol) = t0warm(abs(W)<Wtol & T >= -10-Ttol);
             t0(T < -10-Ttol,1) =  10 * K + t0dry; % 'cold' snow timescale
