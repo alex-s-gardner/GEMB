@@ -73,7 +73,7 @@ TCs = d(1)*dz(1)*CI;
 % determine grid point 'center' vector size
 m = length(d);
 
-% initialize Evaporation - Condenstation 
+% initialize Evaporation - Condensation 
 EC      = 0.0;
 ulwrf   = 0.0;
 lhf_cum = 0.0;
@@ -189,7 +189,12 @@ if m>0
     Nd = Ad ./ Ap;
     Np = 1 - Nu - Nd;
 else
-    Au=0; Ad=0; Ap=0; Nu=0; Nd=0; Np=0;
+    Au = 0; 
+    Ad = 0; 
+    Ap = 0; 
+    Nu = 0; 
+    Nd = 0; 
+    Np = 0;
 end
 
 % specify boundary conditions
@@ -413,7 +418,7 @@ for i = 1:dt:dt0
     % if '-' then there is mass and energy loss at the surface.
     lhf = lhf./(coefM.*coefHQ);
 
-    % mass loss (-)/acreation(+) due to evaporation/condensation [kg]
+    % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
     
     % temperature change due turbulent fluxes

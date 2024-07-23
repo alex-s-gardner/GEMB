@@ -50,7 +50,7 @@ Wi    = 0;
 
 % Specify constants:
 CtoK = 273.15;   % Celsius to Kelvin conversion
-CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 k-1)
+CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
 LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 dPHC = 830.0;    % pore hole close off density [kg m-3]
 
@@ -79,7 +79,6 @@ Msurf  = 0;   % surface layer melt
 
 % output
 surplusE = 0;
-surplusT = 0;
 
 % calculate temperature excess above 0 degC
 exsT = max(0, T - CtoK);        % [K] to [degC]
@@ -148,7 +147,6 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
                 surpT(i+1) = max(0, exsT(i+1) - LF/CI);
                 surpE(i+1) = surpT(i+1) * CI * m(i+1);
             else
-                surplusT=max(0, exsT(i) - LF/CI);
                 surplusE=surpE(i);
                 display([' WARNING: surplus energy at the base of GEMB column' newline])
             end
@@ -178,7 +176,6 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     X = find((M > 0.0+Wtol | exsW > 0.0+Wtol), 1, 'last');
     X(isempty(X)) = 1;
         
-    depthice = 0;
     Xi=1;
     n=length(T);
 
@@ -290,8 +287,17 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     
     % delete all cells with zero mass
     D = (m <= 0+Wtol); 
-    m(D) = []; W(D) = []; d(D) = []; T(D) = []; a(D) = []; re(D) = []; 
-    gdn(D) = []; gsp(D) = []; adiff(D) = []; EI(D) = []; EW(D) = [];
+    m(D)     = []; 
+    W(D)     = []; 
+    d(D)     = []; 
+    T(D)     = []; 
+    a(D)     = []; 
+    re(D)    = []; 
+    gdn(D)   = []; 
+    gsp(D)   = []; 
+    adiff(D) = []; 
+    EI(D)    = []; 
+    EW(D)    = [];
  
     % calculate new grid lengths
     dz = m ./ d;

@@ -6,17 +6,24 @@ function [a, adiff] = albedo(aIdx, re, dz, d, n, aIce, aSnow, aValue, adThresh, 
 %   3 : density and cloud amount (Greuell & Konzelmann, 1994)
 %   4 : exponential time decay & wetness (Bougamont & Bamber, 2005)
 %
+%% Syntax 
+% 
+% 
+%
+%% Description
+% 
+% 
+% 
 %% Inputs
 % aIdx      = albedo method to use
-
+%
 % Method 0
 %  aValue   = direct input value for albedo, override all changes to albedo
-
+%
 % adThresh
 %  Apply below method to all areas with densities below this value,
 %  or else apply direct input value, allowing albedo to be altered.
-%  Default value is rho water (1023 kg m-3).
-
+%
 % Methods 1 & 2
 %   re      = surface effective grain radius [mm]
 % Method 1, optional
@@ -25,13 +32,13 @@ function [a, adiff] = albedo(aIdx, re, dz, d, n, aIce, aSnow, aValue, adThresh, 
 %  COT      = cloud optical thickness, default 0
 %  For TWO LAYER
 %  clabIce  = concentration of light absorbing carbon of first ice layer [ppm1], default 0
-
+%
 % Method 3
 %   d       = snow surface density [kg m-3]
 %   n       = cloud amount
 %   aIce    = albedo of ice
 %   aSnow   = albedo of fresh snow
-
+%
 % Method 4
 %   aIce    = albedo of ice
 %   aSnow   = albedo of fresh snow
@@ -44,20 +51,9 @@ function [a, adiff] = albedo(aIdx, re, dz, d, n, aIce, aSnow, aValue, adThresh, 
 %   t0dry   = warm snow timescale [15] [d]
 %   K       = time scale temperature coef. (7) [d]
 %   dt      = time step of input data [s]
-%% Syntax 
-% 
-% 
-%
-%% Description
-% 
-% 
-% 
-%% Inputs
-% 
-% 
-% 
 %% Outputs
 % 
+%  asdiff  = surface albedo for diffuse radiation
 % 
 %% Documentation
 % 
@@ -96,7 +92,7 @@ else
         case 1 % function of effective grain radius
             
             % clabSnow, IssmDouble clabIce, IssmDouble SZA, IssmDouble COT, int m
-            a(1)=gardnerAlb(re, dz, d, clabSnow, clabIce, SZA, COT);
+            a(1)    =gardnerAlb(re, dz, d, clabSnow, clabIce,  SZA, COT);
             adiff(1)=gardnerAlb(re, dz, d, clabSnow, clabIce, 50.0, COT);
             
         case 2 % function of effective grain radius
@@ -166,9 +162,6 @@ else
             
             a(1) = aSnow - (aSnow - a(1)) * exp(-P./z_snow);
             
-            %----------THIS NEEDS TO BE IMPLEMENTED AT A LATER DATE------------
-            % modification of albedo due to thin layer of water on the surface
-            % a_surf = a_wet - (a_wet - a_surf) * exp(-W_surf/W0);
     end
     
     %If we do not have fresh snow
