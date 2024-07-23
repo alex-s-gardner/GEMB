@@ -159,7 +159,7 @@ end
 % loop above: 
 
 % Find the cells that exceed tolerances: 
-f = (dz > dzMax2+Dtol);
+f = find(dz > dzMax2+Dtol);
 
 % Conserve quantities among the cells that will be split: 
 dz(f) = dz(f)/2; 
