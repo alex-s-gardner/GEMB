@@ -33,10 +33,6 @@ function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = 
 Dtol = 1e-11;
 Wtol = 1e-13;
 
-mAdd = 0.0;
-addE = 0.0;
-dz_add = 0.0;
-
 n=length(T);
 zY2=zY;
 X1=1;
@@ -77,24 +73,24 @@ for i=1:n
         end
 
         % adjust variables as a linearly weighted function of mass
-        m_new = m(X2) + m(X1);
-        T(X1) = (T(X2)*m(X2) + T(X1)*m(X1)) / m_new;
-        a(X1) = (a(X2)*m(X2) + a(X1)*m(X1)) / m_new;
+        m_new     = m(X2) + m(X1);
+        T(X1)     = (    T(X2)*m(X2) +     T(X1)*m(X1)) / m_new;
+        a(X1)     = (    a(X2)*m(X2) +     a(X1)*m(X1)) / m_new;
         adiff(X1) = (adiff(X2)*m(X2) + adiff(X1)*m(X1)) / m_new;
 
         %use grain properties from lower cell
-        re(X1) = re(X2);
+        re(X1)  = re(X2);
         gdn(X1) = gdn(X2);
         gsp(X1) = gsp(X2);
 
         %merge with underlying grid cell and delete old cell
         dz(X1) = dz(X2) + dz(X1);                 % combine cell depths
-        d(X1) = m_new / dz(X1);                   % combine top densities
-        W(X1) = W(X1) + W(X2);                    % combine liquid water
-        m(X1) = m_new;                            % combine top masses
+        d(X1)  = m_new / dz(X1);                  % combine top densities
+        W(X1)  = W(X1) + W(X2);                   % combine liquid water
+        m(X1)  = m_new;                           % combine top masses
 
         % set cell to -99999 for deletion
-        m(X2) = Delflag;
+        m(X2)  = Delflag;
     end
 end
 
@@ -231,6 +227,12 @@ elseif Ztot > zMax+Dtol
     adiff(end) = []; 
     EI(end)    = []; 
     EW(end)    = [];
+
+else
+    % No mass or energy is added or removed: 
+    mAdd   = 0;
+    addE   = 0;
+    dz_add = 0;
 
 end
 
