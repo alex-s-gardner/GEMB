@@ -35,8 +35,7 @@ Wtol = 1e-13;
 
 n=length(T);
 zY2=zY;
-X1=1;
-X2=1;
+i_target=1;
 dzMin2=zeros(size(dz));
 
 Delflag=-99999;
@@ -58,39 +57,40 @@ end
 for i=1:n
 
     if (i<=X && dz(i)<dzMin-Dtol) || (i>X && dz(i)<dzMin2(i)-Dtol)
+
         if i==n
-            X2=i;
-            %find closest cell to merge with
+            % If the very bottom cell (i==n) is too small, look backward until 
+            % we find a cell that won't be deleted:  
             for j=n-1:-1:1
                 if m(j)~=Delflag
-                    X1=j;
+                    i_target=j;
                     break;
                 end
             end
         else
-            X1=i+1;
-            X2=i;
+            i_target = i + 1;
         end
 
-        % adjust variables as a linearly weighted function of mass
-        m_new     = m(X2) + m(X1);
-        T(X1)     = (    T(X2)*m(X2) +     T(X1)*m(X1)) / m_new;
-        a(X1)     = (    a(X2)*m(X2) +     a(X1)*m(X1)) / m_new;
-        adiff(X1) = (adiff(X2)*m(X2) + adiff(X1)*m(X1)) / m_new;
+        % Move the quantities to the target location. Quantities are
+        % calculated as linearly weighted functions of mass: 
+        m_new           = m(i) + m(i_target);
+        T(i_target)     = (    T(i)*m(i) +     T(i_target)*m(i_target)) / m_new;
+        a(i_target)     = (    a(i)*m(i) +     a(i_target)*m(i_target)) / m_new;
+        adiff(i_target) = (adiff(i)*m(i) + adiff(i_target)*m(i_target)) / m_new;
 
-        %use grain properties from lower cell
-        re(X1)  = re(X2);
-        gdn(X1) = gdn(X2);
-        gsp(X1) = gsp(X2);
+        % Use grain properties from lower cell:
+        re(i_target)  =  re(i);
+        gdn(i_target) = gdn(i);
+        gsp(i_target) = gsp(i);
 
-        %merge with underlying grid cell and delete old cell
-        dz(X1) = dz(X2) + dz(X1);                 % combine cell depths
-        d(X1)  = m_new / dz(X1);                  % combine top densities
-        W(X1)  = W(X1) + W(X2);                   % combine liquid water
-        m(X1)  = m_new;                           % combine top masses
+        % Merge with underlying grid cell and delete old cell:
+        dz(i_target) = dz(i) + dz(i_target);            % combine cell depths
+        d(i_target)  = m_new / dz(i_target);            % combine top densities
+        W(i_target)  = W(i) + W(i_target);              % combine liquid water
+        m(i_target)  = m_new;                           % combine top masses
 
         % set cell to -99999 for deletion
-        m(X2)  = Delflag;
+        m(i)  = Delflag;
     end
 end
 
