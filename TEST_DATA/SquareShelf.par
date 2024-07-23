@@ -13,11 +13,11 @@ md.geometry.surface=md.geometry.base+md.geometry.thickness;
 md.geometry.bed = md.geometry.base-500.;
 
 %Initial velocity and pressure
-x     = archread('../TEST_DATA/SquareShelf.arch','x');
-y     = archread('../TEST_DATA/SquareShelf.arch','y');
-vx    = archread('../TEST_DATA/SquareShelf.arch','vx');
-vy    = archread('../TEST_DATA/SquareShelf.arch','vy');
-index = archread('../TEST_DATA/SquareShelf.arch','index');
+x     = archread('../../TEST_DATA/SquareShelf.arch','x');
+y     = archread('../../TEST_DATA/SquareShelf.arch','y');
+vx    = archread('../../TEST_DATA/SquareShelf.arch','vx');
+vy    = archread('../../TEST_DATA/SquareShelf.arch','vy');
+index = archread('../../TEST_DATA/SquareShelf.arch','index');
 x = x{1};
 y = y{1};
 vx = vx{1};
@@ -54,7 +54,7 @@ md.timestepping.final_time=3;
 md.groundingline.migration='None';
 
 %Boundary conditions:
-md=SetIceShelfBC(md,'../TEST_DATA/SquareFront.exp');
+md=SetIceShelfBC(md,'../../TEST_DATA/SquareFront.exp');
 
 %Change name so that no test have the same name
 A=dbstack;
