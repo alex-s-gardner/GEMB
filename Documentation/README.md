@@ -30,8 +30,6 @@ The simplest example of how to use GEMB can be found in `MASTER_RUN.m`, which lo
 
 **`thermo`** computes new temperature profile accounting for energy absorption and thermal diffusion.
 
-**`turbulentFlux`** computes the surface sensible and latent heat fluxes [W m-2] and calculates the mass loss/accretion due to condensation/evaporation.
-
 # Output Data 
 
 GEMB output, value summed per output timestep. For values with layers, above the surface is padded with NaN, e.g., to get the full layer of densities for time step 1: `density_column=d(end-m+1:end,1);` and the surface density at time step 1 (or d1(1) ) should be equal to `density_column(1)`.
