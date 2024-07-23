@@ -122,10 +122,12 @@ Zcum = cumsum(dz);
 dzMax2(1) = dzMin*2.0;
 for i=2:n
     if Zcum(i)<=zTop+Dtol
+        % define maximum layer thickness for top layers
         dzMax2(i)=dzMin*2.0;
         X=i;
     else
-        dzMax2(i)=max(zY2*dzMin2(i-1),dzMin*2.0);
+        % define maximum layer thickness for bottom layers
+        dzMax2(i)=max(zY2*dzMin2(i),dzMin*2.0);
     end
 end
 
@@ -135,7 +137,7 @@ end
 % % it in July 2024: 
 %
 % for j=n:-1:1
-%     if (j<X && dz(j) > dzMax2(j)+Dtol) || (dz(j) > dzMax2(j)*zY2+Dtol)
+%     if (dz(j) > dzMax2(j)+Dtol)
 % 
 %         % split in two
 %         dz =    [   dz(1:j-1) ;    dz(j)/2 ;    dz(j)/2 ;    dz(j+1:end)];
@@ -157,7 +159,7 @@ end
 % loop above: 
 
 % Find the cells that exceed tolerances: 
-f = find((1:n)'<X & ( dz > dzMax2+Dtol) | (dz > dzMax2*zY2+Dtol));
+f = (dz > dzMax2+Dtol);
 
 % Conserve quantities among the cells that will be split: 
 dz(f) = dz(f)/2; 
