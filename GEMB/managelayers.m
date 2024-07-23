@@ -31,14 +31,10 @@ function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = 
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 Dtol = 1e-11;
-Wtol = 1e-13;
 
 n=length(T);
 zY2=zY;
-i_target=1;
 dzMin2=zeros(size(dz));
-
-Delflag=-99999;
 
 X=1;
 Zcum = cumsum(dz); 
@@ -53,20 +49,24 @@ for i=2:n
     end
 end
 
+% Preallocate a logical array that will be true for any cell to be deleted: 
+delete_cell = false(n,1); 
+% is_top_layer = Zcum<=zTop;
+
 % Check to see if any cells are too small and need to be merged
 for i=1:n
 
     if (i<=X && dz(i)<dzMin-Dtol) || (i>X && dz(i)<dzMin2(i)-Dtol)
 
+        % dz has not met minimum thickness requirements, so we will delete it 
+        % and merge its contents into another cell: 
+        delete_cell(i) = true; 
+
+        % Detemine the target location for the cell contents to go: 
         if i==n
-            % If the very bottom cell (i==n) is too small, look backward until 
-            % we find a cell that won't be deleted:  
-            for j=n-1:-1:1
-                if m(j)~=Delflag
-                    i_target=j;
-                    break;
-                end
-            end
+            % If the very bottom cell (i==n) is too small, find the lowermost
+            % cell that isn't going to be deleted:  
+            i_target = find(~delete_cell,1,'last'); 
         else
             i_target = i + 1;
         end
@@ -84,31 +84,28 @@ for i=1:n
         gsp(i_target) = gsp(i);
 
         % Merge with underlying grid cell and delete old cell:
-        dz(i_target) = dz(i) + dz(i_target);            % combine cell depths
-        d(i_target)  = m_new / dz(i_target);            % combine top densities
-        W(i_target)  = W(i) + W(i_target);              % combine liquid water
-        m(i_target)  = m_new;                           % combine top masses
-
-        % set cell to -99999 for deletion
-        m(i)  = Delflag;
+        dz(i_target) = dz(i) + dz(i_target);         % combine cell depths
+        d(i_target)  = m_new / dz(i_target);         % combine top densities
+        W(i_target)  = W(i) + W(i_target);           % combine liquid water
+        m(i_target)  = m_new;                        % combine top masses
+        
     end
 end
 
-% delete combined cells
-D = (m <= Delflag+Wtol);
-m(D)      = []; 
-W(D)      = []; 
-dz(D)     = []; 
-d(D)      = []; 
-T(D)      = []; 
-a(D)      = [];
-re(D)     = []; 
-gdn(D)    = []; 
-gsp(D)    = []; 
-adiff(D)  = []; 
-EI(D)     = []; 
-EW(D)     = [];
-dzMin2(D) = []; % <- EDIT This line added by Chad Greene, July 2024.
+% Delete combined cells:
+m(delete_cell)      = []; 
+W(delete_cell)      = []; 
+dz(delete_cell)     = []; 
+d(delete_cell)      = []; 
+T(delete_cell)      = []; 
+a(delete_cell)      = [];
+re(delete_cell)     = []; 
+gdn(delete_cell)    = []; 
+gsp(delete_cell)    = []; 
+adiff(delete_cell)  = []; 
+EI(delete_cell)     = []; 
+EW(delete_cell)     = [];
+dzMin2(delete_cell) = []; 
 
 % check if any of the cell depths are too large
 n = length(T);
