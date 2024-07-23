@@ -1,12 +1,6 @@
 function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt, re, Tmean, dIce)
-
-%% THIS NEEDS TO BE DOUBLE CHECKED AS THERE SEEMS TO BE LITTLE DENSIFICATION IN THE MODEL OUTOUT [MAYBE COMPATION IS COMPENSATED FOR BY TRACES OF SNOW???]
-
-%
-% Description: 
-%   computes the densification of snow/firn using the emperical model of
-%   Herron and Langway (1980) or the semi-emperical model of Anthern et al.
-%   (2010)
+% densification computes the densification of snow/firn using the emperical model of
+% Herron and Langway (1980) or the semi-emperical model of Anthern et al. (2010).
 %
 % Inputs:
 %   denIdx = densification model to use:
@@ -19,10 +13,7 @@ function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt,
 %   C   = average accumulation rate [kg m-2 yr-1]
 %   dt  = time lapsed [s]
 %   re  = effective grain radius [mm];
-%   Ta  = mean annual temperature                                          
-%
-% Reference: 
-% Herron and Langway (1980), Anthern et al. (2010)
+%   Ta  = mean annual temperature                                         
 %
 %% FOR TESTING
 % denIdx = 2;
@@ -54,6 +45,15 @@ function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt,
 % For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
 % 
 %% References 
+% This function uses formulations from the following references: 
+% 
+% Arthern, R. J., Vaughan, D. G., Rankin, A. M., Mulvaney, R., and Thomas, E. R.: 
+% In situ measurements of Antarctic snow compaction compared with predictions of
+% models, J. Geophys. Res., 115, F03011, https://doi.org/10.1029/2009JF001306, 2010. 
+% 
+% Herron, M. and Langway, C.: Firn Densification: An Empirical Model, J. Glaciol., 
+% 25, 373–385, https://doi.org/10.3189/S0022143000015239, 1980. 
+% 
 % If you use GEMB, please cite the following: 
 % 
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 

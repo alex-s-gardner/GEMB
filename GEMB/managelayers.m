@@ -31,19 +31,10 @@ function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = 
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 Dtol = 1e-11;
-Wtol = 1e-13;
-
-mAdd = 0.0;
-addE = 0.0;
-dz_add = 0.0;
 
 n=length(T);
 zY2=zY;
-X1=1;
-X2=1;
 dzMin2=zeros(size(dz));
-
-Delflag=-99999;
 
 X=1;
 Zcum = cumsum(dz); 
@@ -58,61 +49,63 @@ for i=2:n
     end
 end
 
+% Preallocate a logical array that will be true for any cell to be deleted: 
+delete_cell = false(n,1); 
+% is_top_layer = Zcum<=zTop;
+
 % Check to see if any cells are too small and need to be merged
 for i=1:n
 
     if (i<=X && dz(i)<dzMin-Dtol) || (i>X && dz(i)<dzMin2(i)-Dtol)
+
+        % dz has not met minimum thickness requirements, so we will delete it 
+        % and merge its contents into another cell: 
+        delete_cell(i) = true; 
+
+        % Detemine the target location for the cell contents to go: 
         if i==n
-            X2=i;
-            %find closest cell to merge with
-            for j=n-1:-1:1
-                if m(j)~=Delflag
-                    X1=j;
-                    break;
-                end
-            end
+            % If the very bottom cell (i==n) is too small, find the lowermost
+            % cell that isn't going to be deleted:  
+            i_target = find(~delete_cell,1,'last'); 
         else
-            X1=i+1;
-            X2=i;
+            i_target = i + 1;
         end
 
-        % adjust variables as a linearly weighted function of mass
-        m_new = m(X2) + m(X1);
-        T(X1) = (T(X2)*m(X2) + T(X1)*m(X1)) / m_new;
-        a(X1) = (a(X2)*m(X2) + a(X1)*m(X1)) / m_new;
-        adiff(X1) = (adiff(X2)*m(X2) + adiff(X1)*m(X1)) / m_new;
+        % Move the quantities to the target location. Quantities are
+        % calculated as linearly weighted functions of mass: 
+        m_new           = m(i) + m(i_target);
+        T(i_target)     = (    T(i)*m(i) +     T(i_target)*m(i_target)) / m_new;
+        a(i_target)     = (    a(i)*m(i) +     a(i_target)*m(i_target)) / m_new;
+        adiff(i_target) = (adiff(i)*m(i) + adiff(i_target)*m(i_target)) / m_new;
 
-        %use grain properties from lower cell
-        re(X1) = re(X2);
-        gdn(X1) = gdn(X2);
-        gsp(X1) = gsp(X2);
+        % Use grain properties from lower cell:
+        re(i_target)  =  re(i);
+        gdn(i_target) = gdn(i);
+        gsp(i_target) = gsp(i);
 
-        %merge with underlying grid cell and delete old cell
-        dz(X1) = dz(X2) + dz(X1);                 % combine cell depths
-        d(X1) = m_new / dz(X1);                   % combine top densities
-        W(X1) = W(X1) + W(X2);                    % combine liquid water
-        m(X1) = m_new;                            % combine top masses
-
-        % set cell to -99999 for deletion
-        m(X2) = Delflag;
+        % Merge with underlying grid cell and delete old cell:
+        dz(i_target) = dz(i) + dz(i_target);         % combine cell depths
+        d(i_target)  = m_new / dz(i_target);         % combine top densities
+        W(i_target)  = W(i) + W(i_target);           % combine liquid water
+        m(i_target)  = m_new;                        % combine top masses
+        
     end
 end
 
-% delete combined cells
-D = (m <= Delflag+Wtol);
-m(D)      = []; 
-W(D)      = []; 
-dz(D)     = []; 
-d(D)      = []; 
-T(D)      = []; 
-a(D)      = [];
-re(D)     = []; 
-gdn(D)    = []; 
-gsp(D)    = []; 
-adiff(D)  = []; 
-EI(D)     = []; 
-EW(D)     = [];
-dzMin2(D) = []; % <- EDIT This line added by Chad Greene, July 2024.
+% Delete combined cells:
+m(delete_cell)      = []; 
+W(delete_cell)      = []; 
+dz(delete_cell)     = []; 
+d(delete_cell)      = []; 
+T(delete_cell)      = []; 
+a(delete_cell)      = [];
+re(delete_cell)     = []; 
+gdn(delete_cell)    = []; 
+gsp(delete_cell)    = []; 
+adiff(delete_cell)  = []; 
+EI(delete_cell)     = []; 
+EW(delete_cell)     = [];
+dzMin2(delete_cell) = []; 
 
 % check if any of the cell depths are too large
 n = length(T);
@@ -233,6 +226,12 @@ elseif Ztot > zMax+Dtol
     adiff(end) = []; 
     EI(end)    = []; 
     EW(end)    = [];
+
+else
+    % No mass or energy is added or removed: 
+    mAdd   = 0;
+    addE   = 0;
+    dz_add = 0;
 
 end
 

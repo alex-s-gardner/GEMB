@@ -33,14 +33,25 @@ function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
 %
 %% Example 
 % 
-% plotgemb(a,'T','numlevels',150,'zerolevel',0,'figure',1); 
-% colorbar
+% 
+% 
 % 
 %% Documentation
 % 
 % For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
 % 
 %% References 
+% This function uses formulations from the following references: 
+% 
+% Lefebre, F., Gallée, H., van Ypersele, J.-P., and Greuell, W.: Modeling of 
+% snow and ice melt at ETH Camp (West Greenland): A study of surface albedo, 
+% J. Geophys. Res., 108, 4231, https://doi.org/10.1029/2001JD001160, 2003. 
+% 
+% Greuell, W. and Konzelmann, T.: Numerical modelling of the energy balance 
+% and the englacial temperature of the Greenland Ice Sheet, Calculations for 
+% the ETH-Camp location (West Greenland, 1155 m a.s.l.), Global Planet. 
+% Change, 9, 91–114, 1994. 
+%
 % If you use GEMB, please cite the following: 
 % 
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
@@ -54,10 +65,10 @@ Dtol = 1e-11;
 m = length(d);
 swf = zeros(m,1);
 
-if ((swIdx == 0)) | ((dIce - d(1))<Dtol)  % all sw radation is absorbed in by the top grid cell
+if ((swIdx == 0)) | ((dIce - d(1))<Dtol)  % all sw radation is absorbed by the top grid cell
 
     % calculate surface shortwave radiation fluxes [W m-2]
-    if (aIdx == 1)
+    if (aIdx == 1) % albedo_method = "gardner_2009"
         swf(1) = (1.0 - as) * max(0.0,(dsw - dswdiff)) +  (1.0 - asdiff) * dswdiff;
     else
         swf(1) = (1 - as) * dsw;
@@ -65,7 +76,7 @@ if ((swIdx == 0)) | ((dIce - d(1))<Dtol)  % all sw radation is absorbed in by th
     
 else % sw radation is absorbed at depth within the glacier
     
-    if aIdx == 2    % function of effective radius (3 spectral bands)
+    if aIdx == 2    % albedo_method = "brun_1992" function of effective radius (3 spectral bands)
         
         % convert effective radius [mm] to grain size [m]
         gsz = (re * 2) / 1000;
