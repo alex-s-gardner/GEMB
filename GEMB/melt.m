@@ -306,7 +306,7 @@ end
 Fsum = sum(F);
 
 % Manage the layering to match the user defined requirements
-[d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = ...
+[d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, ~, ~, re, gdn, gsp] = ...
     managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, CI, LF, CtoK);
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
