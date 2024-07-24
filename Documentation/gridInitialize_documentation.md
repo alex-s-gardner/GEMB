@@ -48,7 +48,7 @@ The figure above shows the thickness of each grid cell `dz` as a function of ind
 ```matlab
 z_center = -cumsum(dz) + dz/2; 
 ```
-Or an easier way 
+Or if you don't want to remember the equation above, you can simply request `z_center` as an optional output of `gridInitialize`, like this: 
 
 ```matlab
 [dz, z_center] = gridInitialize_cag(z_top, dz_top, z_max, beta); 
