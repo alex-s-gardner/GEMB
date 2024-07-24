@@ -143,9 +143,9 @@ a=load('GEMBtest.mat');
 
 if ISSM_compare
 
-	md=triangle(model(),'../TEST_DATA/Square.exp',350000.);
+	md=triangle(model(),'../../TEST_DATA/Square.exp',350000.);
 	md=setmask(md,'all','');
-	md=parameterize(md,'../TEST_DATA/SquareShelf.par');
+	md=parameterize(md,'../../TEST_DATA/SquareShelf.par');
 	md=setflowequation(md,'SSA','all');
 	md.materials.rho_ice=910;
 	md.cluster=generic('name',oshostname(),'np',3);
@@ -179,3 +179,6 @@ if ISSM_compare
 	max_meltbias_with_issm=max(abs([M(1,:)'*1000*.910-a.M']))
 
 end
+
+b=load('GEMBtest_output.mat');
+max_meltbias_with_gemb_matlab=max(abs([b.M'-a.M']))
