@@ -35,19 +35,23 @@ Dtol = 1e-11;
 n=length(T);
 zY2=zY;
 dzMin2=zeros(size(dz));
+dzMax2=zeros(size(dz));
 
 X=1;
 Zcum = cumsum(dz); 
+
 % check if depth is too small
-dzMin2(1)=dzMin;
-for i=2:n
-    if (Zcum(i)<=zTop+Dtol)
-        dzMin2(i)=dzMin;
-        X=i;
-    else
-        dzMin2(i)=zY2*dzMin2(i-1);
-    end
-end
+ztop=(Zcum<=zTop+Dtol);
+% define minimum layer thickness for top layers
+dzMin2(find(ztop))=dzMin;
+% define maximum layer thickness for top layers
+dzMax2(find(ztop))=dzMin*2;
+
+zYcum = cumprod(zY2*ones(size(find(~ztop))));
+% define minimum layer thickness for bottom layers
+dzMin2(find(~ztop))=dzMin*zYcum;
+% define maximum layer thickness for bottom layers
+dzMax2(find(~ztop))=max(dzMin2(find(~ztop))*zY2,dzMin*2.0);
 
 % Preallocate a logical array that will be true for any cell to be deleted: 
 delete_cell = false(n,1); 
@@ -106,23 +110,10 @@ adiff(delete_cell)  = [];
 EI(delete_cell)     = []; 
 EW(delete_cell)     = [];
 dzMin2(delete_cell) = []; 
+dzMax2(delete_cell) = [];
 
-% check if any of the cell depths are too large
-n = length(T);
-dzMax2 = zeros(size(dz));
-X = 1;
-Zcum = cumsum(dz); 
-dzMax2(1) = dzMin*2.0;
-for i=2:n
-    if Zcum(i)<=zTop+Dtol
-        % define maximum layer thickness for top layers
-        dzMax2(i)=dzMin*2.0;
-        X=i;
-    else
-        % define maximum layer thickness for bottom layers
-        dzMax2(i)=max(zY2*dzMin2(i),dzMin*2.0);
-    end
-end
+% Calculate new length of cells
+n=length(T);
 
 %% Split cells
 % 

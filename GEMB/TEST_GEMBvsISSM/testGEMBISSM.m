@@ -180,5 +180,17 @@ if ISSM_compare
 
 end
 
-b=load('GEMBtest_output.mat');
+if isrestart
+	if issza
+		b=load('GEMBtest_output_restart_sza.mat');
+	else
+		b=load('GEMBtest_output_restart.mat');
+	end
+else
+	if issza
+		b=load('GEMBtest_output_sza.mat');
+	else
+		b=load('GEMBtest_output.mat');
+	end
+end
 max_meltbias_with_gemb_matlab=max(abs([b.M'-a.M']))
