@@ -178,6 +178,8 @@ if ISSM_compare
 	%[(1:365)' M(1,:)'*1000*.910 a.M']
 	max_meltbias_with_issm=max(abs([M(1,:)'*1000*.910-a.M']))
 
+	final_layerbias_with_issm=length(md.results.TransientSolution(end).SmbT(1,:)) - a.m(end)
+
 end
 
 if isrestart
@@ -194,3 +196,4 @@ else
 	end
 end
 max_meltbias_with_gemb_matlab=max(abs([b.M'-a.M']))
+final_layerbias_with_gemb_matlab=b.m(end)-a.m(end)
