@@ -12,9 +12,9 @@ The simplest example of how to use GEMB can be found in `MASTER_RUN.m`, which lo
 
 **`combineStrucData_GEMB`** combines GEMB input data into structure for passing to parfor loop. 
 
-**`densification`** computes the densification of snow/firn using the emperical model of [*Herron and Langway* (1980)](doi.org/10.3189/S0022143000015239) or the semi-emperical model of [*Anthern et al*. (2010)](https://doi.org/10.1029/2009JF001306).
+**`densification`** computes the densification of snow/firn using the emperical model of [*Herron and Langway* (1980)](https://doi.org/10.3189/S0022143000015239) or the semi-emperical model of [*Anthern et al*. (2010)](https://doi.org/10.1029/2009JF001306).
 
-**`gardnerAlb`** models a broadband albedo parameterization described in [*Gardner & Sharp*, 2010](doi.org/10.1029/2009jf001444). 
+**`gardnerAlb`** models a broadband albedo parameterization described in [*Gardner & Sharp*, 2010](https://doi.org/10.1029/2009jf001444). 
 
 **`grainGrowth`** models the effective snow grain size.
 
