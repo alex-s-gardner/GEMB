@@ -80,7 +80,6 @@ S.ThermoDeltaTScaling = 1/11;
 S.Vmean=10.0;
 
 %optional inputs:
-S.aValue = S.aSnow;  % Albedo forcing at every element.  Used only if aIdx == 0, or density exceeds adThresh
 S.teValue = 1.0;     % Outward longwave radiation thermal emissivity forcing at every element (default in code is 1).
                      % Used only if eIdx==0, or effective grain radius exceeds teThresh
 
@@ -113,13 +112,14 @@ switch S.aIdx
         % METHOD 1 & 2
         S.aSnow = 0.85;         % new snow albedo (0.64 - 0.89)
         S.aIce = 0.48;          % range 0.27-0.58 for old snow
+	S.aValue = S.aSnow;  % Albedo forcing at every element.  Used only if aIdx == 0, or density exceeds adThresh
 
-		  %Defaut values, but these can also be set as time series forcing
-		  S.dswdiffrf=0.0;        % downward diffusive shortwave radiation flux [W/m^2]
-		  S.szaValue=0.0;         % Solar Zenith Angle [degree]
-		  S.cotValue=0.0;         % Cloud Optical Thickness
-		  S.ccsnowValue=0.0;      % concentration of light absorbing carbon for snow [ppm1]
-		  S.cciceValue=0.0;       % concentration of light absorbing carbon for ice [ppm1]
+	%Defaut values, but these can also be set as time series forcing
+	S.dswdiffrf=0.0;        % downward diffusive shortwave radiation flux [W/m^2]
+	S.szaValue=0.0;         % Solar Zenith Angle [degree]
+	S.cotValue=0.0;         % Cloud Optical Thickness
+	S.ccsnowValue=0.0;      % concentration of light absorbing carbon for snow [ppm1]
+	S.cciceValue=0.0;       % concentration of light absorbing carbon for ice [ppm1]
         
     case 3
         % RADIATION CORRECTION FACTORS
@@ -148,13 +148,13 @@ end
 if TEST
     I = load(fullfile(S.inputDIR,'TEST_INPUT_1'));
     S0 = combineStrucData_GEMB(S,I.LP,1);
-    GEMB(I.P0,I.Ta0,I.V0,I.dateN,I.dlw0,I.dsw0,I.eAir0,I.pAir0, S0, isrestart)
+    GEMB(I.P0,I.Ta0,I.V0,I.dateN,I.dlw0,I.dsw0,I.eAir0,I.pAir0, S0, S.isrestart)
 else
     H = dir(fullfile(S.inputDIR,'input*'));
     parfor  runIdx = 1:length(H)
         I = load(fullfile(S.inputDIR,['input_' sprintf('%06d', runIdx)]));
         S0 = combineStrucData_GEMB(S,I.LP,runIdx);
-        GEMB(I.P0,I.Ta0,I.V0,I.dateN,I.dlw0,I.dsw0,I.eAir0,I.pAir0, S0, isrestart)
+        GEMB(I.P0,I.Ta0,I.V0,I.dateN,I.dlw0,I.dsw0,I.eAir0,I.pAir0, S0, S.isrestart)
     end
     
     delete(gcp)
