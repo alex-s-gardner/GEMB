@@ -11,6 +11,7 @@ if ~isequaln(a,b)
 end
 
 cd ../
+warning('off','all')
 MASTER_RUN
 bechmark_out = load('../TEST_DATA/S2A1D2_000001_test.mat');
 master_test_out = load('../TEST_DATA/S2A1D2_000001.mat');
