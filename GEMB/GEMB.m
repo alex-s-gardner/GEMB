@@ -267,6 +267,9 @@ for yIdx = 1:S.spinUp + 1
                 [a, adiff] = albedo(S.aIdx, re, dz, d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, W, P, EC, ...
                     Msurf, ccsnowValue, cciceValue, szaValue, cotValue, [], [], [], dt, dIce);
 
+                % determine distribution of absorbed sw radation with depth
+                swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
+                
             case 3   
                 if numel(S.cldFrac)>1
                     cldFrac = S.cldFrac(dIdx);
@@ -277,15 +280,18 @@ for yIdx = 1:S.spinUp + 1
                 % calculate snow, firn and ice albedo
                 [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh,...
                     a, adiff, [], [], [], [], [], [], [], [], [], [], [], [], [], dIce);
+
+                % determine distribution of absorbed sw radation with depth
+                swf = shortwave(S.swIdx, S.aIdx, dsw, [], a(1), adiff(1), d, dz, re, dIce);
                 
             case 4
                 % calculate snow, firn and ice albedo
                 [a, adiff] = albedo(S.aIdx, [], [], d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, ...
                     W, P, EC, [], [], [], [], [], S.t0wet, S.t0dry, S.K, dt, dIce);
+
+                % determine distribution of absorbed sw radation with depth
+                swf = shortwave(S.swIdx, S.aIdx, dsw, [], a(1), adiff(1), d, dz, re, dIce);
         end
-        
-        % determine distribution of absorbed sw radation with depth
-        swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
 
         % calculate net shortwave [W m-2]
         netSW = sum(swf);
