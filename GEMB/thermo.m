@@ -103,8 +103,6 @@ V(V < 0.01-Dtol) = 0.01;
 % Bulk-transfer coefficient for turbulent fluxes
 An =  0.4^2; % Bulk-transfer coefficient
 C = An*V;  % shf & lhf common coefficient
-An_den_T = (log(Tz/zT)*log(Vz/z0));
-An_den_Q = (log(Tz/zQ)*log(Vz/z0));
 
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
 % calculate new K profile [W m-1 K-1]
@@ -189,9 +187,6 @@ if m>0
     Nd = Ad ./ Ap;
     Np = 1 - Nu - Nd;
 else
-    Au = 0; 
-    Ad = 0; 
-    Ap = 0; 
     Nu = 0; 
     Nd = 0; 
     Np = 0;
@@ -255,24 +250,18 @@ for i = 1:dt:dt0
     
     % calculate the Bulk Richardson Number (Ri)
     Ri = ((100000./pAir).^0.286).*(2.0*9.81*(Ta - Ts)) ./ (Tz.*(Ta + Ts).*(((V/Vz).^2.0)));
-
     
     a1     = 1.0;
     b1     = 2.0/3.0;
     c1     = 5.0;
     d1     = 0.35;
-    PhiMz  = 0.0;
-    PhiHz  = 0.0;
     PhiMz0 = 0.0;
     PhiHzT = 0.0;
     PhiHzQ = 0.0;
-    zL     = 0.0;
-    zLT    = 0.0;
-    zLM    = 0.0;
 
     if (Ri > 0.0+Ttol)
         % if stable
-        if(Ri < 0.2-Ttol)
+        if (Ri < 0.2-Ttol)
             zL = Ri./(1.0-5.0*Ri);
         else
             zL = Ri;
@@ -293,9 +282,6 @@ for i = 1:dt:dt0
     else 
     
         zL  = Ri/1.5; %max(Ri, -0.5+Ttol)/1.5; % Hogstrom (1996)
-        %zL = max(zL, -2.0); % Sjoblom, 2014
-        zLM = min(zL./Vz.*z0,-1e-3);
-        zLT = min(zL./Tz.*zT,-1e-3);
             
         %Sjoblom, 2014
         xm=(1.0-19.0*zL).^-0.25;
@@ -306,8 +292,6 @@ for i = 1:dt:dt0
 
     end
     
-    PhiM   = PhiMz;
-    PhiH   = PhiHz;
     coefM  = log(Vz./z0) - PhiMz + PhiMz0; % Ding et al., 2019
     coefHT = log(Tz./zT) - PhiHz + PhiHzT; % Sjoblom, 2014, after Foken 2008
     coefHQ = log(Tz./zQ) - PhiHz + PhiHzQ; % Sjoblom, 2014, after Foken 2008
@@ -374,7 +358,7 @@ for i = 1:dt:dt0
     % new grid point temperature
     
     % SW penetrates surface
-    T = T + dT_sw;
+    T    = T    + dT_sw;
     T(1) = T(1) + dT_dlw + dT_ulw + dT_turb;
     
     % temperature diffusion
@@ -392,7 +376,7 @@ for i = 1:dt:dt0
     lhf_cum = lhf_cum+lhf*dt/dt0;
     shf_cum = shf_cum+shf*dt/dt0;
     
-     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
+%% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
 %     % energy flux across lower boundary (energy supplied by underling ice)
 %     base_flux = Ad(end-1)*(T_init(end)-T_init(end-1)) * dt;
 %     
