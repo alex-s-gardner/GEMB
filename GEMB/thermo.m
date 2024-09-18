@@ -256,160 +256,87 @@ for i = 1:dt:dt0
     % calculate the Bulk Richardson Number (Ri)
     Ri = ((100000./pAir).^0.286).*(2.0*9.81*(Ta - Ts)) ./ (Tz.*(Ta + Ts).*(((V/Vz).^2.0)));
 
-    % calculate Monin-Obukhov stability factors 'coefM' and 'coefH'
-    if (false)
-        % do not allow Ri to exceed 0.16
-        Ri = min(Ri, 0.16); %Ohmura, 1982
+    
+    a1     = 1.0;
+    b1     = 2.0/3.0;
+    c1     = 5.0;
+    d1     = 0.35;
+    PhiMz  = 0.0;
+    PhiHz  = 0.0;
+    PhiMz0 = 0.0;
+    PhiHzT = 0.0;
+    PhiHzQ = 0.0;
+    zL     = 0.0;
+    zLT    = 0.0;
+    zLM    = 0.0;
 
-        % calculate momentum 'coefM' stability factor
-        if (Ri > 0.0+Ttol)
-            % if stable
-            coefM = 1.0/(1.0-5.2*Ri);
-        else 
-            coefM = (1.0-18.0*Ri).^-0.25;
+    if (Ri > 0.0+Ttol)
+        % if stable
+        if(Ri < 0.2-Ttol)
+            zL = Ri./(1.0-5.0*Ri);
+        else
+            zL = Ri;
         end
+        
+        %zL = min(zL, 0.5); %Sjoblom, 2014
+        zLM = max(zL./Vz.*z0,1e-3);
+        zLT = max(zL./Tz.*zT,1e-3);
+        
+        % Ding et al. 2020, from Beljaars and Holtslag (1991)
+        PhiMz  = -1.*(a1*zL + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1);
+        PhiHz  = -1.*((1.+2.*a1*zL/3.).^1.5 + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1 - 1.0);
+        PhiMz0 = -1.*(a1*zLM + b1*(zLM-c1/d1)*exp(-1.*d1*zLM) + b1*c1/d1);
+        PhiHzT = -1.*((1.+2.*a1*zLT/3.).^1.5 + b1*(zLT-c1/d1)*exp(-1.*d1*zLT) + b1*c1/d1 - 1.0);
+        
+        PhiHzQ=PhiHzT;
+    
+    else 
+    
+        zL  = Ri/1.5; %max(Ri, -0.5+Ttol)/1.5; % Hogstrom (1996)
+        %zL = max(zL, -2.0); % Sjoblom, 2014
+        zLM = min(zL./Vz.*z0,-1e-3);
+        zLT = min(zL./Tz.*zT,-1e-3);
+            
+        %Sjoblom, 2014
+        xm=(1.0-19.0*zL).^-0.25;
+        PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.*atan(xm) + pi/2.;
+        
+        xh=0.95*(1.0-11.6*zL).^(-0.5);
+        PhiHz=2.0*log((1.0+xh.^2)/2.0);
 
-        % calculate heat/wind 'coef_H' stability factor
-        if (Ri <= -0.03+Ttol) 
-            coefH = coefM/1.3;
-         else 
-             coefH = coefM; 
-        end
+    end
+    
+    PhiM   = PhiMz;
+    PhiH   = PhiHz;
+    coefM  = log(Vz./z0) - PhiMz + PhiMz0; % Ding et al., 2019
+    coefHT = log(Tz./zT) - PhiHz + PhiHzT; % Sjoblom, 2014, after Foken 2008
+    coefHQ = log(Tz./zQ) - PhiHz + PhiHzQ; % Sjoblom, 2014, after Foken 2008
 
-         coefHT = coefH.*An_den_T;
-         coefHQ = coefH.*An_den_Q;
-
-    elseif (false)
-
-         % do not allow Ri to exceed 0.19
-         Ri = min(Ri, 0.19); %Ohmura, 1982
-
-         % calculate momentum 'coefM' stability factor
-         if (Ri > 0.0+Ttol)
-             % if stable
-             %coefM = pow(1.0-5.0*Ri,2.0); //Fitzpatrick et al., 2017, from Brock et al., 2010
-             coefM = 1.0+5.3*min((Ri./(1.0-5.0*Ri)),0.5);
-             coefH = 1.0+8.0*min((Ri./(1.0-5.0*Ri)),0.5);
-         else 
-             %coefM =pow(1.0-16.0*max(Ri,-1.0),0.75); //Fitzpatrick et al., 2017, from Brock et al., 2010
-             coefM = (1.0-19.0*max(Ri/1.5,-2.0)).^-0.25;
-             coefH = 0.95*(1.0-11.6*max(Ri/1.5,-2.0)).^-0.5;
-         end
-
-         coefHT = coefH.*An_den_T;
-         coefHQ = coefH.*An_den_Q;
-
-     elseif(false)
-         % Greuell and Konzelman, 1994
-         % calculate momentum 'coefM' stability factor
-
-         if (Ri > 0.0+Ttol)
-             % if stable
-             coefM = 1.0+15.0*Ri.*(1.0+Ri).^(1./2.);
-             coefH = 1.0;
-         else 
-             coefM = (1.0-15.0*Ri./(1.0+75.0.*((0.4/log(Tz./zT)).^2).*((Tz./zT.*abs(Ri)).^(1./2.)))).^(-1);
-             coefH = 1.0;
-         end
-
-         coefHT = coefH.*An_den_T;
-         coefHQ = coefH.*An_den_Q;
-
-     else 
-
-         a1     = 1.0;
-         b1     = 2.0/3.0;
-         c1     = 5.0;
-         d1     = 0.35;
-         PhiMz  = 0.0;
-         PhiHz  = 0.0;
-         PhiMz0 = 0.0;
-         PhiHzT = 0.0;
-         PhiHzQ = 0.0;
-         zL     = 0.0;
-         zLT    = 0.0;
-         zLM    = 0.0;
-
-        if (Ri > 0.0+Ttol)
-             % if stable
-
-            if(Ri < 0.2-Ttol)
-                zL = Ri./(1.0-5.0*Ri);
-            else
-                zL = Ri;
-            end
-
-            %zL = min(zL, 0.5); %Sjoblom, 2014
-            zLM = max(zL./Vz.*z0,1e-3);
-            zLT = max(zL./Tz.*zT,1e-3);
-
-            % Ding et al. 2020, from Beljaars and Holtslag (1991)
-            PhiMz  = -1.*(a1*zL + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1);
-            PhiHz  = -1.*((1.+2.*a1*zL/3.).^1.5 + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1 - 1.0);
-            PhiMz0 = -1.*(a1*zLM + b1*(zLM-c1/d1)*exp(-1.*d1*zLM) + b1*c1/d1);
-            PhiHzT = -1.*((1.+2.*a1*zLT/3.).^1.5 + b1*(zLT-c1/d1)*exp(-1.*d1*zLT) + b1*c1/d1 - 1.0);
-
-            PhiHzQ=PhiHzT;
-
-        else 
-
-            zL  = Ri/1.5; %max(Ri, -0.5+Ttol)/1.5; % Hogstrom (1996)
-            %zL = max(zL, -2.0); % Sjoblom, 2014
-            zLM = min(zL./Vz.*z0,-1e-3);
-            zLT = min(zL./Tz.*zT,-1e-3);
-
-            if (true) %Sjoblom, 2014
-                xm=(1.0-19.0*zL).^-0.25;
-                PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.*atan(xm) + pi/2.;
-
-                xh=0.95*(1.0-11.6*zL).^(-0.5);
-                PhiHz=2.0*log((1.0+xh.^2)/2.0);
-             else % Ding et al., 2020
-                xm=(1.0-16*zL).^0.25;
-                xmM=(1.0-16*zLM).^0.25;
-                xmT=(1.0-16*zLT).^0.25;
-                PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.0*atan(xm) + pi/2.0;
-                PhiMz0=2.0*log((1.+xmM)/2.0) + log((1.+xmM.^2)/2.0) - 2.0*atan(xmM) + pi/2.0;
-
-                PhiHz=2.0*log((1.+xm.^2)/2.0);
-                PhiHzT=2.0*log((1.+xmT.^2)/2.0);
-
-                PhiHzQ=PhiHzT;
-            end
-        end
-
-        PhiM   = PhiMz;
-        PhiH   = PhiHz;
-        coefM  = log(Vz./z0) - PhiMz + PhiMz0; % Ding et al., 2019
-        coefHT = log(Tz./zT) - PhiHz + PhiHzT; % Sjoblom, 2014, after Foken 2008
-        coefHQ = log(Tz./zQ) - PhiHz + PhiHzQ; % Sjoblom, 2014, after Foken 2008
-     end
-
-     %% Sensible Heat
-     % calculate the sensible heat flux [W m-2](Patterson, 1998)
-     shf = dAir .* C .* CA .* (Ta - Ts) .* (100000./pAir).^0.286;
-
-     % adjust using Monin-Obukhov stability theory
-     shf = shf./(coefM.*coefHT);
-
-     %% Latent Heat
-     %   determine if snow pack is melting & calcualte surface vapour pressure over ice or liquid water
-     if (Ts >= CtoK-Ttol)
-         L = LV; %for liquid water at 273.15 k to vapor
-
-         %for liquid surface (assume liquid on surface when Ts == 0 deg C)
-         % Wright (1997), US Meteorological Handbook from Murphy and Koop, 2005 Appendix A
-         %eS = 611.21 * exp(17.502 * (Ts - CtoK) / (240.97 + Ts - CtoK));
-         % Murray 1967, https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
-         eS = 610.78 * exp(17.2693882 .* (Ts - CtoK - 0.01) ./ (Ts - 35.86));
-     else
-         L = LS; % latent heat of sublimation
-
-         % for an ice surface Murphy and Koop, 2005 [Equation 7]
-         %eS = exp(9.550426 - 5723.265/Ts + 3.53068 * log(Ts) - 0.00728332 * Ts);
-         % for an ice surface Ding et al., 2019 after Bolton, 1980
-         eS = 610.78 * exp(21.8745584 .* (Ts - CtoK - 0.01) ./ (Ts - 7.66));
-     end
+    %% Sensible Heat
+    % calculate the sensible heat flux [W m-2](Patterson, 1998)
+    shf = dAir .* C .* CA .* (Ta - Ts) .* (100000./pAir).^0.286;
+    
+    % adjust using Monin-Obukhov stability theory
+    shf = shf./(coefM.*coefHT);
+    
+    %% Latent Heat
+    %   determine if snow pack is melting & calcualte surface vapour pressure over ice or liquid water
+    if (Ts >= CtoK-Ttol)
+        L = LV; %for liquid water at 273.15 k to vapor
+        
+        %for liquid surface (assume liquid on surface when Ts == 0 deg C)
+        % Wright (1997), US Meteorological Handbook from Murphy and Koop, 2005 Appendix A
+        %eS = 611.21 * exp(17.502 * (Ts - CtoK) / (240.97 + Ts - CtoK));
+        % Murray 1967, https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
+        eS = 610.78 * exp(17.2693882 .* (Ts - CtoK - 0.01) ./ (Ts - 35.86));
+    else
+        L = LS; % latent heat of sublimation
+        
+        % for an ice surface Murphy and Koop, 2005 [Equation 7]
+        %eS = exp(9.550426 - 5723.265/Ts + 3.53068 * log(Ts) - 0.00728332 * Ts);
+        % for an ice surface Ding et al., 2019 after Bolton, 1980
+        eS = 610.78 * exp(21.8745584 .* (Ts - CtoK - 0.01) ./ (Ts - 7.66));
+    end
 
     %Latent heat flux [W m-2]
     lhf = C .* L .* (eAir - eS) / (461.9*(Ta+Ts)/2.0);
