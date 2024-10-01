@@ -1,5 +1,24 @@
 cd GEMB
 warning('off','all')
+
+%% thermo test 
+
+load('../TEST_DATA/thermo_test_input.mat')
+
+foo_out = load('../TEST_DATA/thermo_test_output.mat'); 
+
+% Call thermo.m 
+[shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta, V, eAir, pAir, tcIdx, eIdx, ...
+        teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup);
+
+% Check all the outputs: 
+assert(isequal(shf_cum,foo_out.shf_cum),'shf_cum might be wrong.')
+assert(isequal(lhf_cum,foo_out.lhf_cum),'lhf_cum might be wrong.')
+assert(isequal(T,foo_out.T),'T might be wrong.')
+assert(isequal(EC,foo_out.EC),'EC might be wrong.')
+assert(isequal(ulwrf,foo_out.ulwrf),'ulwrf might be wrong.')
+
+%%
 MASTER_RUN
 bechmark_out = load('../TEST_DATA/S2A1D2_000001_test.mat');
 master_test_out = load('../TEST_DATA/S2A1D2_000001.mat');
