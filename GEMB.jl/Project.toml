@@ -1,0 +1,25 @@
+name = "GEMB"
+uuid = "15db1682-5379-4ea6-a152-1a9c6464e1e5"
+authors = ["Anshul Singhvi <anshulsinghvi@gmail.com> and contributors"]
+version = "0.1.0"
+
+[deps]
+AllocCheck = "9b6a8646-10ed-4001-bbdc-1d2f46dfbb1a"
+Bumper = "8ce10254-0962-460f-a3d8-1f77fea1446e"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+
+[compat]
+AllocCheck = "0.2.0"
+Bumper = "0.7.0"
+LinearAlgebra = "1.11.0"
+StaticArrays = "1.9.8"
+Unitful = "1.21.0"
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
