@@ -80,27 +80,27 @@ end
 
 # Now, process the tutorials
 tutorials_path = joinpath(@__DIR__, "src", "tutorials")
-Literate.markdown(
-    joinpath(tutorials_path, "solar_dynamics_observatory.jl"), tutorials_path; 
-    flavor = Literate.DocumenterFlavor(), 
-)
-Literate.markdown(
-    joinpath(tutorials_path, "its_live.jl"), tutorials_path; 
-    flavor = Literate.DocumenterFlavor(), 
-)
+# Literate.markdown(
+#     joinpath(tutorials_path, "solar_dynamics_observatory.jl"), tutorials_path; 
+#     flavor = Literate.DocumenterFlavor(), 
+# )
+# Literate.markdown(
+#     joinpath(tutorials_path, "its_live.jl"), tutorials_path; 
+#     flavor = Literate.DocumenterFlavor(), 
+# )
 
 makedocs(;
     modules=[GEMB],
     authors="Anshul Singhvi <anshulsinghvi@gmail.com> and contributors",
     sitename="GEMB.jl",
-    format=MarkdownVitepress(repo = "github.com/alex-s-gardner/GEMB.jl"),
+    format=MarkdownVitepress(repo = "github.com/alex-s-gardner/GEMB"),
     pages=[
         "Home" => "index.md",
-        "What is GEMB?" => "what_the_heck.md",
-        "Tutorials" => [
-            "tutorials/solar_dynamics_observatory.md",
-            "tutorials/its_live.md",
-        ],
+        # "What is GEMB?" => "what_the_heck.md",
+        # "Tutorials" => [
+        #     "tutorials/solar_dynamics_observatory.md",
+        #     "tutorials/its_live.md",
+        # ],
         "API" => "api.md",
         "Source code" => literate_pages,
     ],
@@ -108,7 +108,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/alex-s-gardner/GEMB.jl",
+    repo="github.com/alex-s-gardner/GEMB",
     devbranch="main",
     push_preview=true,
 )
