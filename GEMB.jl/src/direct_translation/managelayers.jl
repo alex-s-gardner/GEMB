@@ -71,7 +71,7 @@ function managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, g
 
     # Track cells to delete
     delete_cell = falses(n)
-    
+
     # Check for cells that are too small
     for i in 1:n
         if dz[i] < (dzMin2[i] - Dtol)

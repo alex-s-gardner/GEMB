@@ -83,8 +83,8 @@ function melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, g
     EI = m .* T * CI               # initial energy of snow/ice
     EW = W .* (LF .+ CtoK * CI)    # initial energy of water
 
-    mSum0 = sum(W) + sum(m)        # total mass [kg]
-    sumE0 = sum(EI) + sum(EW)      # total energy [J]
+    mSum0 = sum(W) .+ sum(m)        # total mass [kg]
+    sumE0 = sum(EI) .+ sum(EW)      # total energy [J]
 
     # Initialize melt and runoff scalars
     R = 0.0        # runoff [kg]
@@ -128,7 +128,8 @@ function melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, g
 
     # Squeeze water from snow pack
     Wi = (dIce .- d) .* Swi .* (m ./ d)    # irreducible water content [kg]
-    exsW = max.(0, W .- Wi)                # water "squeezed" from snow [kg]
+
+    exsW = max.(0, (W .- Wi))                # water "squeezed" from snow [kg]
 
     # MELT, PERCOLATION AND REFREEZE
     F = zeros(n)
@@ -186,7 +187,7 @@ function melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, g
         flxDn = [R; 0]
 
         # Determine deepest grid cell where melt/pore water is generated
-        X_idx = findlast(@. M > 0.0 + Wtol | exsW > 0.0 + Wtol)
+        X_idx = findlast(@. (M > 0.0 + Wtol) | (exsW > 0.0 + Wtol))
         X = isnothing(X_idx) ? 1 : X_idx
 
         Xi = 1
