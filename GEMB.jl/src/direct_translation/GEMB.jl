@@ -118,9 +118,40 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
     end
     O["ps"] = copy(Z)
 
+    R = 0.0
+
     # Initialize cumulative output values
     OV_varNames = ["R", "M", "F", "P", "EC", "Ra", "mAdd", "netSW", "netLW", "shf",
                    "lhf", "a1", "re1", "ulw", "d1", "comp1", "comp2", "m", "netQ", "FAC"]
+
+    for var in OV_varNames
+        if !haskey(O, var)
+            O[var] = zero(Z)
+        end
+    end
+
+    # Initialize variables that will be accessed throughout function
+    R = 0.0
+    M = 0.0 
+    F = 0.0
+    P = 0.0
+    EC = 0.0
+    Ra = 0.0
+    mAdd = 0.0
+    netSW = 0.0
+    netLW = 0.0
+    shf = 0.0
+    lhf = 0.0
+    a1 = 0.0
+    re1 = 0.0
+    ulw = 0.0
+    d1 = 0.0
+    comp1 = 0.0
+    comp2 = 0.0
+    m = 0.0
+    netQ = 0.0
+    FAC = 0.0
+
     OV = Dict{String,Any}()
     for var in OV_varNames
         OV[var] = 0.0
@@ -128,7 +159,7 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
     OV["count"] = 0
 
     # Start year loop for model spin up
-    for yIdx in 1:(S.spinUp + 1)
+    @showprogress for yIdx in 1:(S.spinUp + 1)
         # Determine initial mass [kg]:
         initMass = sum(dz .* d) + sum(W)
 
@@ -270,9 +301,26 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
                 re1 = re[1]
                 netQ = netSW + netLW + shf + lhf
 
-                for v in OV_varNames
-                    OV[v] += eval(Symbol(v))
-                end
+                OV["R"] += R
+                OV["M"] += M 
+                OV["F"] += F
+                OV["P"] += P
+                OV["EC"] += EC
+                OV["Ra"] += Ra
+                OV["mAdd"] += mAdd
+                OV["netSW"] += netSW
+                OV["netLW"] += netLW
+                OV["shf"] += shf
+                OV["lhf"] += lhf
+                OV["a1"] += a1
+                OV["re1"] += re1
+                OV["ulw"] += ulw
+                OV["d1"] += d1
+                OV["comp1"] += comp1
+                OV["comp2"] += comp2
+                OV["m"] += m
+                OV["netQ"] += netQ
+                OV["FAC"] += FAC
                 OV["count"] += 1
 
                 if outIdx[dIdx]
@@ -289,14 +337,14 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
 
                     # Instantaneous level data
                     o = length(d) - 1
-                    O["re"][end-o:end,r] = re
-                    O["d"][end-o:end,r] = d
-                    O["T"][end-o:end,r] = T
-                    O["W"][end-o:end,r] = W
-                    O["dz"][end-o:end,r] = dz
-                    O["gdn"][end-o:end,r] = gdn
-                    O["gsp"][end-o:end,r] = gsp
-                    O["ps"][end-o:end,r] = sum(dz) - sumMass/910
+                    O["re"][end-o:end,r] .= re
+                    O["d"][end-o:end,r] .= d
+                    O["T"][end-o:end,r] .= T
+                    O["W"][end-o:end,r] .= W
+                    O["dz"][end-o:end,r] .= dz
+                    O["gdn"][end-o:end,r] .= gdn
+                    O["gsp"][end-o:end,r] .= gsp
+                    O["ps"][end-o:end,r] .= sum(dz) - sumMass/910
 
                     O["m"][r] = o + 1
 
