@@ -444,13 +444,13 @@ for i in 1:dt:dt0
     T[1] = T[1] + dT_dlw + dT_ulw + dT_turb
     
     # temperature diffusion
-    T0[2:m+1] = T
+    T0[2:m+1] .= T
     T0[1] = Ta
     T0[m+2] = T[m]
-    Tu = T0[1:m]
-    Td = T0[3:m+2]
+    Tu = @view T0[1:m]
+    Td = @view T0[3:m+2]
     
-    T = (Np .* T) + (Nu .* Tu) + (Nd .* Td)
+    @. T = (Np * T) + (Nu * Tu) + (Nd * Td)
 
     # calculate cumulative evaporation (+)/condensation(-)
     EC = EC + (EC_day/86400)*dt

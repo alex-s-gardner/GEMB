@@ -114,8 +114,8 @@ function grainGrowth(T, dz, d, W, re, gdn, gsp, dt, aIdx)
     if sum(G) != 0
         # disp ('DENDRITIC DRY SNOW METAMORPHISM')
         # index for dentricity > 0 and T gradients < 5 degC m-1 and >= 5 degC m-1
-        H = abs.(dT) .<= 5+Ttol .& G .& W .<= 0+Wtol # asg not wet accounted for on 19/08/29
-        I = abs.(dT) .> 5+Ttol .& G .& W .<= 0+Wtol
+        H = (abs.(dT) .<= 5+Ttol) .& G .& (W .<= 0+Wtol) # asg not wet accounted for on 19/08/29
+        I = (abs.(dT) .> 5+Ttol) .& G .& (W .<= 0+Wtol)
 
         # determine coefficients
         A = -2E8 * exp.(-6E3 ./ T[H]) * dt

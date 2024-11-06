@@ -291,7 +291,7 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
 
             # Check bottom grid cell T is unchanged
             if abs(T[end] - T_bottom) > 1e-8
-                @warn "T(end)≠T_bottom"
+                @debug "T(end)≠T_bottom"
             end
 
             if yIdx == S.spinUp + 1
@@ -337,14 +337,15 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
 
                     # Instantaneous level data
                     o = length(d) - 1
-                    O["re"][end-o:end,r] .= re
-                    O["d"][end-o:end,r] .= d
-                    O["T"][end-o:end,r] .= T
-                    O["W"][end-o:end,r] .= W
-                    O["dz"][end-o:end,r] .= dz
-                    O["gdn"][end-o:end,r] .= gdn
-                    O["gsp"][end-o:end,r] .= gsp
-                    O["ps"][end-o:end,r] .= sum(dz) - sumMass/910
+                    @show o size(O["re"])
+                    O["re"][(end-o):end,r] .= re
+                    O["d"][(end-o):end,r] .= d
+                    O["T"][(end-o):end,r] .= T
+                    O["W"][(end-o):end,r] .= W
+                    O["dz"][(end-o):end,r] .= dz
+                    O["gdn"][(end-o):end,r] .= gdn
+                    O["gsp"][(end-o):end,r] .= gsp
+                    O["ps"][(end-o):end,r] .= sum(dz) - sumMass/910
 
                     O["m"][r] = o + 1
 
@@ -366,72 +367,79 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
     return O, S
 end
 
+function _populate_defaults!(S::Dict{Symbol,Any})
+
+    # Model settings
+    get!(S, :spinUp, 2)
+    get!(S, :aIdx, 1)
+    get!(S, :swIdx, 1)
+    get!(S, :denIdx, 2)
+    get!(S, :dsnowIdx, 1)
+    get!(S, :eIdx, 1)
+    get!(S, :tcIdx, 1)
+    get!(S, :runID, "test_run")
+    
+    # Grid parameters
+    get!(S, :zTop, 10.0)
+    get!(S, :dzTop, 0.05)
+    get!(S, :dzMin, S[:dzTop] / 2)
+    get!(S, :zMax, 250.0)
+    get!(S, :zMin, ceil(S[:zMax]/2 /10)*10)
+    get!(S, :zY, 1.10)
+    
+    # Vertical profile parameters
+    get!(S, :Vz, 2.0)#[2.0, 10.0]  # Heights for wind speed profile [m]
+    get!(S, :Tz, 0.5)#[0.5, 2.0]   # Heights for temperature profile [m]
+    
+    # Time parameters
+    get!(S, :dt, 3600.0)  # Time step [s]
+    
+    # Physical parameters
+    get!(S, :ThermoDeltaTScaling, 1/11)
+    get!(S, :Vmean, 10.0)
+    get!(S, :teValue, 1.0)
+    get!(S, :teThresh, 0.5)
+    get!(S, :isdeltaLWup, false)
+    get!(S, :dulwrfValue, 0.0)
+    get!(S, :isrestart, false)
+    get!(S, :outputFreq, "monthly")
+    get!(S, :addCells, 100)  # Maximum number of new cells that can be added
+    get!(S, :Tmean, 273.15)  # Mean annual temperature [K]
+    get!(S, :C, 500.0)      # Annual accumulation rate [mm w.e. yr⁻¹]
+    get!(S, :CtoK, 273.15)  # Celsius to Kelvin conversion
+    get!(S, :Ttol, 0.01)    # Temperature tolerance
+    get!(S, :Ptol, 1e-11)   # Precipitation tolerance
+    get!(S, :Dtol, 1e-11)   # Layer thickness tolerance
+    get!(S, :adThresh, 0.1) # Albedo threshold
+    
+    # Albedo parameters
+    get!(S, :aSnow, 0.85)
+    get!(S, :aIce, 0.48)
+    get!(S, :aValue, S[:aSnow])
+    get!(S, :dswdiffrf, 0.0)
+    get!(S, :szaValue, 0.0)
+    get!(S, :cotValue, 0.0)
+    get!(S, :ccsnowValue, 0.0)
+    get!(S, :cciceValue, 0.0)
+    get!(S, :cldFrac, 0.0)
+    get!(S, :t0wet, 0.0)
+    get!(S, :t0dry, 0.0)
+    get!(S, :K, 0.0)
+    
+    # Fresh snow parameters
+    get!(S, :gdnNew, 1.0)   # Fresh snow grain dendricity
+    get!(S, :gspNew, 0.5)   # Fresh snow grain sphericity  
+    get!(S, :reNew, 0.1)    # Fresh snow grain radius [mm]
+
+    return S
+end
+
 # Example usage
 function run_example()
     # Set up model parameters similar to MASTER_RUN.m
     S = Dict{Symbol,Any}()
-    
-    # Model settings
-    S[:spinUp] = 2
-    S[:aIdx] = 1 
-    S[:swIdx] = 1
-    S[:denIdx] = 2
-    S[:dsnowIdx] = 1
-    S[:eIdx] = 1
-    S[:tcIdx] = 1
-    S[:runID] = "test_run"
-    
-    # Grid parameters
-    S[:zTop] = 10.0
-    S[:dzTop] = 0.05
-    S[:dzMin] = S[:dzTop] / 2
-    S[:zMax] = 250.0
-    S[:zMin] = ceil(S[:zMax]/2 /10)*10
-    S[:zY] = 1.10
-    
-    # Vertical profile parameters
-    S[:Vz] = 2.0#[2.0, 10.0]  # Heights for wind speed profile [m]
-    S[:Tz] = 0.5#[0.5, 2.0]   # Heights for temperature profile [m]
-    
-    # Time parameters
-    S[:dt] = 3600.0  # Time step [s]
-    
-    # Physical parameters
-    S[:ThermoDeltaTScaling] = 1/11
-    S[:Vmean] = 10.0
-    S[:teValue] = 1.0
-    S[:teThresh] = 0.5
-    S[:isdeltaLWup] = false
-    S[:dulwrfValue] = 0.0
-    S[:isrestart] = false
-    S[:outputFreq] = "monthly"
-    S[:addCells] = 100  # Maximum number of new cells that can be added
-    S[:Tmean] = 273.15  # Mean annual temperature [K]
-    S[:C] = 500.0      # Annual accumulation rate [mm w.e. yr⁻¹]
-    S[:CtoK] = 273.15  # Celsius to Kelvin conversion
-    S[:Ttol] = 0.01    # Temperature tolerance
-    S[:Ptol] = 1e-11   # Precipitation tolerance
-    S[:Dtol] = 1e-11   # Layer thickness tolerance
-    S[:adThresh] = 0.1 # Albedo threshold
-    
-    # Albedo parameters
-    S[:aSnow] = 0.85
-    S[:aIce] = 0.48
-    S[:aValue] = S[:aSnow]
-    S[:dswdiffrf] = 0.0
-    S[:szaValue] = 0.0
-    S[:cotValue] = 0.0
-    S[:ccsnowValue] = 0.0
-    S[:cciceValue] = 0.0
-    S[:cldFrac] = 0.0
-    S[:t0wet] = 0.0
-    S[:t0dry] = 0.0
-    S[:K] = 0.0
-    
-    # Fresh snow parameters
-    S[:gdnNew] = 1.0   # Fresh snow grain dendricity
-    S[:gspNew] = 0.5   # Fresh snow grain sphericity  
-    S[:reNew] = 0.1    # Fresh snow grain radius [mm]
+
+    _populate_defaults!(S)
     
     # Load test data (this would need to be implemented)
     # For example purposes, creating dummy data
