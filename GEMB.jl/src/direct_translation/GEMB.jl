@@ -458,3 +458,28 @@ function run_example()
     
     return output
 end
+
+
+import MAT
+function run_matlab_example()
+    vars = MAT.matread(joinpath((@__DIR__) |> dirname |> dirname |> dirname, "TEST_DATA", "TEST_INPUT_1.mat"))
+    dlw0 = vars["dlw0"]
+    eAir0 = vars["eAir0"]
+    pAir0 = vars["pAir0"]
+    Ta0 = vars["Ta0"]
+    LP = vars["LP"]
+    dateN = vars["dateN"]
+    V0 = vars["V0"]
+    P0 = vars["P0"]
+    dsw0 = vars["dsw0"]
+
+    S = Dict{Symbol,Any}()
+    for key in keys(LP)
+        S[Symbol(key)] = LP[key]
+    end
+
+    _populate_defaults!(S)
+
+    output = GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, NamedTuple(S), false)
+    return output
+end
