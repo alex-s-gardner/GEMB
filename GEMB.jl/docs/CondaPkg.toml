@@ -1,0 +1,7 @@
+[deps]
+# netcdf4 = ""
+# virtualizarr = ""
+zarr = ""
+certifi = ""
+s3fs = ""
+kerchunk = ""
