@@ -47,7 +47,6 @@ function [a] = gardnerAlb(re, dz, d, c1, c2, SZA, t)
 %% Single layer albedo parameterization
 
 Dtol = 1e-11;
-a = 0.0;
 
 %convert effective radius to specific surface area [cm2 g-1]
 S1 = 3.0 / (0.091 * re(1));
@@ -65,8 +64,8 @@ dac = max(0.04 - as, ...
  
 % Two layer albedo parameterization
 %   do two layer calculation if there is more than 1 layer
-lice=find([d; 999]>=830-Dtol);
-z1=sum(dz(1:(lice(1)-1)).*d(1:(lice(1)-1)));
+lice = find([d; 999]>=830-Dtol);
+z1   = sum(dz(1:(lice(1)-1)).*d(1:(lice(1)-1)));
 
 m=length(d);
 if (m>0 & lice(1)<=m & z1 > Dtol)
