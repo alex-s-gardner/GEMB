@@ -10,7 +10,7 @@ dz = gridInitialize(z_top, dz_top, z_max, beta)
 
 # Description 
 
-`dz = gridInitialize(z_top, dz_top, z_max, beta)` creates a 1D grid structure containing the depth `dz` of each cell in the column, where inputs match Fig. 1 of [*Gardner et al*., 2023](https://doi.org/10.5194/gmd-16-2277-2023) and all inputs are scalars as follows: 
+`dz = gridInitialize(z_top, dz_top, z_max, beta)` creates a 1D grid structure containing the thickness `dz` of each cell in the column, where inputs match Fig. 1 of [*Gardner et al*., 2023](https://doi.org/10.5194/gmd-16-2277-2023) and all inputs are scalars as follows: 
 
  * `z_top` (m): Thickness of the upper portion of the model grid, in which grid spacing is constant.
  * `dz_top` (m): Spacing of the upper portion of the model grid. 
@@ -51,7 +51,7 @@ z_center = -cumsum(dz) + dz/2;
 Or if you don't want to remember the equation above, you can simply request `z_center` as an optional output of `gridInitialize`, like this: 
 
 ```matlab
-[dz, z_center] = gridInitialize_cag(z_top, dz_top, z_max, beta); 
+[dz, z_center] = gridInitialize(z_top, dz_top, z_max, beta); 
 
 plot(dz,z_center,'o-')
 xlabel 'Thickness of each grid cell dz (m)' 

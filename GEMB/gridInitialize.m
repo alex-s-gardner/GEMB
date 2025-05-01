@@ -9,7 +9,7 @@ function [dz, z_center] = gridInitialize(z_top, dz_top, z_max, beta)
 %% Description
 % 
 % dz = gridInitialize(z_top, dz_top, z_max, beta) creates a 1D grid structure
-% containing the depth dz of each cell in the column, where inputs match 
+% containing the thickness dz of each cell in the column, where inputs match 
 % Fig. 1 of Gardner et al., 2023 (https://doi.org/10.5194/gmd-16-2277-2023)
 % and all inputs are scalars as follows: 
 % 

@@ -14,11 +14,44 @@ function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = 
 % 
 %% Inputs
 % 
-% 
-% 
+%  T       K            Grid cell temperature.
+%  d       kg m^-3      Grid cell density.
+%  dz      m            Grid cell thickness.
+%  W       kg m^-2      Water content. 
+%  a       fraction     Albedo. 
+%  adiff   fraction     Diffuse albedo.
+%  m       kg m^-2      Grid cell mass.
+%  EI      J m^-2       Initial energy of snow/ice.
+%  EW      J m^-2       Initial energy of water.
+%  dzMin   m            Minimum allowable grid spacing.
+%  zMax    m            Maximum depth of the total column. 
+%  zMin    m            Minimum depth of the total column. 
+%  re      mm           Grain size
+%  gdn     unitless     Grain dendricity
+%  gsp     unitless     Grain sphericity  
+%  zTop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant. 
+%  zY      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
+%  CI      J kg^-1 K^-1 Specific heat capacity of snow/ice. 
+%  LF      J kg^-1      Latent heat of fusion.
+%  CtoK    K            273.15 conversion from C to K.
+%  
 %% Outputs
 % 
-% 
+%  d       kg m^-3      Grid cell density.
+%  T       K            Grid cell temperature.
+%  W       kg m^-2      Water content. 
+%  mAdd:   kg m^-2      Mass added to the column.
+%  dz_add: m            Thickness added to the column.
+%  addE:   J m^-2       Energy added to the column.
+%  a       fraction     Albedo. 
+%  adiff   fraction     Diffuse albedo.
+%  m       kg m^-2      Grid cell mass.
+%  EI      J m^-2       Initial energy of snow/ice.
+%  EW      J m^-2       Initial energy of water.
+%  re      mm           Grain size
+%  gdn     unitless     Grain dendricity
+%  gsp     unitless     Grain sphericity  
+%  
 %% Documentation
 % 
 % For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
@@ -30,7 +63,7 @@ function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = 
 % Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
 % Model Dev., 16, 2277-2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023
 
-Dtol = 1e-11;
+Dtol = 1e-11; % tolerance for numerical comparison. 
 
 n = length(T);
 
@@ -110,8 +143,8 @@ EI(delete_cell)     = [];
 EW(delete_cell)     = [];
 dzMax2(delete_cell) = []; 
 
-% Calculate new length of cells
-n=length(T);
+% Calculate *new* length of cells:
+n = length(T);
 
 %% Split cells
 % * An early implementation of this code used a loop which is included in comments at the bottom of this function for posterity. 

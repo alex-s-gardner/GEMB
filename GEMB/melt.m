@@ -1,7 +1,7 @@
 function [sumM, Msurf, Rsum, Fsum, T, d, dz, W, mAdd, dz_add, a, adiff, re, gdn, gsp] = ...
-    melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, gsp, dIce)
+     melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, gsp, dIce)
 % melt computes the quantity of meltwater due to snow temperature in excess 
-% of 0 deg C, determines pore water content and adjusts grid spacing
+% of 0 deg C, determines pore water content and adjusts grid spacing.
 %
 %% Syntax 
 % 
@@ -13,10 +13,40 @@ function [sumM, Msurf, Rsum, Fsum, T, d, dz, W, mAdd, dz_add, a, adiff, re, gdn,
 % 
 %% Inputs
 % 
-% 
+%  T       K            Grid cell temperature.
+%  d       kg m^-3      Grid cell density.
+%  dz      m            Grid cell thickness.
+%  W       kg m^-2      Water content. 
+%  Ra:     kg m^-2      Rain.
+%  a       fraction     Albedo. 
+%  adiff   fraction     Diffuse albedo.
+%  dzMin   m            Minimum allowable grid spacing.
+%  zMax    m            Maximum depth of the total column. 
+%  zMin    m            Minimum depth of the total column. 
+%  zTop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant. 
+%  zY      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
+%  re      mm           Grain size
+%  gdn     unitless     Grain dendricity
+%  gsp     unitless     Grain sphericity  
+%  dIce:   kg m^-3      Ice density
 % 
 %% Outputs
 % 
+%  sumM:   kg m^-2      Total column melt.
+%  Msurf:  kg m^-2      Surface layer melt.
+%  Rsum:   kg m^-2      Total column runoff.
+%  Fsum:   kg m^-2      Total column refreeze.
+%  T       K            Grid cell temperature.
+%  d       kg m^-3      Grid cell density.
+%  dz      m            Grid cell thickness.
+%  W       kg m^-2      Water content. 
+%  mAdd:   kg m^-2      Mass added to the column.
+%  dz_add: m            Thickness added to the column.
+%  a       fraction     Albedo. 
+%  adiff   fraction     Diffuse albedo.
+%  re      mm           Grain size
+%  gdn     unitless     Grain dendricity
+%  gsp     unitless     Grain sphericity  
 % 
 %% Documentation
 % 
@@ -68,11 +98,11 @@ mSum0 = sum(W) + sum(m);       % total mass [kg]
 sumE0 = sum(EI) + sum(EW);     % total energy [J]
 
 % initialize melt and runoff scalars
-R      = 0;   % runoff [kg]
-Rsum   = 0;   % sum runoff [kg]
-Fsum   = 0;   % sum refreeze [kg]
-sumM   = 0;   % total melt [kg]
-mAdd   = 0;   % mass added/removed to/from base of model [kg]
+R      = 0;   % runoff [kg m^-2]
+Rsum   = 0;   % sum runoff [kg m^-2]
+Fsum   = 0;   % sum refreeze [kg m^-2]
+sumM   = 0;   % total melt [kg m^-2]
+mAdd   = 0;   % mass added/removed to/from base of model [kg m^-2]
 addE   = 0;   % energy added/removed to/from base of model [J]
 dz_add = 0;   % thickness of the layer added/removed to/from base of model [m]
 Msurf  = 0;   % surface layer melt
@@ -110,11 +140,11 @@ if sum(W) > 0+Wtol
 end
 
 % squeeze water from snow pack
-Wi = (dIce - d) .* Swi .* (m ./ d);     % irreducible water content [kg]
-exsW = max(0, W - Wi);                  % water "squeezed" from snow [kg]
+Wi = (dIce - d) .* Swi .* (m ./ d);     % irreducible water content [kg m^-2]
+exsW = max(0, W - Wi);                  % water "squeezed" from snow [kg m^-2]
 
 %% MELT, PERCOLATION AND REFREEZE
-F=zeros(n,1);
+F = zeros(n,1);
 
 % Add previous refreeze to F and reset dW
 F = F + dW;
@@ -307,7 +337,7 @@ Fsum = sum(F);
 
 % Manage the layering to match the user defined requirements
 [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, ~, ~, re, gdn, gsp] = ...
-    managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, CI, LF, CtoK);
+        managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, CI, LF, CtoK);
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 
@@ -330,4 +360,3 @@ end
 if any(W < 0.0-Wtol)
     error('Negative pore water generated in melt equations.')
 end
-
