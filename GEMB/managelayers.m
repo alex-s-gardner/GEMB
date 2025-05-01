@@ -65,7 +65,7 @@ function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = 
 
 Dtol = 1e-11; % tolerance for numerical comparison. 
 
-n = length(T);
+n = numel(T);
 
 Zcum = cumsum(dz);
 
@@ -144,7 +144,7 @@ EW(delete_cell)     = [];
 dzMax2(delete_cell) = []; 
 
 % Calculate *new* length of cells:
-n = length(T);
+n = numel(T);
 
 %% Split cells
 % * An early implementation of this code used a loop which is included in comments at the bottom of this function for posterity. 

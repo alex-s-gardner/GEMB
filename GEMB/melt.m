@@ -84,7 +84,7 @@ CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
 LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 dPHC = 830.0;    % pore hole close off density [kg m-3]
 
-n    = length(T);
+n    = numel(T);
 M    = zeros(n,1);
 maxF = zeros(n,1);
 dW   = zeros(n,1);
@@ -207,7 +207,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     X(isempty(X)) = 1;
         
     Xi=1;
-    n=length(T);
+    n=numel(T);
 
     %% meltwater percolation
     for i = 1:n
