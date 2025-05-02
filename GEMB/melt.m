@@ -189,29 +189,20 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     Xi=1;
     n = numel(T);
 
+    depthice = zeros(n,1); 
+    depthice(d>=dPHC-Dtol) = cumsum(dz(d>=dPHC-Dtol),'reverse'); 
+
     % meltwater percolation
     for i = 1:n
         % calculate total melt water entering cell
         inM = M(i)+ flxDn(i);
-
-        depthice=0;
-        % If this grid cell's density exceeds the pore closeoff density:  
-        if d(i) >= dPHC-Dtol
-            for l=i:n
-                if d(l)>=dPHC-Dtol
-                    depthice = depthice+dz(l); 
-                else 
-                    break
-                end
-            end
-        end
  
         % break loop if there is no meltwater and if depth is > mw_depth
         if abs(inM) < Wtol && i > X
             break
  
         % if reaches impermeable ice layer all liquid water runs off (R)
-        elseif d(i) >= dIce-Dtol || (d(i) >= dPHC-Dtol && depthice>0.1+Dtol)  % dPHC = pore hole close off [kg m-3]
+        elseif d(i) >= dIce-Dtol || (d(i) >= dPHC-Dtol && depthice(i)>0.1+Dtol)  % dPHC = pore hole close off [kg m-3]
             % disp('ICE LAYER')
             % no water freezes in this cell
             % no water percolates to lower cell

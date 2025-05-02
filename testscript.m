@@ -17,6 +17,32 @@ assert(isequal(lhf_cum,foo_out.lhf_cum),'lhf_cum might be wrong.')
 assert(isequal(T,foo_out.T),'T might be wrong.')
 assert(isequal(EC,foo_out.EC),'EC might be wrong.')
 assert(isequal(ulwrf,foo_out.ulwrf),'ulwrf might be wrong.')
+disp('The thermo function looks good.')
+
+%% Melt test 
+
+load('melt_test_input.mat')
+foo_out = load('melt_test_output.mat'); 
+
+[M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
+    S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce);
+
+assert(isequal(M,foo_out.M),'M might be wrong.')
+assert(isequal(Msurf,foo_out.Msurf),'M might be wrong.')
+assert(isequal(R,foo_out.R),'R might be wrong.')
+assert(isequal(F,foo_out.F),'F might be wrong.')
+assert(isequal(T,foo_out.T),'T might be wrong.')
+assert(isequal(d,foo_out.d),'d might be wrong.')
+assert(isequal(dz,foo_out.dz),'dz might be wrong.')
+assert(isequal(W,foo_out.W),'W might be wrong.')
+assert(isequal(mAdd,foo_out.mAdd),'mAdd might be wrong.')
+assert(isequal(a,foo_out.a),'a might be wrong.')
+assert(isequal(adiff,foo_out.adiff),'adiff might be wrong.')
+assert(isequal(dz,foo_out.dz),'dz might be wrong.')
+assert(isequal(re,foo_out.re),'re might be wrong.')
+assert(isequal(gdn,foo_out.gdn),'gdn might be wrong.')
+assert(isequal(gsp,foo_out.gsp),'gsp might be wrong.')
+disp('The melt function looks good.')
 
 %%
 MASTER_RUN
