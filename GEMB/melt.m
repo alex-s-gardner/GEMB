@@ -65,19 +65,6 @@ Ttol = 1e-10;
 Dtol = 1e-11;
 Wtol = 1e-13;
 
-ER    = 0;
-sumM  = 0;
-sumER = 0;
-addE  = 0;
-mSum0 = 0;
-sumE0 = 0;
-mSum1 = 0;
-sumE1 = 0;
-dE    = 0;
-dm    = 0;
-X     = 0;
-Wi    = 0;
-
 % Specify constants:
 CtoK = 273.15;   % Celsius to Kelvin conversion
 CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
@@ -85,8 +72,6 @@ LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 dPHC = 830.0;    % pore hole close off density [kg m-3]
 
 n    = numel(T);
-M    = zeros(n,1);
-maxF = zeros(n,1);
 dW   = zeros(n,1);
 
 % store initial mass [kg] and energy [J]
@@ -98,13 +83,8 @@ mSum0 = sum(W) + sum(m);       % total mass [kg]
 sumE0 = sum(EI) + sum(EW);     % total energy [J]
 
 % initialize melt and runoff scalars
-R      = 0;   % runoff [kg m^-2]
 Rsum   = 0;   % sum runoff [kg m^-2]
-Fsum   = 0;   % sum refreeze [kg m^-2]
 sumM   = 0;   % total melt [kg m^-2]
-mAdd   = 0;   % mass added/removed to/from base of model [kg m^-2]
-addE   = 0;   % energy added/removed to/from base of model [J]
-dz_add = 0;   % thickness of the layer added/removed to/from base of model [m]
 Msurf  = 0;   % surface layer melt
 
 % output
@@ -177,7 +157,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
                 surpT(i+1) = max(0, exsT(i+1) - LF/CI);
                 surpE(i+1) = surpT(i+1) * CI * m(i+1);
             else
-                surplusE=surpE(i);
+                surplusE = surpE(i);
                 display([' WARNING: surplus energy at the base of GEMB column' newline])
             end
             
@@ -207,14 +187,15 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     X(isempty(X)) = 1;
         
     Xi=1;
-    n=numel(T);
+    n = numel(T);
 
-    %% meltwater percolation
+    % meltwater percolation
     for i = 1:n
         % calculate total melt water entering cell
         inM = M(i)+ flxDn(i);
 
         depthice=0;
+        % If this grid cell's density exceeds the pore closeoff density:  
         if d(i) >= dPHC-Dtol
             for l=i:n
                 if d(l)>=dPHC-Dtol
@@ -239,7 +220,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             m(i) = m(i) - M(i);                       % mass after melt
             Wi = (dIce-d(i)) * Swi * (m(i)/d(i));     % irreducible water
             dW(i) = max(min(inM, Wi - W(i)),-1*W(i)); % change in pore water
-            R(i) = max(0.0, inM - dW(i));             % runoff
+            R(i) = max(0, inM - dW(i));               % runoff
 
         % check if no energy to refreeze meltwater     
         elseif abs(maxF(i)) < Dtol
@@ -250,7 +231,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             m(i) = m(i) - M(i);                       % mass after melt
             Wi = (dIce-d(i)) * Swi * (m(i)/d(i));     % irreducible water
             dW(i) = max(min(inM, Wi - W(i)),-1*W(i)); % change in pore water
-            flxDn(i+1) = max(0.0, inM - dW(i));       % meltwater out
+            flxDn(i+1) = max(0, inM - dW(i));         % meltwater out
             R(i) = 0;
  
             % some or all meltwater refreezes
@@ -270,7 +251,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             dW(i) = max(min(inM - F1, Wi-W(i)),-1*W(i)); % change in pore water
             F2 = 0;
             
-            %% ---------------- THIS HAS NOT BEEN CHECKED-----------------_
+            % ---------------- THIS HAS NOT BEEN CHECKED-----------------_
             if dW(i) < 0.0-Wtol                     % excess pore water
                 dMax  = (dIce - d(i))*dz_0;         % maximum refreeze                                             
                 maxF2 = min(dMax, maxF(i)-F1);      % maximum refreeze
@@ -299,10 +280,10 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             end
         end
         
-        Xi=Xi+1;
+        Xi = Xi+1;
     end
 
-    %% GRID CELL SPACING AND MODEL DEPTH
+    % GRID CELL SPACING AND MODEL DEPTH
 
     if any(W < 0.0-Wtol)
         error('Negative pore water generated in melt equations.')
@@ -313,7 +294,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     W = W + dW;   
 
     % calculate Rsum:
-    Rsum=sum(R) + flxDn(Xi);
+    Rsum = sum(R) + flxDn(Xi);
     
     % delete all cells with zero mass
     D = (m <= 0+Wtol); 
