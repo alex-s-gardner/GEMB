@@ -21,8 +21,8 @@ disp('The thermo function looks good.')
 
 %% Melt test 
 
-load('melt_test_input.mat')
-foo_out = load('melt_test_output.mat'); 
+load('../TEST_DATA/melt_test_input.mat')
+foo_out = load('../TEST_DATA/melt_test_output.mat'); 
 
 [M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
     S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce);
