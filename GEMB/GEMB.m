@@ -216,11 +216,11 @@ for yIdx = 1:S.spinUp + 1
     for dIdx = 1:length(dateN)
         
         % Extract daily data:
-        dlw  = dlw0(dIdx);     % downward longwave radiation flux [W m-2]
-        dsw  = dsw0(dIdx);     % downward shortwave radiation flux [W m-2]
-        Ta   = Ta0(dIdx);      % screen level air temperature [K]
-        P    = P0(dIdx);       % precipitation [kg m-2]
-        V    = V0(dIdx);       % wind speed [m s-1]
+        dlw  =  dlw0(dIdx);    % downward longwave radiation flux [W m-2]
+        dsw  =  dsw0(dIdx);    % downward shortwave radiation flux [W m-2]
+        Ta   =   Ta0(dIdx);    % screen level air temperature [K]
+        P    =    P0(dIdx);    % precipitation [kg m-2]
+        V    =    V0(dIdx);    % wind speed [m s-1]
         eAir = eAir0(dIdx);    % screen level vapor pressure [Pa]
         pAir = pAir0(dIdx);    % screen level air pressure [Pa]
 
@@ -318,7 +318,7 @@ for yIdx = 1:S.spinUp + 1
         comp2 = sum(dz); 
         [M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
             S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce);
-
+      
         comp2 = (comp2 - sum(dz));
         
         % allow non-melt densification and determine compaction [m]
