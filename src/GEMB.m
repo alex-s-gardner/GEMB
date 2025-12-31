@@ -224,8 +224,6 @@ for yIdx = 1:S.spinUp + 1
         eAir = eAir0(dIdx);    % screen level vapor pressure [Pa]
         pAir = pAir0(dIdx);    % screen level air pressure [Pa]
 
-        % albedo calculations contained in switch to minimize passing of
-        % variables to albedo function
         switch S.aIdx
             case {1,2}
                 % if we are provided with cc and cot values, extract for the timestep
@@ -259,6 +257,19 @@ for yIdx = 1:S.spinUp + 1
                     dswdiffrf = S.dswdiffrf;
                 end
 
+            case 3   
+                if numel(S.cldFrac)>1
+                    cldFrac = S.cldFrac(dIdx);
+                else
+                    cldFrac = S.cldFrac;
+                end
+        end
+
+        
+        % albedo calculations contained in switch to minimize passing of
+        % variables to albedo function
+        switch S.aIdx
+            case {1,2}
                 % snow grain metamorphism
                 [re, gdn, gsp]  = ...
                     grainGrowth(T, dz, d, W, re, gdn, gsp, dt, S.aIdx);
@@ -271,12 +282,6 @@ for yIdx = 1:S.spinUp + 1
                 swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
                 
             case 3   
-                if numel(S.cldFrac)>1
-                    cldFrac = S.cldFrac(dIdx);
-                else
-                    cldFrac = S.cldFrac;
-                end
-
                 % calculate snow, firn and ice albedo
                 [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh,...
                     a, adiff, [], [], [], [], [], [], [], [], [], [], [], [], [], dIce);
@@ -318,7 +323,6 @@ for yIdx = 1:S.spinUp + 1
         comp2 = sum(dz); 
         [M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
             S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce);
-      
         comp2 = (comp2 - sum(dz));
         
         % allow non-melt densification and determine compaction [m]
@@ -360,6 +364,13 @@ for yIdx = 1:S.spinUp + 1
         if (T(end)-T_bottom)>1e-8
             warning('T(end)~=T_bottom')
         end
+
+
+
+
+
+
+
 
         if yIdx == S.spinUp + 1
             % initialize cumulative and average variables for output
