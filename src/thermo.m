@@ -235,7 +235,11 @@ for i = 1:dt:dt0
 %     % PART OF ENERGY CONSERVATION CHECK
 %     % store initial temperature
     if verbose
-        T_init = T;
+        % total initial hear energy
+        E_init = sum(T ./ (CI * d .* dz));
+
+        % energy flux across lower boundary (energy supplied by underling ice)
+        base_flux = Ad(end-1)*(T(end)-T(end-1)) * dt;
     end
 
     % calculate temperature of snow surface (Ts)
@@ -357,7 +361,7 @@ for i = 1:dt:dt0
         emissivity = teValue; 
     end
 
-    ulw    = - (SB * Ts.^4.0 * emissivity + deltaULW) * dt;
+    ulw    = -(SB * Ts.^4.0 * emissivity + deltaULW) * dt;
     ulwrf  = ulwrf - ulw/dt0;
     dT_ulw = ulw / TCs;
     
@@ -384,16 +388,13 @@ for i = 1:dt:dt0
     
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
-        % energy flux across lower boundary (energy supplied by underling ice)
-        base_flux = Ad(end-1)*(T_init(end)-T_init(end-1)) * dt;
-    
-        E_used = sum(T - T_init)/CI;
-        E_sup = (sum(dT_sw) + dT_dlw + dT_ulw + dT_turb)/CI + base_flux;
+        E_used = sum(T ./ (CI * d .* dz)) - E_init;
+        E_sup = (sum(sw) + dlw + ulw + turb)/CI + base_flux;
     
         E_diff = E_used - E_sup;
     
         if abs(E_diff) > 1E-6 || isnan(E_diff)
-            error('energy not conserved in thermodynamics equations: %0.8g J, %0.8g J', E_used, E_sup)
+            error('energy not conserved in thermodynamics equations: supplied = %0.8g J, used = %0.8g J', E_sup, E_used)
         end
     end
 end

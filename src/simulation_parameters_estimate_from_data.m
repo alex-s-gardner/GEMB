@@ -76,8 +76,8 @@ coeffs.(varname) = fit_seasonal_daily_noise(dec_year, inputs.(varname + "0"));
 coeffs.(varname).min_max = min_max;
 simulate_coeffs_disp(coeffs.(varname), "coeffs." + varname)
 simulated.(varname) = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
-simulated.(varname)(simulated.(varname)<min_max(1)) = min_max(1);
-simulated.(varname)(simulated.(varname)>min_max(2)) = min_max(2);
+simulated.(varname)(simulated.(varname)<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
+simulated.(varname)(simulated.(varname)>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
 simulate_coeffs_disp(coeffs.(varname), "coeffs." +varname)
 figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
 ylabel(longname); legend(["observed", "simulated"]); hold off;
@@ -97,14 +97,14 @@ disp("%% " + longname)
 simulated.(varname) = simulate_longwave_irradiance(simulated.Ta, simulated.eAir);
 
 % account for cloud cover 
-coeffs.(varname) = fit_seasonal_daily_noise(dec_year, inputs.(varname + "0") - simulated.(varname));
-simulated.(varname) = simulated.(varname)  + simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
+coeffs.(varname) = fit_longwave_irradiance_delta(inputs.(varname + "0") - simulated.(varname));
+simulated.(varname) = simulated.(varname)  + simulate_longwave_irradiance_delta(dec_year, coeffs.(varname));
 coeffs.(varname).min_max = min_max;
-simulated.(varname)(simulated.(varname)<min_max(1)) = min_max(1);
-simulated.(varname)(simulated.(varname)>min_max(2)) = min_max(2);
+simulated.(varname)(simulated.(varname)<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
+simulated.(varname)(simulated.(varname)>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
 simulate_coeffs_disp(coeffs.(varname), "coeffs." + varname)
 
-figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
+figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname));plot(inputs.(varname + "0")); 
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% screen wind speed [m/s]
@@ -115,8 +115,8 @@ disp("%% " + longname)
 coeffs.(varname) = fit_seasonal_daily_noise(dec_year, inputs.(varname + "0"));
 coeffs.(varname).min_max = min_max;
 simulated.(varname) = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
-simulated.(varname)(simulated.(varname)<min_max(1)) = min_max(1);
-simulated.(varname)(simulated.(varname)>min_max(2)) = min_max(2);
+simulated.(varname)(simulated.(varname)<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
+simulated.(varname)(simulated.(varname)>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
 simulate_coeffs_disp(coeffs.(varname), "coeffs."+varname)
 figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
 ylabel(longname); legend(["observed", "simulated"]); hold off;
@@ -129,5 +129,5 @@ disp("%% " + longname)
 coeffs.(varname) = fit_precipitation(dec_year, inputs.(varname + "0"));
 simulated.(varname) = simulate_precipitation(dec_year, coeffs.(varname));
 simulate_coeffs_disp(coeffs.(varname), "coeffs."+varname)
-figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
+figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); plot(inputs.(varname + "0"));
 ylabel(longname); legend(["observed", "simulated"]); hold off;
