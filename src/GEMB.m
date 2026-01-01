@@ -304,9 +304,15 @@ for yIdx = 1:S.spinUp + 1
         % calculate new temperature-depth  profile   
         % and calculate turbulent heat fluxes [W m-2]
         verbose=true;
+        Tbtm = T(end);
+        
         [shf, lhf, T, EC, ulw] = thermo(T, re, dz, d, swf, dlw, Ta, V, eAir, pAir, S.tcIdx, S.eIdx, ...
             S.teValue, S.dulwrfValue, S.teThresh, W(1), dt, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, dIce, ...
             S.isdeltaLWup, verbose);     
+
+        if Tbtm ~= T(end)
+            error('change in temperature of bottom cell')
+        end
 
         % change in thickness of top cell due to evaporation/condensation
         % assuming same density as top cell

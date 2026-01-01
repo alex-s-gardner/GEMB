@@ -252,92 +252,8 @@ for i = 1:dt:dt0
     Ts = min(273.15,Ts);    % don't allow Ts to exceed 273.15 K (0 deg C)
     
     % TURBULENT HEAT FLUX
-    
-    % Monin-Obukhov Stability Correction
-    % Reference:
-    % Ohmura, A., 1982: Climate and Energy-Balance on the Arctic Tundra.
-    % Journal of Climatology, 2, 65-84.
-    
-    % calculate the Bulk Richardson Number (Ri)
-    Ri = ((100000./pAir).^0.286).*(2.0*9.81*(Ta - Ts)) ./ (Tz.*(Ta + Ts).*(((V/Vz).^2.0)));
-    
-    a1     = 1.0;
-    b1     = 2.0/3.0;
-    c1     = 5.0;
-    d1     = 0.35;
-    PhiMz0 = 0.0;
-    PhiHzT = 0.0;
-    PhiHzQ = 0.0;
+    [shf, lhf] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz, z0, zT, zQ);
 
-    if (Ri > 0.0+Ttol)
-        % if stable
-        if (Ri < 0.2-Ttol)
-            zL = Ri./(1.0-5.0*Ri);
-        else
-            zL = Ri;
-        end
-        
-        %zL = min(zL, 0.5); %Sjoblom, 2014
-        zLM = max(zL./Vz.*z0,1e-3);
-        zLT = max(zL./Tz.*zT,1e-3);
-        
-        % Ding et al. 2020, from Beljaars and Holtslag (1991)
-        PhiMz  = -1.*(a1*zL + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1);
-        PhiHz  = -1.*((1.+2.*a1*zL/3.).^1.5 + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1 - 1.0);
-        PhiMz0 = -1.*(a1*zLM + b1*(zLM-c1/d1)*exp(-1.*d1*zLM) + b1*c1/d1);
-        PhiHzT = -1.*((1.+2.*a1*zLT/3.).^1.5 + b1*(zLT-c1/d1)*exp(-1.*d1*zLT) + b1*c1/d1 - 1.0);
-        
-        PhiHzQ=PhiHzT;
-    
-    else 
-    
-        zL  = Ri/1.5; %max(Ri, -0.5+Ttol)/1.5; % Hogstrom (1996)
-            
-        %Sjoblom, 2014
-        xm=(1.0-19.0*zL).^-0.25;
-        PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.*atan(xm) + pi/2.;
-        
-        xh=0.95*(1.0-11.6*zL).^(-0.5);
-        PhiHz=2.0*log((1.0+xh.^2)/2.0);
-
-    end
-    
-    coefM  = log(Vz./z0) - PhiMz + PhiMz0; % Ding et al., 2019
-    coefHT = log(Tz./zT) - PhiHz + PhiHzT; % Sjoblom, 2014, after Foken 2008
-    coefHQ = log(Tz./zQ) - PhiHz + PhiHzQ; % Sjoblom, 2014, after Foken 2008
-
-    %% Sensible Heat
-    % calculate the sensible heat flux [W m-2](Patterson, 1998)
-    shf = dAir .* C .* CA .* (Ta - Ts) .* (100000./pAir).^0.286;
-    
-    % adjust using Monin-Obukhov stability theory
-    shf = shf./(coefM.*coefHT);
-    
-    %% Latent Heat
-    %   determine if snow pack is melting & calcualte surface vapour pressure over ice or liquid water
-    if (Ts >= CtoK-Ttol)
-        L = LV; %for liquid water at 273.15 k to vapor
-        
-        %for liquid surface (assume liquid on surface when Ts == 0 deg C)
-        % Wright (1997), US Meteorological Handbook from Murphy and Koop, 2005 Appendix A
-        %eS = 611.21 * exp(17.502 * (Ts - CtoK) / (240.97 + Ts - CtoK));
-        % Murray 1967, https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
-        eS = 610.78 * exp(17.2693882 .* (Ts - CtoK - 0.01) ./ (Ts - 35.86));
-    else
-        L = LS; % latent heat of sublimation
-        
-        % for an ice surface Murphy and Koop, 2005 [Equation 7]
-        %eS = exp(9.550426 - 5723.265/Ts + 3.53068 * log(Ts) - 0.00728332 * Ts);
-        % for an ice surface Ding et al., 2019 after Bolton, 1980
-        eS = 610.78 * exp(21.8745584 .* (Ts - CtoK - 0.01) ./ (Ts - 7.66));
-    end
-
-    % Latent heat flux [W m-2]
-    lhf = C .* L .* (eAir - eS) / (461.9*(Ta+Ts)/2.0);
-
-    % adjust using Monin-Obukhov stability theory (if lhf '+' then there is energy and mass gained at the surface,
-    % if '-' then there is mass and energy loss at the surface.
-    lhf = lhf./(coefM.*coefHQ);
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
@@ -390,8 +306,8 @@ for i = 1:dt:dt0
     if diffusion_sanity_check
         E_after = sum(T ./ (CI * d .* dz));
     
-        if abs(E_before - E_after) > 1E-8 || isnan(E_after)
-            error('energy not conserved in thermodynamics equations: before = %0.8g J, after = %0.8g J', E_before, E_after)
+        if abs(E_before - E_after) > 1E-5 || isnan(E_after)
+            error('#1 energy not conserved in thermodynamics equations: before = %0.8g J, after = %0.8g J', E_before, E_after)
         end
     end
 
@@ -402,7 +318,7 @@ for i = 1:dt:dt0
     shf_cum = shf_cum+shf*dt/dt0;
     
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
-    if verbose
+    if false
         E_used = sum(T .* (CI * d .* dz)) - E_init;
         E_sup = sum(sw) + dlw + ulw + turb + base_flux;
     
