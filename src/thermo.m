@@ -343,7 +343,7 @@ for i = 1:dt:dt0
     EC_day = lhf * 86400 / L;
     
     % temperature change due turbulent fluxes
-    turb = (shf + lhf)* dt;
+    turb = (shf + lhf) * dt;
     dT_turb = turb  / TCs;
 
     % upward longwave contribution
@@ -378,7 +378,7 @@ for i = 1:dt:dt0
     Tu        = T0(1:m);
     Td        = T0(3:m+2);
     
-    diffusion_sanity_check = false;
+    diffusion_sanity_check = true;
     if diffusion_sanity_check
         E_before = sum(T ./ (CI * d .* dz));
     end
@@ -390,7 +390,7 @@ for i = 1:dt:dt0
     if diffusion_sanity_check
         E_after = sum(T ./ (CI * d .* dz));
     
-        if abs(E_before - E_after) > 1E-15 || isnan(E_after)
+        if abs(E_before - E_after) > 1E-8 || isnan(E_after)
             error('energy not conserved in thermodynamics equations: before = %0.8g J, after = %0.8g J', E_before, E_after)
         end
     end
