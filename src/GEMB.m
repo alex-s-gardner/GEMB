@@ -224,8 +224,6 @@ for yIdx = 1:S.spinUp + 1
         eAir = eAir0(dIdx);    % screen level vapor pressure [Pa]
         pAir = pAir0(dIdx);    % screen level air pressure [Pa]
 
-        % albedo calculations contained in switch to minimize passing of
-        % variables to albedo function
         switch S.aIdx
             case {1,2}
                 % if we are provided with cc and cot values, extract for the timestep
@@ -259,6 +257,19 @@ for yIdx = 1:S.spinUp + 1
                     dswdiffrf = S.dswdiffrf;
                 end
 
+            case 3   
+                if numel(S.cldFrac)>1
+                    cldFrac = S.cldFrac(dIdx);
+                else
+                    cldFrac = S.cldFrac;
+                end
+        end
+
+        
+        % albedo calculations contained in switch to minimize passing of
+        % variables to albedo function
+        switch S.aIdx
+            case {1,2}
                 % snow grain metamorphism
                 [re, gdn, gsp]  = ...
                     grainGrowth(T, dz, d, W, re, gdn, gsp, dt, S.aIdx);
@@ -271,12 +282,6 @@ for yIdx = 1:S.spinUp + 1
                 swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
                 
             case 3   
-                if numel(S.cldFrac)>1
-                    cldFrac = S.cldFrac(dIdx);
-                else
-                    cldFrac = S.cldFrac;
-                end
-
                 % calculate snow, firn and ice albedo
                 [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh,...
                     a, adiff, [], [], [], [], [], [], [], [], [], [], [], [], [], dIce);
@@ -298,9 +303,10 @@ for yIdx = 1:S.spinUp + 1
 
         % calculate new temperature-depth  profile   
         % and calculate turbulent heat fluxes [W m-2]
+        verbose=true;
         [shf, lhf, T, EC, ulw] = thermo(T, re, dz, d, swf, dlw, Ta, V, eAir, pAir, S.tcIdx, S.eIdx, ...
             S.teValue, S.dulwrfValue, S.teThresh, W(1), dt, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, dIce, ...
-            S.isdeltaLWup);     
+            S.isdeltaLWup, verbose);     
 
         % change in thickness of top cell due to evaporation/condensation
         % assuming same density as top cell
@@ -311,14 +317,13 @@ for yIdx = 1:S.spinUp + 1
         % and density     
         [T, dz, d, Ra, W, a, adiff, re, gdn, gsp] = accumulation(S.aIdx, S.dsnowIdx, S.Tmean, Ta, T, dz, d, ...
             P, W, S.dzMin, S.C, V, S.Vmean, a, adiff, S.aSnow, re, gdn, gsp, dIce);
-
+        
         % calculate water production, M [kg m-2] resulting from snow/ice
         % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2] 
         % and resulting changes in density and determine wet compaction [m]
         comp2 = sum(dz); 
         [M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
             S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce);
-      
         comp2 = (comp2 - sum(dz));
         
         % allow non-melt densification and determine compaction [m]
@@ -357,8 +362,8 @@ for yIdx = 1:S.spinUp + 1
         end
 
         % check bottom grid cell T is unchanged
-        if (T(end)-T_bottom)>1e-8
-            warning('T(end)~=T_bottom')
+        if abs(T(end)-T_bottom)>1e-8
+            warning('T(end)-T_bottom>1e-8: T(end)= %0.8g, T_bottom = %0.8g',T(end), T_bottom)
         end
 
         if yIdx == S.spinUp + 1

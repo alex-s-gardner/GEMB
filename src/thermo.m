@@ -1,5 +1,5 @@
 function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta, V, eAir, pAir, tcIdx, eIdx, ...
-        teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup)
+        teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup, verbose)
 % thermo computes new temperature profile accounting for energy absorption 
 % and thermal diffusion.
 %
@@ -42,6 +42,10 @@ function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta,
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
 % Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+
+if nargin < 24
+    verbose = false;
+end
 
 %% INITIALIZE
 
@@ -230,8 +234,9 @@ T0 = zeros(m+2,1);
 for i = 1:dt:dt0
 %     % PART OF ENERGY CONSERVATION CHECK
 %     % store initial temperature
-%     T_init = T;
-    
+    if verbose
+        T_init = T;
+    end
     % calculate temperature of snow surface (Ts)
     % when incoming SW radition is allowed to penetrate the surface,
     % the modeled energy balance becomes very sensitive to how Ts is
@@ -376,17 +381,19 @@ for i = 1:dt:dt0
     lhf_cum = lhf_cum+lhf*dt/dt0;
     shf_cum = shf_cum+shf*dt/dt0;
     
-%% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
-%     % energy flux across lower boundary (energy supplied by underling ice)
-%     base_flux = Ad(end-1)*(T_init(end)-T_init(end-1)) * dt;
-%     
-%     E_used = sum((T - T_init) .* (d.*dz*CI));
-%     E_sup = ((sum(swf)  * dt) + dlw + ulw + turb + base_flux);
-%     
-%     E_diff = E_used - E_sup;
-%     
-%     if abs(E_diff) > 1E-6 || isnan(E_diff)
-%         disp(T(1))
-%         error('energy not conserved in thermodynamics equations')
-%     end
+    %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
+    if verbose
+        % energy flux across lower boundary (energy supplied by underling ice)
+        base_flux = Ad(end-1)*(T_init(end)-T_init(end-1)) * dt;
+    
+        E_used = sum((T - T_init) .* (d.*dz*CI));
+        E_sup = ((sum(swf)  * dt) + dlw + ulw + turb + base_flux);
+    
+        E_diff = E_used - E_sup;
+    
+        if abs(E_diff) > 1E-6 || isnan(E_diff)
+            disp(T(1))
+            error('energy not conserved in thermodynamics equations')
+        end
+    end
 end

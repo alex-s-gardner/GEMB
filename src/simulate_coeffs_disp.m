@@ -7,7 +7,11 @@ function simulate_coeffs_disp(coeffs, struct_name)
     for i = 1:length(keys)
         key = keys{i};
         if length(coeffs.(key)) > 1 
-            disp(struct_name + "." + key + " = [" + sprintf('%0.4f ', coeffs.(key)) + "];")
+            if size(coeffs.(key), 1) == 1
+                disp(struct_name + "." + key + " = [" + sprintf('%0.4f ', coeffs.(key)) + "];")
+            else
+                disp(struct_name + "." + key + " = [" + sprintf('%0.4f ', coeffs.(key)) + "]';")
+            end
         else
             disp(struct_name  + "." + key + " = " + sprintf('%0.4f ', coeffs.(key)) + ";")
         end
