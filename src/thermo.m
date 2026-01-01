@@ -237,6 +237,7 @@ for i = 1:dt:dt0
     if verbose
         T_init = T;
     end
+
     % calculate temperature of snow surface (Ts)
     % when incoming SW radition is allowed to penetrate the surface,
     % the modeled energy balance becomes very sensitive to how Ts is
@@ -327,7 +328,7 @@ for i = 1:dt:dt0
         eS = 610.78 * exp(21.8745584 .* (Ts - CtoK - 0.01) ./ (Ts - 7.66));
     end
 
-    %Latent heat flux [W m-2]
+    % Latent heat flux [W m-2]
     lhf = C .* L .* (eAir - eS) / (461.9*(Ta+Ts)/2.0);
 
     % adjust using Monin-Obukhov stability theory (if lhf '+' then there is energy and mass gained at the surface,
@@ -352,7 +353,7 @@ for i = 1:dt:dt0
 
     %If user wants to directly set emissivity, or grain radius is larger than the
     %threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
-    if (eIdx==0 | (teThresh - re(1))<=Gdntol | (eIdx==2 & z0>0.001+Gdntol)) 
+    if (eIdx==0 || (teThresh - re(1))<=Gdntol || (eIdx==2 & z0>0.001+Gdntol)) 
         emissivity = teValue; 
     end
 
@@ -386,14 +387,13 @@ for i = 1:dt:dt0
         % energy flux across lower boundary (energy supplied by underling ice)
         base_flux = Ad(end-1)*(T_init(end)-T_init(end-1)) * dt;
     
-        E_used = sum((T - T_init) .* (d.*dz*CI));
-        E_sup = ((sum(swf)  * dt) + dlw + ulw + turb + base_flux);
+        E_used = sum(T - T_init)/CI;
+        E_sup = (sum(dT_sw) + dT_dlw + dT_ulw + dT_turb)/CI + base_flux;
     
         E_diff = E_used - E_sup;
     
         if abs(E_diff) > 1E-6 || isnan(E_diff)
-            disp(T(1))
-            error('energy not conserved in thermodynamics equations')
+            error('energy not conserved in thermodynamics equations: %0.8g J, %0.8g J', E_used, E_sup)
         end
     end
 end
