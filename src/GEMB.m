@@ -303,9 +303,10 @@ for yIdx = 1:S.spinUp + 1
 
         % calculate new temperature-depth  profile   
         % and calculate turbulent heat fluxes [W m-2]
+        verbose=true;
         [shf, lhf, T, EC, ulw] = thermo(T, re, dz, d, swf, dlw, Ta, V, eAir, pAir, S.tcIdx, S.eIdx, ...
             S.teValue, S.dulwrfValue, S.teThresh, W(1), dt, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, dIce, ...
-            S.isdeltaLWup);     
+            S.isdeltaLWup, verbose);     
 
         % change in thickness of top cell due to evaporation/condensation
         % assuming same density as top cell
@@ -316,7 +317,7 @@ for yIdx = 1:S.spinUp + 1
         % and density     
         [T, dz, d, Ra, W, a, adiff, re, gdn, gsp] = accumulation(S.aIdx, S.dsnowIdx, S.Tmean, Ta, T, dz, d, ...
             P, W, S.dzMin, S.C, V, S.Vmean, a, adiff, S.aSnow, re, gdn, gsp, dIce);
-
+        
         % calculate water production, M [kg m-2] resulting from snow/ice
         % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2] 
         % and resulting changes in density and determine wet compaction [m]
