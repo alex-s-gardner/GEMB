@@ -362,7 +362,7 @@ for yIdx = 1:S.spinUp + 1
 
         % check bottom grid cell T is unchanged
         if abs(T(end)-T_bottom)>1e-8
-            warning('T(end)~=T_bottom')
+            warning('T(end)-T_bottom>1e-8: T(end)= %0.8g, T_bottom = %0.8g',T(end), T_bottom)
         end
 
         if yIdx == S.spinUp + 1
