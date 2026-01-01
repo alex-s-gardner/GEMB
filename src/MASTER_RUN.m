@@ -96,10 +96,8 @@ S.outputFreq = 'monthly';
 
 % input data directory
 if TEST
-    S.inputDIR = fullfile('..','TEST_DATA/');
     S.outDIR = fullfile('..','TEST_DATA/');
 else
-    S.inputDIR = '/Volumes/MasterBrain/data/GEMB/CFSR/T62/';
     % output directory
     S.outDIR = '/Volumes/MasterBrain/data/GEMB/Output/';
 end
@@ -136,7 +134,6 @@ end
 
 %% RUN GEMB
 runPfx = S.runPfx;
-inputDIR = S.inputDIR;
 
 % open matlab pool for parallel processing
 if strcmp(mod.PC, 'on')
@@ -146,16 +143,9 @@ elseif strcmp(mod.PC, 'flux')
 end
 
 if TEST
-    I = load(fullfile(S.inputDIR,'TEST_INPUT_1'));
-    S0 = combineStrucData_GEMB(S,I.LP,1);
-    GEMB(I.P0,I.Ta0,I.V0,I.dateN,I.dlw0,I.dsw0,I.eAir0,I.pAir0, S0, S.isrestart)
+    [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_forcing(set_id);
+    S0 = combineStrucData_GEMB(S,LP,1);
+    GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S0, S.isrestart)
 else
-    H = dir(fullfile(S.inputDIR,'input*'));
-    parfor  runIdx = 1:length(H)
-        I = load(fullfile(S.inputDIR,['input_' sprintf('%06d', runIdx)]));
-        S0 = combineStrucData_GEMB(S,I.LP,runIdx);
-        GEMB(I.P0,I.Ta0,I.V0,I.dateN,I.dlw0,I.dsw0,I.eAir0,I.pAir0, S0, S.isrestart)
-    end
-    
-    delete(gcp)
+    error("input case not defined")
 end

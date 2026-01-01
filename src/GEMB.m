@@ -365,13 +365,6 @@ for yIdx = 1:S.spinUp + 1
             warning('T(end)~=T_bottom')
         end
 
-
-
-
-
-
-
-
         if yIdx == S.spinUp + 1
             % initialize cumulative and average variables for output
             d1   = d(1); 
