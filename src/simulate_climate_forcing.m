@@ -29,15 +29,14 @@ function [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_f
     
     % downward logwave radiation [W m⁻²]
     varname = "dlw";
-    dlw0 = simulate_vapor_pressure(Ta0, rh0);
-    dlw0 = dlw0  + simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
+    dlw0 = simulate_longwave_irradiance(Ta0, eAir0);
+    dlw0 = dlw0  + simulate_longwave_irradiance_delta(dec_year, coeffs.(varname));
     dlw0(dlw0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
     dlw0(dlw0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
     
     % screen level wind speed [m s⁻¹]
     varname = "V";
-    V0 = simulate_vapor_pressure(Ta0, rh0);
-    V0 = V0  + simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
+    V0 = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
     V0(V0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
     V0(V0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
     

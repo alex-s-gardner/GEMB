@@ -56,11 +56,13 @@ function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
         coeffs.rh.min_max = [0.0000 100.0000 ]';
          
         %% downward logwave radiation [W m⁻²]
-        coeffs.dlw.beta = [55.8829 0.0948 0.4670 -10.9419 5.5415 ]';
-        coeffs.dlw.noise_std = 54.8108 ;
-        coeffs.dlw.noise_lag1 = 0.9885 ;
+        coeffs.dlw.mu = [113.2225 23.6664 ]';
+        coeffs.dlw.sigma = [30.9535 38.1762 ]';
+        coeffs.dlw.P = [0.3590 0.6410 ];
+        coeffs.dlw.limits = [-142.9820 222.0189 ];
+        coeffs.dlw.prctile_bounds = [-67.5562 147.9489 ];
         coeffs.dlw.min_max = [0.0000 Inf ]';
-         
+                 
         %% screen level wind speed [m s⁻¹]
         coeffs.V.beta = [5.2495 0.1296 -0.1237 -0.3030 -0.2289 ]';
         coeffs.V.noise_std = 2.9324 ;
