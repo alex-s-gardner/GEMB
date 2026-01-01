@@ -236,7 +236,7 @@ for i = 1:dt:dt0
 %     % store initial temperature
     if verbose
         % total initial hear energy
-        E_init = sum(T ./ (CI * d .* dz));
+        E_init = sum(T .* (CI * d .* dz));
 
         % energy flux across lower boundary (energy supplied by underling ice)
         base_flux = Ad(end-1)*(T(end)-T(end-1)) * dt;
@@ -378,7 +378,22 @@ for i = 1:dt:dt0
     Tu        = T0(1:m);
     Td        = T0(3:m+2);
     
+    diffusion_sanity_check = false;
+    if diffusion_sanity_check
+        E_before = sum(T ./ (CI * d .* dz));
+    end
+
+    
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
+
+
+    if diffusion_sanity_check
+        E_after = sum(T ./ (CI * d .* dz));
+    
+        if abs(E_before - E_after) > 1E-15 || isnan(E_after)
+            error('energy not conserved in thermodynamics equations: before = %0.8g J, after = %0.8g J', E_before, E_after)
+        end
+    end
 
     % calculate cumulative evaporation (+)/condensation(-)
     EC = EC + (EC_day/86400)*dt;
@@ -388,8 +403,8 @@ for i = 1:dt:dt0
     
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
-        E_used = sum(T ./ (CI * d .* dz)) - E_init;
-        E_sup = (sum(sw) + dlw + ulw + turb)/CI + base_flux;
+        E_used = sum(T .* (CI * d .* dz)) - E_init;
+        E_sup = sum(sw) + dlw + ulw + turb + base_flux;
     
         E_diff = E_used - E_sup;
     
