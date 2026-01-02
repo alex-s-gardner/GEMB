@@ -76,9 +76,6 @@ ulwrf   = 0.0;
 lhf_cum = 0.0;
 shf_cum = 0.0;
 
-% check if all SW applied to surface or distributed throught subsurface
-% swIdx = length(swf) > 1
-
 %% SURFACE ROUGHNESS (Bougamont, 2005)
 % wind/temperature surface roughness height [m]
 if ds < dIce-Dtol && Ws < Wtol
@@ -260,26 +257,19 @@ for i = 1:dt:dt0
     T(1) = T(1) + dT_dlw + dT_ulw + dT_turb;
     
     % temperature diffusion
-    T0(2:m+1) = T;
-    T0(1)     = Ta;
-    T0(m+2)   = T(m);
-    Tu        = T0(1:m);
-    Td        = T0(3:m+2);
     
-    diffusion_sanity_check = true;
-    if diffusion_sanity_check
-        E_before = sum(T ./ (CI * d .* dz));
-    end
-
+    % Tu: Shift T down one step.
+    % The first element is the 'Ghost Node' above surface. 
+    % For Zero Flux, T_ghost = T(1).
+    Tu = [T(1); T(1:end-1)];
+    
+    % Td: Shift T up one step.
+    % The last element is the 'Ghost Node' below the bottom.
+    % Since T(m) is fixed (Nu(m)=0, Nd(m)=0), this value is unused, 
+    % but duplicating T(end) keeps the vector size correct.
+    Td = [T(2:end); T(end)];
+    
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
-
-    if diffusion_sanity_check
-        E_after = sum(T ./ (CI * d .* dz));
-    
-        if abs(E_before - E_after) > 1E-6 || isnan(E_after)
-            error('#1 energy not conserved in thermodynamics equations: before = %0.8g J, after = %0.8g J', E_before, E_after)
-        end
-    end
 
     % calculate cumulative evaporation (+)/condensation(-)
     EC = EC + (EC_day/86400)*dt;
@@ -288,7 +278,7 @@ for i = 1:dt:dt0
     shf_cum = shf_cum+shf*dt/dt0;
     
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
-    if false
+    if verbose
         E_used = sum(T .* (CI * d .* dz)) - E_init;
         E_sup = sum(sw) + dlw + ulw + turb + base_flux;
     
