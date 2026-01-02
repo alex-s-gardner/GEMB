@@ -23,7 +23,7 @@ location_parameters.C = inputs.LP.C; % average annual accumulation rate of snow 
 dec_year = location_parameters.start_date: location_parameters.time_step:location_parameters.end_date+1;
 dec_year = dec_year(1:length(inputs.Ta0));
 dec_year = dec_year(:);
-rand(location_parameters.rand_seed);
+rng(location_parameters.rand_seed)
 
 disp("%%  location and time parameters")
 disp("location_parameters.description = """ + location_parameters.description + """;")

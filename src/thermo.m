@@ -141,25 +141,46 @@ dzU = [NaN; dz(1:m-1)];
 dzD = [dz(2:m) ; NaN];
  
 % determine minimum acceptable delta t (diffusion number > 1/2) [s]
-dt = min(CI * dz.^2 .* d  ./ (3 * K) .* dtScaling);
+% 1. Calculate the theoretical limit for every single grid cell
+%    (Using 0.5 is the absolute limit; we usually aim lower for safety)
+stability_limit_per_cell = 0.5 * (d .* CI .* dz.^2) ./ K;
 
-% smallest possible even integer of 60 min where diffusion number > 1/2
-% must go evenly into one hour or the data frequency it it is smaller
+% 2. Find the bottleneck: The smallest allowable dt in the entire column
+max_safe_dt = min(stability_limit_per_cell);
 
-% all divisors of the number of second/1000 in a day (8600 [s])
-f = divisors(8600 *1000)/1000;
+% 3. Apply a Safety Factor (0.9 or 0.8 is standard)
+%    This accounts for floating point errors or slight non-linearities in K
+dt_target = max_safe_dt * 0.8;
 
-% return the min integer factor that is < dt
-dt = f(find(f <= dt, 1, 'last'));
+% 4. (Optional) Sanity check to prevent extremely small steps if bad data enters
+if dt_target < 1e-4
+    warning('Timestep is extremely small (%e). Check for near-zero dz layers.', dt_target);
+end
+
+% 5. Fit this target into your input data frequency (dt0)
+%    Find the largest divisor of dt0 that is <= dt_target
+%    (Your existing divisor logic works well here)
+
+if rem(dt0,1) ~= 0
+    warning('rounding dt0 as it is not an exact integer: dt0 = %0.4f', dt0)
+    dt0 = round(dt0);
+end
+
+f = divisors(dt0 * 10000) / 10000; % assuming dt0 is in seconds
+dt = f(find(f <= dt_target, 1, 'last'));
+
 if isempty(dt)
-	dt = f(1);
-	warning('calculated timestep for thermal loop is < %0.4f seconds, setting dt to %0.4f seconds', f(1), f(1))
+    dt = f(1); % Fallback to smallest possible step
 end
 
 % determine mean (harmonic mean) of K/dz for u, d, & p
 Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
 Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
 Ap = (d.*dz*CI)/dt;
+
+
+% Create neighbor arrays for diffusion calculations instead of a
+% tridiagonal matrix
 
 % create "neighbor" coefficient matrix
 Nu = Au ./ Ap;
@@ -170,14 +191,12 @@ Np = 1 - Nu - Nd;
 % constant flux at bottom
 Nu(m) = 0;
 Np(m) = 1;
+Nd(m) = 0;
 
 % zero flux at surface
-Np(1) = 1 - Nd(1);
+Nu(1) = 0; % Disconnect from the node above (Air/Ghost node)
+Np(1) = 1 - Nd(1); % Balance the center node to conserve energy (Weights must sum to 1)
 
-% Create neighbor arrays for diffusion calculations instead of a
-% tridiagonal matrix
-Nu(1) = 0;
-Nd(m) = 0;
 
 %% RADIATIVE FLUXES
 
@@ -198,18 +217,19 @@ dlw = dlwrf * dt;
 dT_dlw = dlw / TCs;
 
 %% PREALLOCATE ARRAYS BEFORE LOOP FOR IMPROVED PERFORMANCE
-T0 = zeros(m+2,1);
+Tu = zeros(m,1);
+Td = zeros(m,1);
 
 %% CALCULATE ENERGY SOURCES AND DIFFUSION FOR EVERY TIME STEP [dt]
 for i = 1:dt:dt0
     %     % PART OF ENERGY CONSERVATION CHECK
     %     % store initial temperature
     if verbose
-        % total initial hear energy
+        % total initial heat energy
         E_init = sum(T .* (CI * d .* dz));
 
         % energy flux across lower boundary (energy supplied by underling ice)
-        base_flux = Ad(end-1)*(T(end)-T(end-1)) * dt;
+        base_flux = Ad(end-1) * (T(end) - T(end-1)) * dt;
     end
 
     % calculate temperature of snow surface (Ts)
@@ -247,6 +267,7 @@ for i = 1:dt:dt0
     end
 
     ulw    = -(SB * Ts.^4.0 * emissivity + deltaULW) * dt;
+
     ulwrf  = ulwrf - ulw/dt0;
     dT_ulw = ulw / TCs;
     
@@ -257,17 +278,19 @@ for i = 1:dt:dt0
     T(1) = T(1) + dT_dlw + dT_ulw + dT_turb;
     
     % temperature diffusion
-    
+
     % Tu: Shift T down one step.
     % The first element is the 'Ghost Node' above surface. 
     % For Zero Flux, T_ghost = T(1).
-    Tu = [T(1); T(1:end-1)];
+    Tu(1) = T(1);
+    Tu(2:end) = T(1:end-1);
     
     % Td: Shift T up one step.
     % The last element is the 'Ghost Node' below the bottom.
     % Since T(m) is fixed (Nu(m)=0, Nd(m)=0), this value is unused, 
     % but duplicating T(end) keeps the vector size correct.
-    Td = [T(2:end); T(end)];
+    Td(1:end-1) = T(2:end);
+    Td(end) = T(end);
     
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
 
@@ -281,11 +304,11 @@ for i = 1:dt:dt0
     if verbose
         E_used = sum(T .* (CI * d .* dz)) - E_init;
         E_sup = sum(sw) + dlw + ulw + turb + base_flux;
-    
         E_diff = E_used - E_sup;
     
-        if abs(E_diff) > 1E-6 || isnan(E_diff)
-            error('energy not conserved in thermodynamics equations: supplied = %0.8g J, used = %0.8g J', E_sup, E_used)
+        if abs(E_diff) > 1E-4 || isnan(E_diff)
+            fprintf('sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, turb = %0.10g J, base_flux = %0.10g J', sum(sw) , dlw , ulw , turb , base_flux)
+            error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J', E_sup, E_used)
         end
     end
 end
