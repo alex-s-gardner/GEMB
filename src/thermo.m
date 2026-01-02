@@ -156,7 +156,7 @@ f = divisors(8600 *1000)/1000;
 dt = f(find(f <= dt, 1, 'last'));
 if isempty(dt)
 	dt = f(1);
-	display([' WARNING: calculated timestep for thermal loop is < ' num2str(f(1)) ' second. (' num2str(dt) ' sec) ' newline])
+	warning('calculated timestep for thermal loop is < %0.4f seconds, setting dt to %0.4f seconds', f(1), f(1))
 end
 
 % determine mean (harmonic mean) of K/dz for u, d, & p
