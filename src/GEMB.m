@@ -368,7 +368,7 @@ for yIdx = 1:S.spinUp + 1
 
         % check bottom grid cell T is unchanged
         if abs(T(end)-T_bottom) > 0.001
-            warning('temperature of bottom grid cell changed outside of thermal function: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
+            error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
 
         if yIdx == S.spinUp + 1
