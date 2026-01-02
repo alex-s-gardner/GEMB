@@ -48,20 +48,10 @@ if nargin < 24
 end
 
 %% INITIALIZE
-
 CI = 2102;          % heat capacity of snow/ice (J kg-1 k-1)
-CA = 1005.0;        % heat capacity of air (J kg-1 K-1)
-CtoK = 273.15;      % Kelvin to Celcius conversion/ice melt. point T in K
-LS = 2.8295e6;      % latent heat of sublimation (J kg-1)
 R  = 8.314;         % gas constant [mol-1 K-1]
-% dtScaling = 1/11; % This is a necessary fudge factor to avoid instability errors in diffusion [Nicole discovery]
-% CA = 1005;        % heat capacity of air (J kg-1 k-1)
-% LF = 0.3345E6;    % latent heat of fusion(J kg-1)
-LV = 2.495E6;       % latent heat of vaporization(J kg-1)
-% dSnow = 300;      % density of snow [kg m-3]
 SB = 5.67E-8;       % Stefan-Boltzmann constant [W m-2 K-4]
 
-Ttol = 1e-10;
 Dtol = 1e-11;
 Gdntol = 1e-10;
 Wtol = 1e-13;
