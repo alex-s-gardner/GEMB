@@ -7,7 +7,7 @@ function [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_f
     dec_year = location_parameters.start_date:location_parameters.time_step:location_parameters.end_date+1;
     dec_year = dec_year(:);
     dateN = decyear2datenum(dec_year);
-    rand(location_parameters.rand_seed);
+    rng(location_parameters.rand_seed);
     
     % simulate downward shortave radiation
     dsw0 = simulate_shortwave_irradiance(dec_year, location_parameters.lat);

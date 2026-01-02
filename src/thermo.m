@@ -48,20 +48,10 @@ if nargin < 24
 end
 
 %% INITIALIZE
-
 CI = 2102;          % heat capacity of snow/ice (J kg-1 k-1)
-CA = 1005.0;        % heat capacity of air (J kg-1 K-1)
-CtoK = 273.15;      % Kelvin to Celcius conversion/ice melt. point T in K
-LS = 2.8295e6;      % latent heat of sublimation (J kg-1)
 R  = 8.314;         % gas constant [mol-1 K-1]
-% dtScaling = 1/11; % This is a necessary fudge factor to avoid instability errors in diffusion [Nicole discovery]
-% CA = 1005;        % heat capacity of air (J kg-1 k-1)
-% LF = 0.3345E6;    % latent heat of fusion(J kg-1)
-LV = 2.495E6;       % latent heat of vaporization(J kg-1)
-% dSnow = 300;      % density of snow [kg m-3]
 SB = 5.67E-8;       % Stefan-Boltzmann constant [W m-2 K-4]
 
-Ttol = 1e-10;
 Dtol = 1e-11;
 Gdntol = 1e-10;
 Wtol = 1e-13;
@@ -76,6 +66,9 @@ TCs = d(1)*dz(1)*CI;
 
 % determine grid point 'center' vector size
 m = length(d);
+if m == 0
+    error('column has not no gridcells: length(d) = 0')
+end
 
 % initialize Evaporation - Condensation 
 EC      = 0.0;
@@ -83,8 +76,9 @@ ulwrf   = 0.0;
 lhf_cum = 0.0;
 shf_cum = 0.0;
 
-% check if all SW applied to surface or distributed throught subsurface
-% swIdx = length(swf) > 1
+if verbose
+    T_btm = T(end);
+end
 
 %% SURFACE ROUGHNESS (Bougamont, 2005)
 % wind/temperature surface roughness height [m]
@@ -104,28 +98,9 @@ zQ = z0/zratio;
 % if V = 0 goes to infinity therfore if V = 0 change
 V(V < 0.01-Dtol) = 0.01;
 
-% Bulk-transfer coefficient for turbulent fluxes
-An =  0.4^2; % Bulk-transfer coefficient
-C = An*V;  % shf & lhf common coefficient
-
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
-% calculate new K profile [W m-1 K-1]
-
-% logical index of snow and firn
-sfIdx = d < dIce-Dtol;
-
-% initialize conductivity
-K = zeros(m,1);
-
-% for snow and firn (density < 910 kg m-3) (Sturm et al, 1997) or (Calonne et al., 2011)
-if tcIdx == 2
-    K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
-else %default (Sturm et al, 1997)
-    K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
-end
-
-% for ice (density >= 910 kg m-3)
-K(~sfIdx) = 9.828 * exp(-5.7E-3*T(~sfIdx));
+% calculate new thermal conductivity (K) profile [W m-1 K-1]
+K = thermal_conductivity(d, T, dIce, tcIdx);
 
 %% THERMAL DIFFUSION COEFFICIENTS
  
@@ -155,59 +130,62 @@ dzU = [NaN; dz(1:m-1)];
 dzD = [dz(2:m) ; NaN];
  
 % determine minimum acceptable delta t (diffusion number > 1/2) [s]
-if m>0
-    dt = min(CI * dz.^2 .* d  ./ (3 * K) .* dtScaling);
-else
-    dt=1e12;
+% 1. Calculate the theoretical limit for every single grid cell
+%    (Using 0.5 is the absolute limit; we usually aim lower for safety)
+stability_limit_per_cell = 0.5 * (d .* CI .* dz.^2) ./ K;
+
+% 2. Find the bottleneck: The smallest allowable dt in the entire column
+max_safe_dt = min(stability_limit_per_cell);
+
+% 3. Apply a Safety Factor (0.9 or 0.8 is standard)
+%    This accounts for floating point errors or slight non-linearities in K
+dt_target = max_safe_dt * 0.8;
+
+% 4. (Optional) Sanity check to prevent extremely small steps if bad data enters
+if dt_target < 1e-4
+    warning('Timestep is extremely small (%e). Check for near-zero dz layers.', dt_target);
 end
 
-% smallest possible even integer of 60 min where diffusion number > 1/2
-% must go evenly into one hour or the data frequency it it is smaller
+% 5. Fit this target into your input data frequency (dt0)
+%    Find the largest divisor of dt0 that is <= dt_target
+%    (Your existing divisor logic works well here)
 
-% all integer factors of the number of second in a day (8600 [s])
-f = [1 2 3 4 5 6 8 9 10 12 15 16 18 20 24 25 30 36 40 45 48 50 60 ...
-    72 75 80 90 100 120 144 150 180 200 225 240 300 360 400 450 600 ...
-    720 900 1200 1800 3600];
-fi=1./f(end-12:-1:2);
-f = [fi((fi*1e12-floor(fi*1e12)) == 0) f];
-
-% return the min integer factor that is < dt
-I=f<dt-Dtol;
-if sum(I)
-	dt = max(f(I));
-else
-	dt = f(1);
-	display([' WARNING: calculated timestep for thermal loop is < ' num2str(f(1)) ' second. (' num2str(dt) ' sec) ' sprintf('\n')])
+if rem(dt0,1) ~= 0
+    warning('rounding dt0 as it is not an exact integer: dt0 = %0.4f', dt0)
+    dt0 = round(dt0);
 end
 
-if m>0
-    % determine mean (harmonic mean) of K/dz for u, d, & p
-    Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
-    Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
-    Ap = (d.*dz*CI)/dt;
+f = divisors(dt0 * 10000) / 10000; % assuming dt0 is in seconds
+dt = f(find(f <= dt_target, 1, 'last'));
 
-    % create "neighbor" coefficient matrix
-    Nu = Au ./ Ap;
-    Nd = Ad ./ Ap;
-    Np = 1 - Nu - Nd;
-else
-    Nu = 0; 
-    Nd = 0; 
-    Np = 0;
+if isempty(dt)
+    dt = f(1); % Fallback to smallest possible step
 end
+
+% determine mean (harmonic mean) of K/dz for u, d, & p
+Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
+Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
+Ap = (d.*dz*CI)/dt;
+
+
+% Create neighbor arrays for diffusion calculations instead of a
+% tridiagonal matrix
+
+% create "neighbor" coefficient matrix
+Nu = Au ./ Ap;
+Nd = Ad ./ Ap;
+Np = 1 - Nu - Nd;
 
 % specify boundary conditions
 % constant flux at bottom
 Nu(m) = 0;
 Np(m) = 1;
+Nd(m) = 0;
 
 % zero flux at surface
-Np(1) = 1 - Nd(1);
+Nu(1) = 0; % Disconnect from the node above (Air/Ghost node)
+Np(1) = 1 - Nd(1); % Balance the center node to conserve energy (Weights must sum to 1)
 
-% Create neighbor arrays for diffusion calculations instead of a
-% tridiagonal matrix
-Nu(1) = 0;
-Nd(m) = 0;
 
 %% RADIATIVE FLUXES
 
@@ -228,18 +206,19 @@ dlw = dlwrf * dt;
 dT_dlw = dlw / TCs;
 
 %% PREALLOCATE ARRAYS BEFORE LOOP FOR IMPROVED PERFORMANCE
-T0 = zeros(m+2,1);
+Tu = zeros(m,1);
+Td = zeros(m,1);
 
 %% CALCULATE ENERGY SOURCES AND DIFFUSION FOR EVERY TIME STEP [dt]
 for i = 1:dt:dt0
-%     % PART OF ENERGY CONSERVATION CHECK
-%     % store initial temperature
+    %     % PART OF ENERGY CONSERVATION CHECK
+    %     % store initial temperature
     if verbose
-        % total initial hear energy
-        E_init = sum(T ./ (CI * d .* dz));
+        % total initial heat energy
+        E_init = sum(T .* (CI * d .* dz));
 
         % energy flux across lower boundary (energy supplied by underling ice)
-        base_flux = Ad(end-1)*(T(end)-T(end-1)) * dt;
+        base_flux = Ad(end-1) * (T(end) - T(end-1)) * dt;
     end
 
     % calculate temperature of snow surface (Ts)
@@ -252,98 +231,13 @@ for i = 1:dt:dt0
     Ts = min(273.15,Ts);    % don't allow Ts to exceed 273.15 K (0 deg C)
     
     % TURBULENT HEAT FLUX
-    
-    % Monin-Obukhov Stability Correction
-    % Reference:
-    % Ohmura, A., 1982: Climate and Energy-Balance on the Arctic Tundra.
-    % Journal of Climatology, 2, 65-84.
-    
-    % calculate the Bulk Richardson Number (Ri)
-    Ri = ((100000./pAir).^0.286).*(2.0*9.81*(Ta - Ts)) ./ (Tz.*(Ta + Ts).*(((V/Vz).^2.0)));
-    
-    a1     = 1.0;
-    b1     = 2.0/3.0;
-    c1     = 5.0;
-    d1     = 0.35;
-    PhiMz0 = 0.0;
-    PhiHzT = 0.0;
-    PhiHzQ = 0.0;
-
-    if (Ri > 0.0+Ttol)
-        % if stable
-        if (Ri < 0.2-Ttol)
-            zL = Ri./(1.0-5.0*Ri);
-        else
-            zL = Ri;
-        end
-        
-        %zL = min(zL, 0.5); %Sjoblom, 2014
-        zLM = max(zL./Vz.*z0,1e-3);
-        zLT = max(zL./Tz.*zT,1e-3);
-        
-        % Ding et al. 2020, from Beljaars and Holtslag (1991)
-        PhiMz  = -1.*(a1*zL + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1);
-        PhiHz  = -1.*((1.+2.*a1*zL/3.).^1.5 + b1*(zL-c1/d1)*exp(-1.*d1*zL) + b1*c1/d1 - 1.0);
-        PhiMz0 = -1.*(a1*zLM + b1*(zLM-c1/d1)*exp(-1.*d1*zLM) + b1*c1/d1);
-        PhiHzT = -1.*((1.+2.*a1*zLT/3.).^1.5 + b1*(zLT-c1/d1)*exp(-1.*d1*zLT) + b1*c1/d1 - 1.0);
-        
-        PhiHzQ=PhiHzT;
-    
-    else 
-    
-        zL  = Ri/1.5; %max(Ri, -0.5+Ttol)/1.5; % Hogstrom (1996)
-            
-        %Sjoblom, 2014
-        xm=(1.0-19.0*zL).^-0.25;
-        PhiMz=2.0*log((1.+xm)/2.0) + log((1.+xm.^2)/2.0) - 2.*atan(xm) + pi/2.;
-        
-        xh=0.95*(1.0-11.6*zL).^(-0.5);
-        PhiHz=2.0*log((1.0+xh.^2)/2.0);
-
-    end
-    
-    coefM  = log(Vz./z0) - PhiMz + PhiMz0; % Ding et al., 2019
-    coefHT = log(Tz./zT) - PhiHz + PhiHzT; % Sjoblom, 2014, after Foken 2008
-    coefHQ = log(Tz./zQ) - PhiHz + PhiHzQ; % Sjoblom, 2014, after Foken 2008
-
-    %% Sensible Heat
-    % calculate the sensible heat flux [W m-2](Patterson, 1998)
-    shf = dAir .* C .* CA .* (Ta - Ts) .* (100000./pAir).^0.286;
-    
-    % adjust using Monin-Obukhov stability theory
-    shf = shf./(coefM.*coefHT);
-    
-    %% Latent Heat
-    %   determine if snow pack is melting & calcualte surface vapour pressure over ice or liquid water
-    if (Ts >= CtoK-Ttol)
-        L = LV; %for liquid water at 273.15 k to vapor
-        
-        %for liquid surface (assume liquid on surface when Ts == 0 deg C)
-        % Wright (1997), US Meteorological Handbook from Murphy and Koop, 2005 Appendix A
-        %eS = 611.21 * exp(17.502 * (Ts - CtoK) / (240.97 + Ts - CtoK));
-        % Murray 1967, https://cran.r-project.org/web/packages/humidity/vignettes/humidity-measures.html
-        eS = 610.78 * exp(17.2693882 .* (Ts - CtoK - 0.01) ./ (Ts - 35.86));
-    else
-        L = LS; % latent heat of sublimation
-        
-        % for an ice surface Murphy and Koop, 2005 [Equation 7]
-        %eS = exp(9.550426 - 5723.265/Ts + 3.53068 * log(Ts) - 0.00728332 * Ts);
-        % for an ice surface Ding et al., 2019 after Bolton, 1980
-        eS = 610.78 * exp(21.8745584 .* (Ts - CtoK - 0.01) ./ (Ts - 7.66));
-    end
-
-    % Latent heat flux [W m-2]
-    lhf = C .* L .* (eAir - eS) / (461.9*(Ta+Ts)/2.0);
-
-    % adjust using Monin-Obukhov stability theory (if lhf '+' then there is energy and mass gained at the surface,
-    % if '-' then there is mass and energy loss at the surface.
-    lhf = lhf./(coefM.*coefHQ);
+    [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz, z0, zT, zQ);
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
     
     % temperature change due turbulent fluxes
-    turb = (shf + lhf)* dt;
+    turb = (shf + lhf) * dt;
     dT_turb = turb  / TCs;
 
     % upward longwave contribution
@@ -355,13 +249,14 @@ for i = 1:dt:dt0
         deltaULW = dulwrfValue; 
     end
 
-    %If user wants to directly set emissivity, or grain radius is larger than the
-    %threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
+    % If user wants to directly set emissivity, or grain radius is larger than the
+    % threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
     if (eIdx==0 || (teThresh - re(1))<=Gdntol || (eIdx==2 & z0>0.001+Gdntol)) 
         emissivity = teValue; 
     end
 
     ulw    = -(SB * Ts.^4.0 * emissivity + deltaULW) * dt;
+
     ulwrf  = ulwrf - ulw/dt0;
     dT_ulw = ulw / TCs;
     
@@ -372,11 +267,19 @@ for i = 1:dt:dt0
     T(1) = T(1) + dT_dlw + dT_ulw + dT_turb;
     
     % temperature diffusion
-    T0(2:m+1) = T;
-    T0(1)     = Ta;
-    T0(m+2)   = T(m);
-    Tu        = T0(1:m);
-    Td        = T0(3:m+2);
+
+    % Tu: Shift T down one step.
+    % The first element is the 'Ghost Node' above surface. 
+    % For Zero Flux, T_ghost = T(1).
+    Tu(1) = T(1);
+    Tu(2:end) = T(1:end-1);
+    
+    % Td: Shift T up one step.
+    % The last element is the 'Ghost Node' below the bottom.
+    % Since T(m) is fixed (Nu(m)=0, Nd(m)=0), this value is unused, 
+    % but duplicating T(end) keeps the vector size correct.
+    Td(1:end-1) = T(2:end);
+    Td(end) = T(end);
     
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
 
@@ -388,13 +291,17 @@ for i = 1:dt:dt0
     
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
-        E_used = sum(T ./ (CI * d .* dz)) - E_init;
-        E_sup = (sum(sw) + dlw + ulw + turb)/CI + base_flux;
-    
+        E_used = sum(T .* (CI * d .* dz)) - E_init;
+        E_sup = sum(sw) + dlw + ulw + turb + base_flux;
         E_diff = E_used - E_sup;
     
-        if abs(E_diff) > 1E-6 || isnan(E_diff)
-            error('energy not conserved in thermodynamics equations: supplied = %0.8g J, used = %0.8g J', E_sup, E_used)
+        if abs(E_diff) > 1E-4 || isnan(E_diff)
+            fprintf('sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, turb = %0.10g J, base_flux = %0.10g J \n', sum(sw) , dlw , ulw , turb , base_flux)
+            error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J', E_sup, E_used)
         end
+
+         if T_btm ~= T(end)
+            error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_btm,T(end))
+         end
     end
 end
