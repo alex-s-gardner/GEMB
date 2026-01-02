@@ -143,10 +143,12 @@ elseif strcmp(mod.PC, 'flux')
 end
 
 if TEST
+    verbose = true;
+
     [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_forcing(set_id);
     S0 = combineStrucData_GEMB(S,LP,1);
 
-    GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S0, S.isrestart)
+    GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S0, S.isrestart, verbose)
 else
     error("input case not defined")
 end

@@ -1,4 +1,4 @@
-function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart)
+function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart, verbose)
 % GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023. 
 %                                   
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed 
@@ -307,8 +307,7 @@ for yIdx = 1:S.spinUp + 1
         netSW = sum(swf);
 
         % calculate new temperature-depth  profile   
-        % and calculate turbulent heat fluxes [W m-2]
-        verbose=true;        
+        % and calculate turbulent heat fluxes [W m-2]     
         [shf, lhf, T, EC, ulw] = thermo(T, re, dz, d, swf, dlw, Ta, V, eAir, pAir, S.tcIdx, S.eIdx, ...
             S.teValue, S.dulwrfValue, S.teThresh, W(1), dt, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, dIce, ...
             S.isdeltaLWup, verbose);     
@@ -329,7 +328,7 @@ for yIdx = 1:S.spinUp + 1
         % and resulting changes in density and determine wet compaction [m]
         comp2 = sum(dz); 
         [M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
-            S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce);
+            S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce, verbose);
         comp2 = (comp2 - sum(dz));
         
         % allow non-melt densification and determine compaction [m]
