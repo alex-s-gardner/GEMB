@@ -149,20 +149,14 @@ dt = min(CI * dz.^2 .* d  ./ (3 * K) .* dtScaling);
 % smallest possible even integer of 60 min where diffusion number > 1/2
 % must go evenly into one hour or the data frequency it it is smaller
 
-% all integer factors of the number of second in a day (8600 [s])
-f = [1 2 3 4 5 6 8 9 10 12 15 16 18 20 24 25 30 36 40 45 48 50 60 ...
-    72 75 80 90 100 120 144 150 180 200 225 240 300 360 400 450 600 ...
-    720 900 1200 1800 3600];
-fi=1./f(end-12:-1:2);
-f = [fi((fi*1e12-floor(fi*1e12)) == 0) f];
+% all divisors of the number of second/1000 in a day (8600 [s])
+f = divisors(8600 *1000)/1000;
 
 % return the min integer factor that is < dt
-I=f<dt-Dtol;
-if sum(I)
-	dt = max(f(I));
-else
+dt = f(find(f <= dt, 1, 'last'));
+if isempty(dt)
 	dt = f(1);
-	display([' WARNING: calculated timestep for thermal loop is < ' num2str(f(1)) ' second. (' num2str(dt) ' sec) ' sprintf('\n')])
+	display([' WARNING: calculated timestep for thermal loop is < ' num2str(f(1)) ' second. (' num2str(dt) ' sec) ' newline])
 end
 
 % determine mean (harmonic mean) of K/dz for u, d, & p
