@@ -76,6 +76,9 @@ TCs = d(1)*dz(1)*CI;
 
 % determine grid point 'center' vector size
 m = length(d);
+if m == 0
+    error('column has not no gridcells: length(d) = 0')
+end
 
 % initialize Evaporation - Condensation 
 EC      = 0.0;
@@ -155,11 +158,7 @@ dzU = [NaN; dz(1:m-1)];
 dzD = [dz(2:m) ; NaN];
  
 % determine minimum acceptable delta t (diffusion number > 1/2) [s]
-if m>0
-    dt = min(CI * dz.^2 .* d  ./ (3 * K) .* dtScaling);
-else
-    dt=1e12;
-end
+dt = min(CI * dz.^2 .* d  ./ (3 * K) .* dtScaling);
 
 % smallest possible even integer of 60 min where diffusion number > 1/2
 % must go evenly into one hour or the data frequency it it is smaller
@@ -180,21 +179,15 @@ else
 	display([' WARNING: calculated timestep for thermal loop is < ' num2str(f(1)) ' second. (' num2str(dt) ' sec) ' sprintf('\n')])
 end
 
-if m>0
-    % determine mean (harmonic mean) of K/dz for u, d, & p
-    Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
-    Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
-    Ap = (d.*dz*CI)/dt;
+% determine mean (harmonic mean) of K/dz for u, d, & p
+Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
+Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
+Ap = (d.*dz*CI)/dt;
 
-    % create "neighbor" coefficient matrix
-    Nu = Au ./ Ap;
-    Nd = Ad ./ Ap;
-    Np = 1 - Nu - Nd;
-else
-    Nu = 0; 
-    Nd = 0; 
-    Np = 0;
-end
+% create "neighbor" coefficient matrix
+Nu = Au ./ Ap;
+Nd = Ad ./ Ap;
+Np = 1 - Nu - Nd;
 
 % specify boundary conditions
 % constant flux at bottom
@@ -232,8 +225,8 @@ T0 = zeros(m+2,1);
 
 %% CALCULATE ENERGY SOURCES AND DIFFUSION FOR EVERY TIME STEP [dt]
 for i = 1:dt:dt0
-%     % PART OF ENERGY CONSERVATION CHECK
-%     % store initial temperature
+    %     % PART OF ENERGY CONSERVATION CHECK
+    %     % store initial temperature
     if verbose
         % total initial hear energy
         E_init = sum(T .* (CI * d .* dz));
@@ -252,8 +245,7 @@ for i = 1:dt:dt0
     Ts = min(273.15,Ts);    % don't allow Ts to exceed 273.15 K (0 deg C)
     
     % TURBULENT HEAT FLUX
-    [shf, lhf] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz, z0, zT, zQ);
-
+    [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz, z0, zT, zQ);
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
@@ -271,8 +263,8 @@ for i = 1:dt:dt0
         deltaULW = dulwrfValue; 
     end
 
-    %If user wants to directly set emissivity, or grain radius is larger than the
-    %threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
+    % If user wants to directly set emissivity, or grain radius is larger than the
+    % threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
     if (eIdx==0 || (teThresh - re(1))<=Gdntol || (eIdx==2 & z0>0.001+Gdntol)) 
         emissivity = teValue; 
     end
@@ -299,14 +291,12 @@ for i = 1:dt:dt0
         E_before = sum(T ./ (CI * d .* dz));
     end
 
-    
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
-
 
     if diffusion_sanity_check
         E_after = sum(T ./ (CI * d .* dz));
     
-        if abs(E_before - E_after) > 1E-5 || isnan(E_after)
+        if abs(E_before - E_after) > 1E-6 || isnan(E_after)
             error('#1 energy not conserved in thermodynamics equations: before = %0.8g J, after = %0.8g J', E_before, E_after)
         end
     end

@@ -24,7 +24,7 @@ S.adThresh = 1023;
 
 % apply all SW to top grid cell (0) or allow SW to penetrate surface (1) 
 % (default 0: if swIdx=1 and aIdx=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
-S.swIdx = 1;
+S.swIdx = 0;
 
 % select densification model to use (default is 2):
 %   1 = emperical model of Herron and Langway (1980)
