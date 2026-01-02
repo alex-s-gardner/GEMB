@@ -95,23 +95,8 @@ zQ = z0/zratio;
 V(V < 0.01-Dtol) = 0.01;
 
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
-% calculate new K profile [W m-1 K-1]
-
-% logical index of snow and firn
-sfIdx = d < dIce-Dtol;
-
-% initialize conductivity
-K = zeros(m,1);
-
-% for snow and firn (density < 910 kg m-3) (Sturm et al, 1997) or (Calonne et al., 2011)
-if tcIdx == 2
-    K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
-else %default (Sturm et al, 1997)
-    K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
-end
-
-% for ice (density >= 910 kg m-3)
-K(~sfIdx) = 9.828 * exp(-5.7E-3*T(~sfIdx));
+% calculate new thermal conductivity (K) profile [W m-1 K-1]
+K = thermal_conductivity(d, T, dIce, tcIdx);
 
 %% THERMAL DIFFUSION COEFFICIENTS
  
