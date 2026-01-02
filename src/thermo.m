@@ -177,7 +177,7 @@ Nd = Ad ./ Ap;
 Np = 1 - Nu - Nd;
 
 % specify boundary conditions
-% constant flux at bottom
+% Constant Temperature (Dirichlet) boundary condition
 Nu(m) = 0;
 Np(m) = 1;
 Nd(m) = 0;

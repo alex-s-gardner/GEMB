@@ -1,5 +1,5 @@
 function [sumM, Msurf, Rsum, Fsum, T, d, dz, W, mAdd, dz_add, a, adiff, re, gdn, gsp] = ...
-     melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, gsp, dIce)
+     melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, gsp, dIce, verbose)
 % melt computes the quantity of meltwater due to snow temperature in excess 
 % of 0 deg C, determines pore water content and adjusts grid spacing.
 %
@@ -95,6 +95,7 @@ exsT = max(0, T - CtoK);        % [K] to [degC]
 
 % new grid point center temperature, T [K]
 T = min(T,CtoK);
+T_bottom = T(end);
 
 % specify irreducible water content saturation [fraction]
 Swi = 0.07;                     % assumed constant after Colbeck, 1974
@@ -158,7 +159,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
                 surpE(i+1) = surpT(i+1) * CI * m(i+1);
             else
                 surplusE = surpE(i);
-                display([' WARNING: surplus energy at the base of GEMB column' newline])
+                warning('surplus energy at the base of GEMB column' + newline)
             end
             
             % adjust current cell properties (again 159.1342 is the max T)
@@ -284,9 +285,10 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     end
 
     % GRID CELL SPACING AND MODEL DEPTH
-
-    if any(W < 0.0-Wtol)
-        error('Negative pore water generated in melt equations.')
+    if verbose
+        if any(W < 0.0-Wtol)
+            error('Negative pore water generated in melt equations.')
+        end
     end
 
     % delete all cells with zero mass
@@ -321,23 +323,31 @@ Fsum = sum(F);
         managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, CI, LF, CtoK);
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
-
-% Calculate final mass [kg] and energy [J]
-sumER = Rsum * (LF + CtoK * CI);
-EI    = m .* T * CI;
-EW    = W .* (LF + CtoK * CI);
-
-mSum1 = sum(W) + sum(m) + Rsum;
-sumE1 = sum(EI) + sum(EW);
-
-dm = round((mSum0 - mSum1 + mAdd)*100)/100.;
-dE = round(sumE0 - sumE1 - sumER + addE - surplusE);
-
-if dm ~= 0 || dE ~= 0
-    error(['Mass and energy are not conserved in melt equations:' newline ' dm: ' ...
-        num2str(dm) ' dE: ' num2str(dE) newline])
+if verbose
+    % Calculate final mass [kg] and energy [J]
+    sumER = Rsum * (LF + CtoK * CI);
+    EI    = m .* T * CI;
+    EW    = W .* (LF + CtoK * CI);
+    
+    mSum1 = sum(W) + sum(m) + Rsum;
+    sumE1 = sum(EI) + sum(EW);
+    
+    dm = round((mSum0 - mSum1 + mAdd)*100)/100.;
+    dE = round(sumE0 - sumE1 - sumER + addE - surplusE);
+    
+    if dm ~= 0 || dE ~= 0
+        error(['Mass and energy are not conserved in melt equations:' newline ' dm: ' ...
+            num2str(dm) ' dE: ' num2str(dE) newline])
+    end
+    
+    if any(W < 0.0-Wtol)
+        error('Negative pore water generated in melt equations.')
+    end
 end
 
-if any(W < 0.0-Wtol)
-    error('Negative pore water generated in melt equations.')
-end
+% The temperature of the bottom grid cell may have been modified when
+% layers were merged. After checking for energy conservation, set:
+%       T(end) = T_bottom
+% This is to satisfy the Constant Temperature (Dirichlet) boundary
+% condition. If this is not done then then thermal diffusion will blow up
+T(end) = T_bottom; 
