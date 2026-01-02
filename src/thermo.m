@@ -97,10 +97,6 @@ zQ = z0/zratio;
 % if V = 0 goes to infinity therfore if V = 0 change
 V(V < 0.01-Dtol) = 0.01;
 
-% Bulk-transfer coefficient for turbulent fluxes
-An =  0.4^2; % Bulk-transfer coefficient
-C = An*V;  % shf & lhf common coefficient
-
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
 % calculate new K profile [W m-1 K-1]
 
