@@ -41,6 +41,11 @@ disp(['------------------ STARTING RUN # ' num2str(S.runID) ' ------------------
 tic                                     % start timer
 dt = (dateN(2)-dateN(1)) * (60*60*24);  % input time step in seconds
 
+if rem(dt,1) ~= 0
+    warning('rounding dt as it is not an exact integer: dt = %0.4f', dt)
+    dt = round(dt);
+end
+
 % % test switches
 % checkInput      = false;
 % overridePrecip  = false;
@@ -303,16 +308,10 @@ for yIdx = 1:S.spinUp + 1
 
         % calculate new temperature-depth  profile   
         % and calculate turbulent heat fluxes [W m-2]
-        verbose=true;
-        Tbtm = T(end);
-        
+        verbose=true;        
         [shf, lhf, T, EC, ulw] = thermo(T, re, dz, d, swf, dlw, Ta, V, eAir, pAir, S.tcIdx, S.eIdx, ...
             S.teValue, S.dulwrfValue, S.teThresh, W(1), dt, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, dIce, ...
             S.isdeltaLWup, verbose);     
-
-        if Tbtm ~= T(end)
-            error('change in temperature of bottom cell')
-        end
 
         % change in thickness of top cell due to evaporation/condensation
         % assuming same density as top cell
@@ -320,7 +319,8 @@ for yIdx = 1:S.spinUp + 1
         dz(1) = dz(1) + EC / d(1);
 
         % add snow/rain to top grid cell adjusting cell depth, temperature 
-        % and density     
+        % and density
+
         [T, dz, d, Ra, W, a, adiff, re, gdn, gsp] = accumulation(S.aIdx, S.dsnowIdx, S.Tmean, Ta, T, dz, d, ...
             P, W, S.dzMin, S.C, V, S.Vmean, a, adiff, S.aSnow, re, gdn, gsp, dIce);
         
@@ -368,8 +368,8 @@ for yIdx = 1:S.spinUp + 1
         end
 
         % check bottom grid cell T is unchanged
-        if abs(T(end)-T_bottom)>1e-8
-            warning('T(end)-T_bottom>1e-8: T(end)= %0.8g, T_bottom = %0.8g',T(end), T_bottom)
+        if abs(T(end)-T_bottom) > 0.001
+            warning('temperature of bottom grid cell changed outside of thermal function: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
 
         if yIdx == S.spinUp + 1

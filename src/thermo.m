@@ -76,6 +76,10 @@ ulwrf   = 0.0;
 lhf_cum = 0.0;
 shf_cum = 0.0;
 
+if verbose
+    T_btm = T(end);
+end
+
 %% SURFACE ROUGHNESS (Bougamont, 2005)
 % wind/temperature surface roughness height [m]
 if ds < dIce-Dtol && Ws < Wtol
@@ -292,8 +296,12 @@ for i = 1:dt:dt0
         E_diff = E_used - E_sup;
     
         if abs(E_diff) > 1E-4 || isnan(E_diff)
-            fprintf('sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, turb = %0.10g J, base_flux = %0.10g J', sum(sw) , dlw , ulw , turb , base_flux)
+            fprintf('sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, turb = %0.10g J, base_flux = %0.10g J \n', sum(sw) , dlw , ulw , turb , base_flux)
             error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J', E_sup, E_used)
         end
+
+         if T_btm ~= T(end)
+            error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_btm,T(end))
+         end
     end
 end
