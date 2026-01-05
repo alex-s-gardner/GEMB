@@ -1,18 +1,20 @@
-function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta, V, eAir, pAir, tcIdx, eIdx, ...
-        teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup, verbose)
-% thermo computes new temperature profile accounting for energy absorption 
+function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, dlwrf, Ta, V, eAir, pAir, dIce, tcIdx, eIdx, ...
+    teValue, dulwrfValue, teThresh, dzMin, Vz, Tz, TdtScaling, ...
+    isdeltaLWup, verbose)
+
+% thermo computes new temperature profile accounting for energy absorption
 % and thermal diffusion.
 %
-%% Syntax 
-% 
-% 
+%% Syntax
+%
+%
 %
 %% Description
-% 
-% 
-% 
+%
+%
+%
 %% Inputs
-% 
+%
 % * T: grid cell temperature [k]
 % * dz: grid cell depth [m]
 % * d: grid cell density [kg m-3]
@@ -25,22 +27,22 @@ function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta,
 % * dt0: time step of input data [s]
 % * Vz: air temperature height above surface [m]
 % * Tz: wind height above surface [m]
-% 
+%
 %% Outputs
-% 
+%
 % * T: grid cell temperature [k]
 % * EC: evaporation/condensation [kg]
 % * ulwrf: upward longwave radiation flux [W m-2]
-% 
+%
 %% Documentation
-% 
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
-% 
-%% References 
-% If you use GEMB, please cite the following: 
-% 
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+%
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
+%
+%% References
+% If you use GEMB, please cite the following:
+%
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 if nargin < 24
@@ -62,7 +64,7 @@ ds = d(1);      % density of top grid cell
 dAir = 0.029 * pAir /(R * Ta);
 
 % thermal capacity of top grid cell [J/k]
-TCs = d(1)*dz(1)*CI; 
+TCs = d(1)*dz(1)*CI;
 
 % determine grid point 'center' vector size
 m = length(d);
@@ -70,7 +72,7 @@ if m == 0
     error('column has not no gridcells: length(d) = 0')
 end
 
-% initialize Evaporation - Condensation 
+% initialize Evaporation - Condensation
 EC      = 0.0;
 ulwrf   = 0.0;
 lhf_cum = 0.0;
@@ -103,23 +105,23 @@ V(V < 0.01-Dtol) = 0.01;
 K = thermal_conductivity(d, T, dIce, tcIdx);
 
 %% THERMAL DIFFUSION COEFFICIENTS
- 
+
 % A discretization scheme which truncates the Taylor-Series expansion
 % after the 3rd term is used. See Patankar 1980, Ch. 3&4
- 
+
 % discretized heat equation:
- 
+
 %                 Tp = (Au*Tuo+ Ad*Tdo+ (Ap-Au-Ad)Tpo+ S) / Ap
- 
+
 % where neighbor coefficients Au, Ap, & Ad are
- 
+
 %                   Au = [dz_u/2KU + dz/2KP]^-1
 %                   Ad = [dz_d/2KD + dz/2KP]^-1
-%                   Ap = d*CI*dz/Dt 
- 
-% and u & d represent grid points up and down from the center grid point 
+%                   Ap = d*CI*dz/Dt
+
+% and u & d represent grid points up and down from the center grid point
 % point p and o identifies previous time step values. S is a source term.
- 
+
 % u, d, and p conductivities
 KU = [NaN ; K(1:m-1)];
 KD = [K(2:m) ; NaN];
@@ -128,7 +130,7 @@ KP = K;
 % determine u, d & p cell widths
 dzU = [NaN; dz(1:m-1)];
 dzD = [dz(2:m) ; NaN];
- 
+
 % determine minimum acceptable delta t (diffusion number > 1/2) [s]
 % 1. Calculate the theoretical limit for every single grid cell
 %    (Using 0.5 is the absolute limit; we usually aim lower for safety)
@@ -225,17 +227,17 @@ for i = 1:dt:dt0
     % when incoming SW radition is allowed to penetrate the surface,
     % the modeled energy balance becomes very sensitive to how Ts is
     % calculated.  Here, we take the surface temperature to be T(1), but
-     % note that the estimated enegy balance & melt are significanly
+    % note that the estimated enegy balance & melt are significanly
     % less when Ts is taken as the mean of the x top grid cells (T(1) + T(2))/2.0.
     Ts = T(1);
     Ts = min(273.15,Ts);    % don't allow Ts to exceed 273.15 K (0 deg C)
-    
+
     % TURBULENT HEAT FLUX
     [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz, z0, zT, zQ);
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
-    
+
     % temperature change due turbulent fluxes
     turb = (shf + lhf) * dt;
     dT_turb = turb  / TCs;
@@ -246,41 +248,41 @@ for i = 1:dt:dt0
 
     %If user wants to set a upward long wave bias
     if isdeltaLWup
-        deltaULW = dulwrfValue; 
+        deltaULW = dulwrfValue;
     end
 
     % If user wants to directly set emissivity, or grain radius is larger than the
     % threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
-    if (eIdx==0 || (teThresh - re(1))<=Gdntol || (eIdx==2 & z0>0.001+Gdntol)) 
-        emissivity = teValue; 
+    if (eIdx==0 || (teThresh - re(1))<=Gdntol || (eIdx==2 & z0>0.001+Gdntol))
+        emissivity = teValue;
     end
 
     ulw    = -(SB * Ts.^4.0 * emissivity + deltaULW) * dt;
 
     ulwrf  = ulwrf - ulw/dt0;
     dT_ulw = ulw / TCs;
-    
+
     % new grid point temperature
-    
+
     % SW penetrates surface
     T    = T    + dT_sw;
     T(1) = T(1) + dT_dlw + dT_ulw + dT_turb;
-    
+
     % temperature diffusion
 
     % Tu: Shift T down one step.
-    % The first element is the 'Ghost Node' above surface. 
+    % The first element is the 'Ghost Node' above surface.
     % For Zero Flux, T_ghost = T(1).
     Tu(1) = T(1);
     Tu(2:end) = T(1:end-1);
-    
+
     % Td: Shift T up one step.
     % The last element is the 'Ghost Node' below the bottom.
-    % Since T(m) is fixed (Nu(m)=0, Nd(m)=0), this value is unused, 
+    % Since T(m) is fixed (Nu(m)=0, Nd(m)=0), this value is unused,
     % but duplicating T(end) keeps the vector size correct.
     Td(1:end-1) = T(2:end);
     Td(end) = T(end);
-    
+
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
 
     % calculate cumulative evaporation (+)/condensation(-)
@@ -288,20 +290,20 @@ for i = 1:dt:dt0
 
     lhf_cum = lhf_cum+lhf*dt/dt0;
     shf_cum = shf_cum+shf*dt/dt0;
-    
+
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
         E_used = sum(T .* (CI * d .* dz)) - E_init;
         E_sup = sum(sw) + dlw + ulw + turb + base_flux;
         E_diff = E_used - E_sup;
-    
+
         if abs(E_diff) > 1E-4 || isnan(E_diff)
             fprintf('sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, turb = %0.10g J, base_flux = %0.10g J \n', sum(sw) , dlw , ulw , turb , base_flux)
             error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J', E_sup, E_used)
         end
 
-         if T_btm ~= T(end)
+        if T_btm ~= T(end)
             error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_btm,T(end))
-         end
+        end
     end
 end

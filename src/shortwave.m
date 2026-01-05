@@ -65,7 +65,7 @@ Dtol = 1e-11;
 m = length(d);
 swf = zeros(m,1);
 
-if ((swIdx == 0)) | ((dIce - d(1))<Dtol)  % all sw radation is absorbed by the top grid cell
+if ((swIdx == 0)) || ((dIce - d(1))<Dtol)  % all sw radation is absorbed by the top grid cell
 
     % calculate surface shortwave radiation fluxes [W m-2]
     if (aIdx == 1) % albedo_method = "gardner_2009"
