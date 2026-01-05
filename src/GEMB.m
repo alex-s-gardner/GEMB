@@ -327,14 +327,13 @@ for yIdx = 1:S.spinUp + 1
             accumulation(T, dz, d, W, re, gdn, gsp, a, adiff, Ta, P, V, dIce, S.aIdx, S.dsnowIdx, S.Tmean,  ...
              S.dzMin, S.C,  S.Vmean, S.aSnow);
 
-        
-
         % calculate water production, M [kg m-2] resulting from snow/ice
         % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2] 
         % and resulting changes in density and determine wet compaction [m]
         comp2 = sum(dz); 
-        [M, Msurf, R, F, T, d, dz, W, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
-            re, gdn, gsp, dIce, verbose);
+
+        [T, dz, d, W, re, gdn, gsp, a, adiff, M, Msurf, R, F] = ...
+            melt(T, dz, d, W, re, gdn, gsp, a, adiff, Ra, dIce, verbose);
         comp2 = (comp2 - sum(dz));
 
         % Manage the layering to match the user defined requirements
