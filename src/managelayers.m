@@ -1,5 +1,5 @@
-function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = ...
-		managelayers(T, d, dz, W, a, adiff, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, verbose)
+function [T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, dz_add, addE, m, EI, EW] = ...
+		managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, dzMin, zMax, zMin, zTop, zY, verbose)
 % managelayers adjusts the depth and number of vertical layers in the model 
 % to ensure that the thickness of any single layer does not exceed thresholds 
 % set for the minimum and maximum allowable layer thickness.

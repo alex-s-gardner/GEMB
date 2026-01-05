@@ -337,8 +337,10 @@ for yIdx = 1:S.spinUp + 1
         comp2 = (comp2 - sum(dz));
 
         % Manage the layering to match the user defined requirements
-[d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, ~, ~, re, gdn, gsp] = ...
-        managelayers(T, d, dz, W, a, adiff, S.dzMin, S.zMax, S.zMin, re, gdn, gsp, S.zTop, S.zY, verbose);
+
+[T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, dz_add, addE, m, EI, EW] = ...
+        managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, verbose);
+
   % check bottom grid cell T is unchanged
         if abs(T(end)-T_bottom) > 0.001
             error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
