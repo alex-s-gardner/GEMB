@@ -103,34 +103,31 @@ else
 end
 
 % FIXED ALBEDO VARIABLES
-switch S.aIdx
-    case {1 2}
-        % albedo tuning parameters
-        % for methods of calculating albedo see albedo function
-        % METHOD 1 & 2
-        S.aSnow = 0.85;         % new snow albedo (0.64 - 0.89)
-        S.aIce = 0.48;          % range 0.27-0.58 for old snow
-    	S.aValue = S.aSnow;  % Albedo forcing at every element.  Used only if aIdx == 0, or density exceeds adThresh
+% albedo tuning parameters 
+% for methods of calculating albedo see albedo function
+% ----------------------------- METHODS 1 & 2 -----------------------------
+S.aSnow = 0.85;         % new snow albedo (0.64 - 0.89)
+S.aIce = 0.48;          % range 0.27-0.58 for old snow
+S.aValue = S.aSnow;  % Albedo forcing at every element.  Used only if aIdx == 0, or density exceeds adThresh
 
-    	%Defaut values, but these can also be set as time series forcing
-    	S.dswdiffrf=0.0;        % downward diffusive shortwave radiation flux [W/m^2]
-    	S.szaValue=0.0;         % Solar Zenith Angle [degree]
-    	S.cotValue=0.0;         % Cloud Optical Thickness
-    	S.ccsnowValue=0.0;      % concentration of light absorbing carbon for snow [ppm1]
-    	S.cciceValue=0.0;       % concentration of light absorbing carbon for ice [ppm1]
+%Defaut values, but these can also be set as time series forcing
+S.dswdiffrf=0.0;        % downward diffusive shortwave radiation flux [W/m^2]
+S.szaValue=0.0;         % Solar Zenith Angle [degree]
+S.cotValue=0.0;         % Cloud Optical Thickness
+S.ccsnowValue=0.0;      % concentration of light absorbing carbon for snow [ppm1]
+S.cciceValue=0.0;       % concentration of light absorbing carbon for ice [ppm1]
 
-    case 3
-        % RADIATION CORRECTION FACTORS
-        % -> only used for met station data and Greuell & Konzelmann, 1994 albedo
-        S.cldFrac = 0.1;        % average cloud amount
+% ------------------------------- METHOD 3 --------------------------------
+% RADIATION CORRECTION FACTORS
+% -> only used for met station data and Greuell & Konzelmann, 1994 albedo
+S.cldFrac = 0.1;        % average cloud amount
 
-    case 4
-        % additonal tuning parameters albedo as a funtion of age and water content
-        % (Bougamont et al., 2005)
-        S.t0wet = 15;           % time scale for wet snow (15-21.9) [d]
-        S.t0dry = 30;           % warm snow timescale (30) [d]
-        S.K = 7;                % time scale temperature coef. (7) [d]
-end
+% ------------------------------- METHOD 4 --------------------------------
+% additonal tuning parameters albedo as a funtion of age and water content
+% (Bougamont et al., 2005)
+S.t0wet = 15;           % time scale for wet snow (15-21.9) [d]
+S.t0dry = 30;           % warm snow timescale (30) [d]
+S.K = 7;                % time scale temperature coef. (7) [d]
 
 %% RUN GEMB
 runPfx = S.runPfx;

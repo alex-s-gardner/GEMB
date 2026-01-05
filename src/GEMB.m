@@ -229,79 +229,59 @@ for yIdx = 1:S.spinUp + 1
         eAir = eAir0(dIdx);    % screen level vapor pressure [Pa]
         pAir = pAir0(dIdx);    % screen level air pressure [Pa]
 
-        switch S.aIdx
-            case {1,2}
-                % if we are provided with cc and cot values, extract for the timestep
-                if numel(S.ccsnowValue)>1
-                    ccsnowValue = S.ccsnowValue(dIdx);
-                else
-                    ccsnowValue = S.ccsnowValue;
-                end
+        % if we are provided with cc and cot values, extract for the timestep
+        if numel(S.ccsnowValue)>1
+            ccsnowValue = S.ccsnowValue(dIdx);
+        else
+            ccsnowValue = S.ccsnowValue;
+        end
 
-                if numel(S.cciceValue)>1
-                    cciceValue = S.cciceValue(dIdx);
-                else
-                    cciceValue = S.cciceValue;
-                end
+        if numel(S.cciceValue)>1
+            cciceValue = S.cciceValue(dIdx);
+        else
+            cciceValue = S.cciceValue;
+        end
 
-                if numel(S.cotValue)>1
-                    cotValue = S.cotValue(dIdx);
-                else
-                    cotValue = S.cotValue;
-                end
+        if numel(S.cotValue)>1
+            cotValue = S.cotValue(dIdx);
+        else
+            cotValue = S.cotValue;
+        end
 
-                if numel(S.szaValue)>1
-                    szaValue = S.szaValue(dIdx);
-                else
-                    szaValue = S.szaValue;
-                end
+        if numel(S.szaValue)>1
+            szaValue = S.szaValue(dIdx);
+        else
+            szaValue = S.szaValue;
+        end
 
-                if numel(S.dswdiffrf)>1
-                    dswdiffrf = S.dswdiffrf(dIdx);
-                else
-                    dswdiffrf = S.dswdiffrf;
-                end
+        if numel(S.dswdiffrf)>1
+            dswdiffrf = S.dswdiffrf(dIdx);
+        else
+            dswdiffrf = S.dswdiffrf;
+        end
 
-            case 3
-                if numel(S.cldFrac)>1
-                    cldFrac = S.cldFrac(dIdx);
-                else
-                    cldFrac = S.cldFrac;
-                end
+        if numel(S.cldFrac)>1
+            cldFrac = S.cldFrac(dIdx);
+        else
+            cldFrac = S.cldFrac;
         end
 
 
-        % albedo calculations contained in switch to minimize passing of
-        % variables to albedo function
-        switch S.aIdx
-            case {1,2}
-                % snow grain metamorphism
-                [re, gdn, gsp]  = ...
-                    grainGrowth(T, dz, d, W, re, gdn, gsp, dt, S.aIdx);
 
-                % calculate snow, firn and ice albedo
-                [a, adiff] = albedo(S.aIdx, re, dz, d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, W, P, EC, ...
-                    Msurf, ccsnowValue, cciceValue, szaValue, cotValue, [], [], [], dt, dIce);
+        % !!!!! Start of gemb function .... !!!!!!!!!!!!!!!!
 
-                % determine distribution of absorbed sw radation with depth
-                swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
+        
+        % snow grain metamorphism [also used in thermo.. not just albedo... so always
+        % calculate]
+        [re, gdn, gsp]  = ...
+            grainGrowth(T, dz, d, W, re, gdn, gsp, dt, S.aIdx);
 
-            case 3
-                % calculate snow, firn and ice albedo
-                [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh,...
-                    a, adiff, [], [], [], [], [], [], [], [], [], [], [], [], [], dIce);
+        % calculate snow, firn and ice albedo
+        [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, W, P, EC, ...
+            Msurf, ccsnowValue, cciceValue, szaValue, cotValue, S.t0wet, S.t0dry, S.K, dt, dIce);
 
-                % determine distribution of absorbed sw radation with depth
-                swf = shortwave(S.swIdx, S.aIdx, dsw, [], a(1), adiff(1), d, dz, re, dIce);
-
-            case 4
-                % calculate snow, firn and ice albedo
-                [a, adiff] = albedo(S.aIdx, [], [], d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, ...
-                    W, P, EC, [], [], [], [], [], S.t0wet, S.t0dry, S.K, dt, dIce);
-
-                % determine distribution of absorbed sw radation with depth
-                swf = shortwave(S.swIdx, S.aIdx, dsw, [], a(1), adiff(1), d, dz, re, dIce);
-        end
+        % determine distribution of absorbed sw radation with depth
+        swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
 
         % calculate net shortwave [W m-2]
         netSW = sum(swf);
@@ -320,8 +300,6 @@ for yIdx = 1:S.spinUp + 1
 
         % add snow/rain to top grid cell adjusting cell depth, temperature
         % and density
-
-
 
         [T, dz, d, W, re, gdn, gsp, a, adiff, Ra] = ...
             accumulation(T, dz, d, W, re, gdn, gsp, a, adiff, Ta, P, V, dIce, S.aIdx, S.dsnowIdx, S.Tmean,  ...
@@ -347,6 +325,11 @@ for yIdx = 1:S.spinUp + 1
 
         [dz, d] = densification(T, dz, d, re, dt, dIce, S.aIdx, S.denIdx, S.Tmean, S.C, S.swIdx, S.adThresh);
         comp1 = (comp1 - sum(dz));
+
+
+        % !!!!! END gemb function here..... !!!!!!!!!
+
+
 
         % calculate upward longwave radiation flux [W m-2]
         % not used in energy balance
