@@ -1,13 +1,13 @@
-function K = thermal_conductivity(d, T, dIce, thermal_conductivity_method)
+function K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method)
 % thermal_conductivity computes the thermal conductivity profile for snow, 
 % firn, and ice based on density and temperature.
 %
 %% Syntax
-%   K = thermal_conductivity(d, T, dIce, thermal_conductivity_method)
+%   K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method)
 %
 %% Description
 %   Calculates thermal conductivity [W m-1 K-1] differentiating between 
-%   snow/firn (density < dIce) and glacier ice (density >= dIce).
+%   snow/firn (density < density_ice) and glacier ice (density >= density_ice).
 %   
 %   For snow/firn, it uses empirical relationships based on density.
 %   For ice, it uses a temperature-dependent relationship.
@@ -15,7 +15,7 @@ function K = thermal_conductivity(d, T, dIce, thermal_conductivity_method)
 %% Inputs
 %   d     : vector of grid cell densities [kg m-3]
 %   T     : vector of grid cell temperatures [K]
-%   dIce  : density threshold defining glacier ice (e.g., 910 or 917) [kg m-3]
+%   density_ice  : density threshold defining glacier ice (e.g., 910 or 917) [kg m-3]
 %   thermal_conductivity_method : integer flag for snow conductivity parameterization:
 %           1 = Sturm et al. (1997) [Default]
 %           2 = Calonne et al. (2011)
@@ -41,7 +41,7 @@ function K = thermal_conductivity(d, T, dIce, thermal_conductivity_method)
     
     %% IDENTIFY SNOW VS ICE
     % Create logical mask: True for snow/firn, False for ice
-    sfIdx = d < dIce - Dtol;
+    sfIdx = d < density_ice - Dtol;
     
     %% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
     % Use empirical density-based regressions
@@ -56,7 +56,7 @@ function K = thermal_conductivity(d, T, dIce, thermal_conductivity_method)
     end
     
     %% CALCULATE CONDUCTIVITY FOR ICE
-    % For densities >= dIce, conductivity is dominated by temperature dependence.
+    % For densities >= density_ice, conductivity is dominated by temperature dependence.
     % Formula typically attributed to Weller & Schwerdtfeger (1977) or similar
     % standard glaciological relations.
     % Note: ~sfIdx selects the inverse of the snow index (i.e., the ice cells)

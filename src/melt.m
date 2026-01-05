@@ -1,5 +1,5 @@
-function [T, dz, d, W, re, gdn, gsp, a, adiff, sumM, Msurf, Rsum, Fsum] = ...
-    melt(T, dz, d, W, re, gdn, gsp, a, adiff, Ra, dIce, verbose)
+function [T, dz, d, W, re, gdn, gsp, a, adiff, sumM, M_surf, Rsum, Fsum] = ...
+    melt(T, dz, d, W, re, gdn, gsp, a, adiff, Ra, density_ice, verbose)
 
 
 % melt computes the quantity of meltwater due to snow temperature in excess
@@ -30,19 +30,19 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, sumM, Msurf, Rsum, Fsum] = ...
 %  re      mm           Grain size
 %  gdn     unitless     Grain dendricity
 %  gsp     unitless     Grain sphericity
-%  dIce:   kg m^-3      Ice density
+%  density_ice:   kg m^-3      Ice density
 %
 %% Outputs
 %
 %  sumM:   kg m^-2      Total column melt.
-%  Msurf:  kg m^-2      Surface layer melt.
+%  M_surf:  kg m^-2      Surface layer melt.
 %  Rsum:   kg m^-2      Total column runoff.
 %  Fsum:   kg m^-2      Total column refreeze.
 %  T       K            Grid cell temperature.
 %  d       kg m^-3      Grid cell density.
 %  dz      m            Grid cell thickness.
 %  W       kg m^-2      Water content.
-%  mAdd:   kg m^-2      Mass added to the column.
+%  mass_added:   kg m^-2      Mass added to the column.
 %  dz_add: m            Thickness added to the column.
 %  a       fraction     Albedo.
 %  adiff   fraction     Diffuse albedo.
@@ -87,7 +87,7 @@ sumE0 = sum(EI) + sum(EW);     % total energy [J]
 % initialize melt and runoff scalars
 Rsum   = 0;   % sum runoff [kg m^-2]
 sumM   = 0;   % total melt [kg m^-2]
-Msurf  = 0;   % surface layer melt
+M_surf  = 0;   % surface layer melt
 
 % output
 surplusE = 0;
@@ -117,13 +117,13 @@ if sum(W) > 0+Wtol
     T = T + double(m>Wtol).*(dW.*(LF+(CtoK - T)*CI)./(m.*CI)); % temperature [K]
 
     % if pore water froze in ice then adjust d and dz thickness
-    d(d > dIce-Dtol) = dIce;
+    d(d > density_ice-Dtol) = density_ice;
     dz = m ./ d;
 
 end
 
 % squeeze water from snow pack
-Wi = (dIce - d) .* Swi .* (m ./ d);     % irreducible water content [kg m^-2]
+Wi = (density_ice - d) .* Swi .* (m ./ d);     % irreducible water content [kg m^-2]
 exsW = max(0, W - Wi);                  % water "squeezed" from snow [kg m^-2]
 
 %% MELT, PERCOLATION AND REFREEZE
@@ -175,7 +175,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
     % convert temperature excess to melt [kg]
     Mmax  = exsT .* d .* dz * CI / LF;
     M     = min(Mmax, m);               % melt
-    Msurf = M(1);
+    M_surf = M(1);
     sumM  = max(0,sum(M)-Ra);           % total melt [kg] minus the liquid rain that had been added
 
     % calculate maximum refreeze amount, maxF [kg]
@@ -214,14 +214,14 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             break
 
             % if reaches impermeable ice layer all liquid water runs off (R)
-        elseif d(i) >= dIce-Dtol || (d(i) >= dPHC-Dtol && depthice>0.1+Dtol)  % dPHC = pore hole close off [kg m-3]
+        elseif d(i) >= density_ice-Dtol || (d(i) >= dPHC-Dtol && depthice>0.1+Dtol)  % dPHC = pore hole close off [kg m-3]
             % disp('ICE LAYER')
             % no water freezes in this cell
             % no water percolates to lower cell
             % cell ice temperature & density do not change
 
             m(i) = m(i) - M(i);                       % mass after melt
-            Wi = (dIce-d(i)) * Swi * (m(i)/d(i));     % irreducible water
+            Wi = (density_ice-d(i)) * Swi * (m(i)/d(i));     % irreducible water
             dW(i) = max(min(inM, Wi - W(i)),-1*W(i)); % change in pore water
             R(i) = max(0, inM - dW(i));               % runoff
 
@@ -232,7 +232,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             % cell ice temperature & density do not change
 
             m(i) = m(i) - M(i);                       % mass after melt
-            Wi = (dIce-d(i)) * Swi * (m(i)/d(i));     % irreducible water
+            Wi = (density_ice-d(i)) * Swi * (m(i)/d(i));     % irreducible water
             dW(i) = max(min(inM, Wi - W(i)),-1*W(i)); % change in pore water
             flxDn(i+1) = max(0, inM - dW(i));         % meltwater out
             R(i) = 0;
@@ -244,19 +244,19 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             %-----------------------melt water-----------------------------
             m(i) = m(i) - M(i);
             dz_0 = m(i)/d(i);
-            dMax = (dIce - d(i))*dz_0;              % d max = dIce
+            dMax = (density_ice - d(i))*dz_0;              % d max = density_ice
             F1   = min(min(inM,dMax),maxF(i));      % maximum refreeze
             m(i) = m(i) + F1;                       % mass after refreeze
             d(i) = m(i)/dz_0;
 
             %-----------------------pore water-----------------------------
-            Wi = (dIce-d(i))* Swi * dz_0;                % irreducible water
+            Wi = (density_ice-d(i))* Swi * dz_0;                % irreducible water
             dW(i) = max(min(inM - F1, Wi-W(i)),-1*W(i)); % change in pore water
             F2 = 0;
 
             % ---------------- THIS HAS NOT BEEN CHECKED-----------------_
             if dW(i) < 0.0-Wtol                     % excess pore water
-                dMax  = (dIce - d(i))*dz_0;         % maximum refreeze
+                dMax  = (density_ice - d(i))*dz_0;         % maximum refreeze
                 maxF2 = min(dMax, maxF(i)-F1);      % maximum refreeze
                 F2    = min(-1.0*dW(i), maxF2);     % pore water refreeze
                 m(i)  = m(i) + F2;                  % mass after refreeze
@@ -273,7 +273,7 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
             end
 
             % check if an ice layer forms
-            if abs(d(i) - dIce) < Dtol
+            if abs(d(i) - density_ice) < Dtol
                 % disp('ICE LAYER FORMS')
                 % excess water runs off
                 R(i) = flxDn(i+1);

@@ -46,34 +46,10 @@ if rem(dt,1) ~= 0
     dt = round(dt);
 end
 
-% % test switches
-% checkInput      = false;
-% overridePrecip  = false;
 
-% Constants
-dIce = 910;     % density of ice [kg m-3]
-
-% if overridePrecip
-%     % override pricipitiation data for testing
-%     disp('--> setting precipitation to annual mean <--')
-%     P0(:) = S.C*(dt/(60*60*24*364.25)); % FIX NUM DAYS IN YEAR
-% end
-%
-% if checkInput
-%     % display input parameter ranges to screen for sanity check
-%     disp(' - - - - - check input forcing - - - - - ')
-%     X = {'daten', 'Ta0', 'V0', 'dsw0', 'dlw0', 'P0', 'eAir0', 'pAir0', 'dt'};
-%     for i = 1:length(X)
-%
-%         fprintf('%s \t : %6.2f - %6.2f \t size : [%7.0f %7.0f]\n', ...
-%             X{i}, min(eval(X{i})), max(eval(X{i})), size(eval(X{i}),1), ...
-%             size(eval(X{i}),2))
-%     end
-% end
 
 %% Generate model grid
-
-dz = gridInitialize(S.column_ztop, S.column_dztop, S.column_zmax, S.column_zy);
+dz = grid_initialize(S.column_ztop, S.column_dztop, S.column_zmax, S.column_zy);
 
 %% Initialize model variables
 
@@ -88,7 +64,6 @@ dz = gridInitialize(S.column_ztop, S.column_dztop, S.column_zmax, S.column_zy);
 % -------------------------------------------------------------------------
 
 % initialize profile variables
-
 if is_restart
     m     = S.Sizeini;
     a     = S.Aini;               % albedo [fraction]
@@ -105,7 +80,7 @@ else
     m     = length(dz);
     a     = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
     adiff = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
-    d     = zeros(m,1) + dIce;    % density to that of ice [kg m-3]
+    d     = zeros(m,1) + S.density_ice;    % density to that of ice [kg m-3]
     EC    = 0;                    % surface evaporation (-) condensation (+) [kg m-2]
     gdn   = zeros(m,1);           % grain dentricity to old snow
     gsp   = zeros(m,1);           % grain sphericity to old snow
@@ -114,53 +89,52 @@ else
     W     = zeros(m,1);           % water content to zero [kg m-2]
 end
 
-F     = zeros(m,1);               % refreeze to zero [kg m-2]
-M     = zeros(m,1);               % melt water to zero [kg m-2]
-Msurf = 0;                        % initialize surface melt for albedo parameterization
-Ra    = zeros(m,1);               % rain amount to zero [kg m-2]
+F      = zeros(m,1);               % refreeze to zero [kg m-2]
+M      = zeros(m,1);               % melt water to zero [kg m-2]
+M_surf = 0;                        % initialize surface melt for albedo parameterization
+Ra     = zeros(m,1);               % rain amount to zero [kg m-2]
 
 % fixed lower temperature bounday condition - T is fixed
 T_bottom = T(end);
 
 % deteremine save time steps
-dateV = datevec([daten; (daten(end) + daten(end)-daten(end-1))]);
+date_vector = datevec([daten; (daten(end) + daten(end)-daten(end-1))]);
 switch S.output_frequency
     case 'monthly'
-        outIdx = (dateV(1:end-1,2) - dateV(2:end,2)) ~= 0;
+        output_index = (date_vector(1:end-1,2) - date_vector(2:end,2)) ~= 0;
     case 'daily'
-        outIdx = (dateV(1:end-1,3) - dateV(2:end,3)) ~= 0;
+        output_index = (date_vector(1:end-1,3) - date_vector(2:end,3)) ~= 0;
     case '3hourly'
-        outIdx = (dateV(1:end-1,4) - dateV(2:end,4)) ~= 0;
+        output_index = (date_vector(1:end-1,4) - date_vector(2:end,4)) ~= 0;
 end
 
 % initialize output structure
 
 % single level time series
-S.varName.monolevel = {'time', 'Ta', 'P', 'M', 'R', 'F', 'EC', 'netSW', ...
-    'netLW', 'shf', 'lhf', 'a1', 'netQ', 're1', 'd1', 'm', 'FAC'};
+S.varname.monolevel = {'time', 'Ta', 'P', 'M', 'R', 'F', 'EC', 'sw_net', ...
+    'lw_net', 'shf', 'lhf', 'a1', 'Q_net', 're1', 'd1', 'm', 'FAC'};
 
-Z       = nan(1,sum(outIdx));
-O.time  = daten(outIdx)';
-O.M     = Z;
-O.R     = Z;
-O.F     = Z;
-O.netSW = Z;
-O.netLW = Z;
-O.shf   = Z;
-O.lhf   = Z;
-O.a1    = Z;
-O.netQ  = Z;
-O.re1   = Z;
-O.d1    = Z;
-O.Ta    = Z;
-O.P     = Z;
-O.comp1 = Z;
-O.comp2 = Z;
-O.ps    = Z;
-O.m     = Z;
+O.time            = daten(output_index)';
+O.M               = nan(1,sum(output_index));
+O.R               = O.M;
+O.F               = O.M;
+O.sw_net          = O.M;
+O.lw_net          = O.M;
+O.shf             = O.M;
+O.lhf             = O.M;
+O.a1              = O.M;
+O.Q_net           = O.M;
+O.re1             = O.M;
+O.d1              = O.M;
+O.Ta              = O.M;
+O.P               = O.M;
+O.compaction_dens = O.M;
+O.compaction_melt = O.M;
+O.ps              = O.M;
+O.m               = O.M;
 
 % time averages/totals
-I = find(outIdx);                      % save index
+I = find(output_index);                      % save index
 for i = 1:length(I)
     if i == 1
         O.Ta(i) = mean(Ta0(1:I(i))) - 273.15;  % convert from K to deg C
@@ -172,29 +146,25 @@ for i = 1:length(I)
 end
 
 % multi level time series
-S.varName.profile = {'d', 'T', 'W', 'a', 'dz', 're', 'gdn', 'gsp'};
-S.addCells        = 10000;   % number of addtional vertical levels
+S.varname.profile = {'d', 'T', 'W', 'a', 'dz', 're', 'gdn', 'gsp'};
+S.output_padding  = 10000;   % number of addtional vertical levels to accomodate changing grid size
 
-Z     = nan(length(d)+S.addCells,length(I));
-O.d   = Z;
-O.T   = Z;
-O.W   = Z;
-O.dz  = Z;
-O.re  = Z;
-O.gdn = Z;
-O.gsp = Z;
-O.ps  = Z;
-
-% clear unwanted variables
-clear X Z n dateV fn
+O.d   = nan(length(d) + S.output_padding,length(I));;
+O.T   = O.d;
+O.W   = O.d;
+O.dz  = O.d;
+O.re  = O.d;
+O.gdn = O.d;
+O.gsp = O.d;
+O.ps  = O.d;
 
 % initialize cumulative output values
-OV.varName = {'R', 'M', 'F', 'P', 'EC', 'Ra', 'mAdd', 'netSW', 'netLW', 'shf', ...
-    'lhf', 'a1', 're1', 'ulw', 'd1', 'comp1', 'comp2', 'm', 'netQ', 'FAC'};
+OV.varname = {'R', 'M', 'F', 'P', 'EC', 'Ra', 'mass_added', 'sw_net', 'lw_net', 'shf', ...
+    'lhf', 'a1', 're1', 'ulw', 'd1', 'compaction_dens', 'compaction_melt', 'm', 'Q_net', 'FAC'};
 
 % set cumulative values zero
-for v = 1:length(OV.varName)
-    OV.(OV.varName{v}) = 0;
+for v = 1:length(OV.varname)
+    OV.(OV.varname{v}) = 0;
 end
 
 OV.count = 0;
@@ -203,17 +173,17 @@ OV.count = 0;
 for yIdx = 1:S.n_spinup_cycles + 1
 
     % Determine initial mass [kg]:
-    initMass   = sum (dz .* d) + sum(W);
+    mass_initial   = sum (dz .* d) + sum(W);
 
     % Initialize cumulative variables:
-    sumR       = 0;
-    sumF       = 0;
-    sumM       = 0;
-    sumEC      = 0;
-    sumP       = 0;
-    sumMassAdd = 0;
-    sumMsurf   = 0;
-    sumRa      = 0;
+    R_cumulative          = 0;
+    F_cumulative          = 0;
+    M_cumulative          = 0;
+    EC_cumulative         = 0;
+    P_cumulative          = 0;
+    mass_added_cumulative = 0;
+    M_surf_cumulative     = 0;
+    Ra_cumulative         = 0;
 
     %% Start loop for data frequency
 
@@ -266,10 +236,10 @@ for yIdx = 1:S.n_spinup_cycles + 1
             cloud_fraction = S.cloud_fraction;
         end
 
-        [T, dz, d, W, re, gdn, gsp, a, adiff, EC, Msurf, netSW, shf, ...
-            lhf, ulw, Ra, M, R, F, mAdd, addE, comp1, comp2] = ...
-            gemb_core(T, dz, d, W, re, gdn, gsp, a, adiff, dt, P, EC, Msurf, ...
-            dIce, black_carbon_snow, black_carbon_ice, solar_zenith_angle, cloud_optical_thickness, cloud_fraction, dsw, ...
+        [T, dz, d, W, re, gdn, gsp, a, adiff, EC, M_surf, sw_net, shf, ...
+            lhf, ulw, Ra, M, R, F, mass_added, energy_added, compaction_dens, compaction_melt] = ...
+            gemb_core(T, dz, d, W, re, gdn, gsp, a, adiff, dt, P, EC, M_surf, ...
+            S.density_ice, black_carbon_snow, black_carbon_ice, solar_zenith_angle, cloud_optical_thickness, cloud_fraction, dsw, ...
             dsw_diffuse, dlw, Ta, V, eAir, pAir, S, verbose);
         
         % calculate upward longwave radiation flux [W m-2]
@@ -278,27 +248,27 @@ for yIdx = 1:S.n_spinup_cycles + 1
         % ulw = 5.67E-8 * T(1)^4;
 
         % calculate net longwave [W m-2]
-        netLW = dlw - ulw;
+        lw_net = dlw - ulw;
 
         % sum component mass changes [kg m-2]
-        sumMassAdd = mAdd + sumMassAdd;
-        sumM       = M + sumM;
-        sumMsurf   = Msurf + sumMsurf;
-        sumR       = R + sumR;
-        sumW       = sum(W);
-        sumP       = P +  sumP;
-        sumEC      = EC + sumEC;   % evap (-)/cond(+)
-        sumRa      = Ra + sumRa;
-        sumF       = F + sumF;
+        mass_added_cumulative = mass_added + mass_added_cumulative;
+        M_cumulative          = M + M_cumulative;
+        M_surf_cumulative     = M_surf + M_surf_cumulative;
+        R_cumulative          = R + R_cumulative;
+        W_total               = sum(W);
+        P_cumulative          = P +  P_cumulative;
+        EC_cumulative         = EC + EC_cumulative;   % evap (-)/cond(+)
+        Ra_cumulative         = Ra + Ra_cumulative;
+        F_cumulative          = F + F_cumulative;
 
         % calculate total system mass
-        sumMass = sum(dz .* d);
-        FAC     = sum(dz.*(dIce - min(d,dIce)))/1000;
-        dMass   = sumMass + sumR + sumW - sumP - sumEC - initMass - sumMassAdd;
-        dMass   = round(dMass * 100)/100;
+        mass_total    = sum(dz .* d);
+        FAC           = sum(dz.*(S.density_ice - min(d,S.density_ice)))/1000;
+        mass_change   = mass_total + R_cumulative + W_total- P_cumulative - EC_cumulative - mass_initial - mass_added_cumulative;
+        mass_change   = round(mass_change * 100)/100;
 
         % check mass conservation
-        if dMass ~= 0
+        if mass_change ~= 0
             error('total system mass not conserved in MB function')
         end
 
@@ -309,30 +279,30 @@ for yIdx = 1:S.n_spinup_cycles + 1
 
         if yIdx == S.n_spinup_cycles + 1
             % initialize cumulative and average variables for output
-            d1   = d(1);
-            a1   = a(1);
-            re1  = re(1);
-            netQ = netSW + netLW + shf + lhf;
+            d1    = d(1);
+            a1    = a(1);
+            re1   = re(1);
+            Q_net = sw_net + lw_net + shf + lhf;
 
-            for v = 1:length(OV.varName)
-                OV.(OV.varName{v}) = eval(OV.varName{v}) + OV.(OV.varName{v});
+            for v = 1:length(OV.varname)
+                OV.(OV.varname{v}) = eval(OV.varname{v}) + OV.(OV.varname{v});
             end
 
             OV.count = OV.count + 1;
 
-            if outIdx(dIdx)
+            if output_index(dIdx)
                 % Store model output in structure format
 
                 % time averaged monolevel values
-                r = sum(outIdx(1:dIdx));
+                r = sum(output_index(1:dIdx));
 
-                for v = 1:length(OV.varName)
+                for v = 1:length(OV.varname)
                     % check if output is a cumulative value
-                    if sum(strcmp(OV.varName{v}, {'M', 'R', 'F', 'EC', 'P', 'Ra','mAdd', 'comp1', 'comp2'})) == 1
-                        O.(OV.varName{v})(r) = OV.(OV.varName{v});
+                    if sum(strcmp(OV.varname{v}, {'M', 'R', 'F', 'EC', 'P', 'Ra','mass_added', 'compaction_dens', 'compaction_melt'})) == 1
+                        O.(OV.varname{v})(r) = OV.(OV.varname{v});
                     else
                         % if not cumulative then divide by time steps
-                        O.(OV.varName{v})(r) = OV.(OV.varName{v}) / OV.count;
+                        O.(OV.varname{v})(r) = OV.(OV.varname{v}) / OV.count;
                     end
                 end
 
@@ -345,12 +315,12 @@ for yIdx = 1:S.n_spinup_cycles + 1
                 O.dz(end-o:end,r)  = dz;
                 O.gdn(end-o:end,r) = gdn;
                 O.gsp(end-o:end,r) = gsp;
-                O.ps(end-o:end,r)  = sum(dz) - sumMass/910;
+                O.ps(end-o:end,r)  = sum(dz) - mass_total/910;
                 O.m(r)             = o+1;
 
                 % set cumulative values back to zero
-                for v = 1:length(OV.varName)
-                    OV.(OV.varName{v}) = 0;
+                for v = 1:length(OV.varname)
+                    OV.(OV.varname{v}) = 0;
                 end
 
                 OV.count = 0;
@@ -361,7 +331,7 @@ for yIdx = 1:S.n_spinup_cycles + 1
     % display cycle completed and time to screen
     disp([num2str(S.run_id) ': cycle: ' num2str(yIdx) ' of '  ...
         num2str(S.n_spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
-        ' avg melt: ' num2str(round(sumM/(daten(end)-daten(1))*365.25)) ...
+        ' avg melt: ' num2str(round(M_cumulative/(daten(end)-daten(1))*365.25)) ...
         ' kg/m2/yr']);
 end
 

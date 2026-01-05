@@ -1,4 +1,4 @@
-function [T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
+function [T, dz, d, W, re, gdn, gsp, a, adiff, mass_added, energy_added] = ...
     managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, column_dzmin, column_zmax, column_zmin, column_ztop, column_zy, verbose)
 % managelayers adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
@@ -40,9 +40,9 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
 %  d       kg m^-3      Grid cell density.
 %  T       K            Grid cell temperature.
 %  W       kg m^-2      Water content.
-%  mAdd:   kg m^-2      Mass added to the column.
+%  mass_added:   kg m^-2      Mass added to the column.
 %  dz_add: m            Thickness added to the column.
-%  addE:   J m^-2       Energy added to the column.
+%  energy_added:   J m^-2       Energy added to the column.
 %  a       fraction     Albedo.
 %  adiff   fraction     Diffuse albedo.
 %  m       kg m^-2      Grid cell mass.
@@ -205,8 +205,8 @@ Ztot = sum(dz);
 if Ztot < column_zmin-Dtol
 
     % Mass and energy to be added:
-    mAdd   = m(end) + W(end);
-    addE   = T(end) * m(end) * CI + W(end) * (LF+CtoK*CI);
+    mass_added   = m(end) + W(end);
+    energy_added   = T(end) * m(end) * CI + W(end) * (LF+CtoK*CI);
     dz_add = dz(end);
 
     % Add a grid cell of the same size and temperature to the bottom:
@@ -226,8 +226,8 @@ if Ztot < column_zmin-Dtol
 elseif Ztot > column_zmax+Dtol
 
     % Mass and energy loss:
-    mAdd   = -(m(end) + W(end));
-    addE   = -(T(end) * m(end) * CI) - W(end) * (LF+CtoK*CI);
+    mass_added   = -(m(end) + W(end));
+    energy_added   = -(T(end) * m(end) * CI) - W(end) * (LF+CtoK*CI);
     dz_add = -(dz(end));
 
     % Remove a grid cell from the bottom:
@@ -246,8 +246,8 @@ elseif Ztot > column_zmax+Dtol
 
 else
     % No mass or energy is added or removed:
-    mAdd   = 0;
-    addE   = 0;
+    mass_added   = 0;
+    energy_added   = 0;
     dz_add = 0;
 
 end
@@ -257,7 +257,7 @@ end
 %       T(end) = T_bottom
 % This is to satisfy the Constant Temperature (Dirichlet) boundary
 % condition. If this is not done then then thermal diffusion will blow up
-addE   = addE + ((T_bottom - T(end)) * m(end) * CI);
+energy_added   = energy_added + ((T_bottom - T(end)) * m(end) * CI);
 T(end) = T_bottom;
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
@@ -270,8 +270,8 @@ if verbose
     mSum1 = sum(W) + sum(m);
     sumE1 = sum(EI) + sum(EW);
 
-    dm = round((mSum0 - mSum1 + mAdd)*100)/100.;
-    dE = round(sumE0 - sumE1 + addE);
+    dm = round((mSum0 - mSum1 + mass_added)*100)/100.;
+    dE = round(sumE0 - sumE1 + energy_added);
 
     if dm ~= 0 || dE ~= 0
         error(['Mass and energy are not conserved in melt equations:' newline ' dm: ' ...

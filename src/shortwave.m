@@ -1,4 +1,4 @@
-function swf = shortwave(sw_absorption_method, albedo_method, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
+function swf = shortwave(sw_absorption_method, albedo_method, dsw, dswdiff, as, asdiff, d, dz, re, density_ice)
 % shortwave distributes absorbed shortwave radiation vertically within snow/ice.
 %
 %% Syntax 
@@ -65,7 +65,7 @@ Dtol = 1e-11;
 m = length(d);
 swf = zeros(m,1);
 
-if ((sw_absorption_method == 0)) || ((dIce - d(1))<Dtol)  % all sw radation is absorbed by the top grid cell
+if ((sw_absorption_method == 0)) || ((density_ice - d(1))<Dtol)  % all sw radation is absorbed by the top grid cell
 
     % calculate surface shortwave radiation fluxes [W m-2]
     if (albedo_method == 1) % albedo_method = "gardner_2009"
@@ -145,7 +145,7 @@ else % sw radation is absorbed at depth within the glacier
         Bi = 1.3;   % ice SW extinction coefficient [m-1] (Bassford,2006)
         
         % calculate extinction coefficient B [m-1] vector
-        B = Bs + (300 - d) .* ((Bs - Bi)/(dIce - 300));
+        B = Bs + (300 - d) .* ((Bs - Bi)/(density_ice - 300));
         
         % cumulative extinction factor
         B_cum =  [1; cumprod(exp(-B.*dz))];

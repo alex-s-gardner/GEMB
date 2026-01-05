@@ -1,5 +1,5 @@
 function [T, dz, d, W, re, gdn, gsp, a, adiff, Ra] = accumulation(T, dz,...
-    d, W, re, gdn, gsp, a, adiff, T_air, P, V, dIce, albedo_method, new_snow_method,...
+    d, W, re, gdn, gsp, a, adiff, T_air, P, V, density_ice, albedo_method, new_snow_method,...
     T_mean, dz_min, C, V_mean, a_SNOW)
 
 % accumulation adds precipitation and deposition to the model grid.
@@ -136,9 +136,9 @@ if P > 0+Ptol
         % adjust grid cell density
         d(1) = mass / dz(1);
 
-        % if d > the density of ice, d = dIce
-        if d(1) > dIce-Dtol
-            d(1)  = dIce;          % adjust d
+        % if d > the density of ice, d = density_ice
+        if d(1) > density_ice-Dtol
+            d(1)  = density_ice;          % adjust d
             dz(1) = mass / d(1);   % dz is adjusted to conserve mass
         end
 

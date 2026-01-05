@@ -1,4 +1,4 @@
-function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, dlwrf, Ta, V, eAir, pAir, dIce, thermal_conductivity_method, emissivity_method, ...
+function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, dlwrf, Ta, V, eAir, pAir, density_ice, thermal_conductivity_method, emissivity_method, ...
     emissivity, ulw_delta, emissivity_re_threshold, Vz, Tz, verbose)
 
 % thermo computes new temperature profile accounting for energy absorption
@@ -83,9 +83,9 @@ end
 
 %% SURFACE ROUGHNESS (Bougamont, 2005)
 % wind/temperature surface roughness height [m]
-if ds < dIce-Dtol && Ws < Wtol
+if ds < density_ice-Dtol && Ws < Wtol
     z0 = 0.00012;       % 0.12 mm for dry snow
-elseif ds >= dIce-Dtol
+elseif ds >= density_ice-Dtol
     z0 = 0.0032;        % 3.2 mm for ice
 else
     z0 = 0.0013;        % 1.3 mm for wet snow
@@ -101,7 +101,7 @@ V(V < 0.01-Dtol) = 0.01;
 
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
 % calculate new thermal conductivity (K) profile [W m-1 K-1]
-K = thermal_conductivity(d, T, dIce, thermal_conductivity_method);
+K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method);
 
 %% THERMAL DIFFUSION COEFFICIENTS
 

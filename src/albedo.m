@@ -1,5 +1,5 @@
 function [a, adiff] = albedo(TK, dz, d, W, re, a, adiff, dt, P, EC, ...
-    Ms, dIce, clabSnow, clabIce, SZA, COT, n, albedo_method, albedo_ice, albedo_snow, ...
+    Ms, density_ice, clabSnow, clabIce, SZA, COT, n, albedo_method, albedo_ice, albedo_snow, ...
     albedo_fixed, albedo_desnity_threshold, albedo_wet_snow_t0, albedo_dry_snow_t0, albedo_K)
 
 
@@ -120,8 +120,8 @@ else
         case 3 % a as a function of density
 
             % calculate albedo
-            a(1) = albedo_ice + (d(1) - dIce)*(albedo_snow - albedo_ice) ...
-                / (dSnow - dIce) + (0.05 * (n - 0.5));
+            a(1) = albedo_ice + (d(1) - density_ice)*(albedo_snow - albedo_ice) ...
+                / (dSnow - density_ice) + (0.05 * (n - 0.5));
 
         case 4 % exponential time decay & wetness
 
@@ -175,21 +175,21 @@ else
         depthsnow = sum(dz(1:(lice(1)-1)));
 
         if (depthsnow<=0.1+Dtol & lice(1)<=length(d) & d(lice(1))>=dPHC-Dtol)
-            aice = ai_max + (as_min - ai_max)*(d(lice(1))-dIce)/(dPHC-dIce);
+            aice = ai_max + (as_min - ai_max)*(d(lice(1))-density_ice)/(dPHC-density_ice);
             a(1) = aice + max(a(1)-aice,0.0)*(depthsnow/0.1);
         end
 
         if (d(1)>=dPHC-Dtol)
-            if (d(1)<dIce-Dtol) %For continuity of albedo in firn i.e. P. Alexander et al., 2014
+            if (d(1)<density_ice-Dtol) %For continuity of albedo in firn i.e. P. Alexander et al., 2014
 
-                %ai=ai_max + (as_min - ai_max)*(dI-dIce)/(dPHC-dIce);
+                %ai=ai_max + (as_min - ai_max)*(dI-density_ice)/(dPHC-density_ice);
                 %dPHC is pore close off (830 kg m^-3)
                 %dI is density of the upper firn layer
-                a(1) = ai_max + (as_min - ai_max)*(d(1)-dIce)/(dPHC-dIce);
+                a(1) = ai_max + (as_min - ai_max)*(d(1)-density_ice)/(dPHC-density_ice);
 
             else %surface layer is density of ice
 
-                %When density is > dIce (typically 910 kg m^-3, 920 is used by Alexander in MAR),
+                %When density is > density_ice (typically 910 kg m^-3, 920 is used by Alexander in MAR),
                 %ai=ai_min + (ai_max - ai_min)*e^(-1*(Msw(t)/albedo_K))
                 %albedo_K is a scale factor (set to 200 kg m^-2)
                 %Msw(t) is the time-dependent accumulated amount of excessive surface meltwater

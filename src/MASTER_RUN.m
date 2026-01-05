@@ -119,6 +119,9 @@ S.albedo_wet_snow_t0 = 15;     % time scale for wet snow (15-21.9) [d]
 S.albedo_dry_snow_t0 = 30;     % warm snow timescale (30) [d]
 S.albedo_K           = 7;      % time scale temperature coef. (7) [d]
 
+% Constants
+S.density_ice = 910;     % density of ice [kg m-3]
+
 %% RUN GEMB
 
 % open matlab pool for parallel processing

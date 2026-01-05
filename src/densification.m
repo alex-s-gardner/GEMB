@@ -1,4 +1,4 @@
-function [dz, d] = densification(T, dz, d, re, dt, dIce, albedo_method, densification_method, T_mean, C, sw_absorption_method, albedo_desnity_threshold)
+function [dz, d] = densification(T, dz, d, re, dt, density_ice, albedo_method, densification_method, T_mean, C, sw_absorption_method, albedo_desnity_threshold)
 
 
 % densification computes the densification of snow/firn using the emperical model of
@@ -106,14 +106,14 @@ switch densification_method
         c1 = 3.7E-9 * H(~idx);
 
     case 4 % Li and Zwally (2004)
-        c0 = (C./dIce) .* max(139.21 - 0.542*T_mean,1).*8.36.*max(CtoK - T,1.0) .^ -2.061;
+        c0 = (C./density_ice) .* max(139.21 - 0.542*T_mean,1).*8.36.*max(CtoK - T,1.0) .^ -2.061;
         c1 = c0;
         c0 = c0(idx);
         c1 = c1(~idx);
 
     case 5 % Helsen et al. (2008)
         % common variable
-        c0 = (C./dIce) .* max(76.138 - 0.28965*T_mean,1).*8.36.*max(CtoK - T,1.0) .^ -2.061;
+        c0 = (C./density_ice) .* max(76.138 - 0.28965*T_mean,1).*8.36.*max(CtoK - T,1.0) .^ -2.061;
         c1 = c0;
         c0 = c0(idx);
         c1 = c1(~idx);
@@ -197,13 +197,13 @@ switch densification_method
 end
 
 % new snow density
-d(idx) = d(idx) + (c0 .* (dIce - d(idx)) / 365 * dt);
-d(~idx) = d(~idx) + (c1 .* (dIce - d(~idx)) / 365 * dt);
+d(idx) = d(idx) + (c0 .* (density_ice - d(idx)) / 365 * dt);
+d(~idx) = d(~idx) + (c1 .* (density_ice - d(~idx)) / 365 * dt);
 
-%disp((num2str(nanmean(c0 .* (dIce - d(idx)) / 365 * dt))))
+%disp((num2str(nanmean(c0 .* (density_ice - d(idx)) / 365 * dt))))
 
 % do not allow densities to exceed the density of ice
-d(d > dIce-Ptol) = dIce;
+d(d > density_ice-Ptol) = density_ice;
 
 % calculate new grid cell length
 dz = mass_init ./ d;

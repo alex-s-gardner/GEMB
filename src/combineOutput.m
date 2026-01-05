@@ -2,8 +2,8 @@
 
 %% USER INPUT
 
-varMerge = {'Ta','P','M','R','EC','elev','a1', 'comp1', ...
-    'comp2', 'd_50m','netSW', 'netLW', 'shf', 'lhf',};
+varMerge = {'Ta','P','M','R','EC','elev','a1', 'compaction_dens', ...
+    'compaction_melt', 'd_50m','sw_net', 'lw_net', 'shf', 'lhf',};
 S.run_prefix = 'S2A1D2';
 S.inputDIR = '../input/CFSR/T62';
 
@@ -63,15 +63,15 @@ for v = 1:length(varMerge)
             units       = 'unitless';
             monolevel   = true;
             depthAvg    = false;
-        case 'comp1'
+        case 'compaction_dens'
             longName    = 'elevation lowering due to dry-snow densification';
-            shortName   = 'comp1';
+            shortName   = 'compaction_dens';
             units       = 'm';
             monolevel   = true;
             depthAvg    = false;
-        case 'comp2'
+        case 'compaction_melt'
             longName    = 'elevation lowering due to wet-snow densification and runoff';
-            shortName   = 'comp2';
+            shortName   = 'compaction_melt';
             units       = 'm';
             mmonolevel   = true;
             depthAvg    = false;
@@ -172,7 +172,7 @@ for v = 1:length(varMerge)
     end
     
     switch var
-        case {'elev', 'comp1', 'comp2'}
+        case {'elev', 'compaction_dens', 'compaction_melt'}
             OUT = OUT - repmat(OUT(:,:,1), [1,1,size(OUT,3)]);
     end
     

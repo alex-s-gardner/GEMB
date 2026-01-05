@@ -68,10 +68,10 @@ for i=1:nt
     
     if i>1
         di=max(min(find(results.dz(:,i-1)==0))-1,1);
-        if isfield(results,'mAdd') & isfield(results,'W') & isfield(results,'d');
-            Hadd=Hadd+deltat*((results.mAdd(i)-results.W(di,i-1))/results.d(di,i-1));
+        if isfield(results,'mass_added') & isfield(results,'W') & isfield(results,'d');
+            Hadd=Hadd+deltat*((results.mass_added(i)-results.W(di,i-1))/results.d(di,i-1));
         else
-            display('WARNING: no mAdd, W, or d in results, plot surface height will not be adjusted accordingly.');
+            display('WARNING: no mass_added, W, or d in results, plot surface height will not be adjusted accordingly.');
         end
         Madd=(Madd-MeanSmb)/1000;
     end
