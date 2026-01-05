@@ -338,7 +338,7 @@ for yIdx = 1:S.spinUp + 1
 
         % Manage the layering to match the user defined requirements
 
-[T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, dz_add, addE, m, EI, EW] = ...
+[T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
         managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, verbose);
 
   % check bottom grid cell T is unchanged
