@@ -1,5 +1,8 @@
-function [a, adiff] = albedo(aIdx, re, dz, d, n, aIce, aSnow, aValue, adThresh, a, adiff, TK, W, P, EC,...
-    Ms, clabSnow, clabIce, SZA, COT, t0wet, t0dry, K, dt, dIce)
+function [a, adiff] = albedo(TK, dz, d, W, re, a, adiff, dt, P, EC, ...
+    Ms, dIce, clabSnow, clabIce, SZA, COT, n, aIdx, aIce, aSnow, ...
+    aValue, adThresh, t0wet, t0dry, K)
+
+
 % albedo calculates snow, firn and ice albedo as a function of:
 %   1 : effective grain radius (Gardner & Sharp, 2009)
 %   2 : effective grain radius (Brun et al., 2009)

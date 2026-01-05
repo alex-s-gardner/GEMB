@@ -277,8 +277,9 @@ for yIdx = 1:S.spinUp + 1
             grainGrowth(T, dz, d, W, re, gdn, gsp, dt, S.aIdx);
 
         % calculate snow, firn and ice albedo
-        [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, W, P, EC, ...
-            Msurf, ccsnowValue, cciceValue, szaValue, cotValue, S.t0wet, S.t0dry, S.K, dt, dIce);
+
+        [a, adiff] = albedo(T, dz, d, W, re, a, adiff, dt, P, EC, Msurf, dIce, ccsnowValue, cciceValue, szaValue, cotValue, cldFrac, S.aIdx, S.aIce, S.aSnow, S.aValue, S.adThresh,  ...
+            S.t0wet, S.t0dry, S.K);
 
         % determine distribution of absorbed sw radation with depth
         swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
