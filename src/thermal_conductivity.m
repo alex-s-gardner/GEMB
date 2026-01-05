@@ -1,9 +1,9 @@
-function K = thermal_conductivity(d, T, dIce, tcIdx)
+function K = thermal_conductivity(d, T, dIce, thermal_conductivity_method)
 % thermal_conductivity computes the thermal conductivity profile for snow, 
 % firn, and ice based on density and temperature.
 %
 %% Syntax
-%   K = thermal_conductivity(d, T, dIce, tcIdx)
+%   K = thermal_conductivity(d, T, dIce, thermal_conductivity_method)
 %
 %% Description
 %   Calculates thermal conductivity [W m-1 K-1] differentiating between 
@@ -16,7 +16,7 @@ function K = thermal_conductivity(d, T, dIce, tcIdx)
 %   d     : vector of grid cell densities [kg m-3]
 %   T     : vector of grid cell temperatures [K]
 %   dIce  : density threshold defining glacier ice (e.g., 910 or 917) [kg m-3]
-%   tcIdx : integer flag for snow conductivity parameterization:
+%   thermal_conductivity_method : integer flag for snow conductivity parameterization:
 %           1 = Sturm et al. (1997) [Default]
 %           2 = Calonne et al. (2011)
 %
@@ -45,7 +45,7 @@ function K = thermal_conductivity(d, T, dIce, tcIdx)
     
     %% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
     % Use empirical density-based regressions
-    if tcIdx == 2
+    if thermal_conductivity_method == 2
         % Parameterization from Calonne et al. (2011)
         % Often used for a wider range of snow microstructures
         K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);

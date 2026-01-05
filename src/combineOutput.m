@@ -4,7 +4,7 @@
 
 varMerge = {'Ta','P','M','R','EC','elev','a1', 'comp1', ...
     'comp2', 'd_50m','netSW', 'netLW', 'shf', 'lhf',};
-S.runPfx = 'S2A1D2';
+S.run_prefix = 'S2A1D2';
 S.inputDIR = '../input/CFSR/T62';
 
 %% Combine output and place into a netcdf
@@ -12,7 +12,7 @@ S.inputDIR = '../input/CFSR/T62';
 load(fullfile(S.inputDIR, 'mask'))
 
 % find all output data files
-f = dir(fullfile('..','Output', [S.runPfx '*.mat']));
+f = dir(fullfile('..','Output', [S.run_prefix '*.mat']));
 fName = {f(:).name};
 
 % read in time stamp from first file
@@ -177,7 +177,7 @@ for v = 1:length(varMerge)
     end
     
     %% place into netcdf file
-    outFileName = fullfile('..','Output', [S.runPfx '_' var '.nc']);
+    outFileName = fullfile('..','Output', [S.run_prefix '_' var '.nc']);
     [numrow, numcol]= size(mask.value);
     ncid = netcdf.create(outFileName,'NC_SHARE');
     
@@ -236,7 +236,7 @@ for v = 1:length(varMerge)
     % add attributes
     netcdf.putAtt(ncid, varid, 'long_name', longName)
     netcdf.putAtt(ncid, varid, 'units', units)
-    netcdf.putAtt(ncid, varid, 'model_run', ['GEMB0.2_' S.runPfx])
+    netcdf.putAtt(ncid, varid, 'model_run', ['GEMB0.2_' S.run_prefix])
     netcdf.putAtt(ncid, varid, 'units', units)
     
     netcdf.putAtt(ncid, varidX, 'long_name', xLongName)

@@ -33,4 +33,4 @@ for i = 1:length(fn)
     S.(fn{i}) = LP.(fn{i});
 end
 
-S.runID = [S.runPfx '_' sprintf('%06d', runIdx)];
+S.run_id = [S.run_prefix '_' sprintf('%06d', runIdx)];

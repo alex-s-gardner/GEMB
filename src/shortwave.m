@@ -1,4 +1,4 @@
-function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
+function swf = shortwave(sw_absorption_method, albedo_method, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
 % shortwave distributes absorbed shortwave radiation vertically within snow/ice.
 %
 %% Syntax 
@@ -11,8 +11,8 @@ function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
 % 
 %% Inputs
 % 
-%   swIdx   = shortwave allowed to penetrate surface (0 = No, 1 = Yes)
-%   aIdx    = method for calculating albedo (1-4)
+%   sw_absorption_method   = shortwave allowed to penetrate surface (0 = No, 1 = Yes)
+%   albedo_method    = method for calculating albedo (1-4)
 %   dsw     = downward shortwave radiative flux [w m-2]
 %   dswdiff = downward shortwave diffuse radiative flux [w m-2]
 %   as      = surface albedo
@@ -21,11 +21,11 @@ function swf = shortwave(swIdx, aIdx, dsw, dswdiff, as, asdiff, d, dz, re, dIce)
 %   dz      = grid cell depth [m]
 %   re      = grid cell effective grain radius [mm]
 % 
-% swIdx = 0 : all absorbed SW energy is assigned to the top grid cell
+% sw_absorption_method = 0 : all absorbed SW energy is assigned to the top grid cell
 %
-% swIdx = 1 : absorbed SW is distributed with depth as a function of:
+% sw_absorption_method = 1 : absorbed SW is distributed with depth as a function of:
 %   default   : snow density (taken from Bassford, 2002)
-%   if aIdx=2 : grain size in 3 spectral bands (Brun et al., 1992)
+%   if albedo_method=2 : grain size in 3 spectral bands (Brun et al., 1992)
 %
 %% Outputs
 % 
@@ -65,10 +65,10 @@ Dtol = 1e-11;
 m = length(d);
 swf = zeros(m,1);
 
-if ((swIdx == 0)) || ((dIce - d(1))<Dtol)  % all sw radation is absorbed by the top grid cell
+if ((sw_absorption_method == 0)) || ((dIce - d(1))<Dtol)  % all sw radation is absorbed by the top grid cell
 
     % calculate surface shortwave radiation fluxes [W m-2]
-    if (aIdx == 1) % albedo_method = "gardner_2009"
+    if (albedo_method == 1) % albedo_method = "gardner_2009"
         swf(1) = (1.0 - as) * max(0.0,(dsw - dswdiff)) +  (1.0 - asdiff) * dswdiff;
     else
         swf(1) = (1 - as) * dsw;
@@ -76,7 +76,7 @@ if ((swIdx == 0)) || ((dIce - d(1))<Dtol)  % all sw radation is absorbed by the 
     
 else % sw radation is absorbed at depth within the glacier
     
-    if aIdx == 2    % albedo_method = "brun_1992" function of effective radius (3 spectral bands)
+    if albedo_method == 2    % albedo_method = "brun_1992" function of effective radius (3 spectral bands)
         
         % convert effective radius [mm] to grain size [m]
         gsz = (re * 2) / 1000;

@@ -1,6 +1,5 @@
-function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, dlwrf, Ta, V, eAir, pAir, dIce, tcIdx, eIdx, ...
-    teValue, dulwrfValue, teThresh, dzMin, Vz, Tz, TdtScaling, ...
-    isdeltaLWup, verbose)
+function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, dlwrf, Ta, V, eAir, pAir, dIce, thermal_conductivity_method, emissivity_method, ...
+    emissivity, ulw_delta, emissivity_re_threshold, Vz, Tz, verbose)
 
 % thermo computes new temperature profile accounting for energy absorption
 % and thermal diffusion.
@@ -102,7 +101,7 @@ V(V < 0.01-Dtol) = 0.01;
 
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
 % calculate new thermal conductivity (K) profile [W m-1 K-1]
-K = thermal_conductivity(d, T, dIce, tcIdx);
+K = thermal_conductivity(d, T, dIce, thermal_conductivity_method);
 
 %% THERMAL DIFFUSION COEFFICIENTS
 
@@ -242,22 +241,15 @@ for i = 1:dt:dt0
     turb = (shf + lhf) * dt;
     dT_turb = turb  / TCs;
 
-    % upward longwave contribution
-    deltaULW   = 0.0;
-    emissivity = 1.0;
-
-    %If user wants to set a upward long wave bias
-    if isdeltaLWup
-        deltaULW = dulwrfValue;
-    end
-
     % If user wants to directly set emissivity, or grain radius is larger than the
-    % threshold, or eIdx is 2 and we have wet snow or ice, use prescribed emissivity
-    if (eIdx==0 || (teThresh - re(1))<=Gdntol || (eIdx==2 & z0>0.001+Gdntol))
-        emissivity = teValue;
+    % threshold, or emissivity_method is 2 and we have wet snow or ice, use prescribed emissivity
+    if (emissivity_method==0 || (emissivity_re_threshold - re(1))<=Gdntol || (emissivity_method==2 & z0>0.001+Gdntol))
+        emissivity = emissivity;
+    else
+        emissivity = 1.0;
     end
 
-    ulw    = -(SB * Ts.^4.0 * emissivity + deltaULW) * dt;
+    ulw    = -(SB * Ts.^4.0 * emissivity + ulw_delta) * dt;
 
     ulwrf  = ulwrf - ulw/dt0;
     dT_ulw = ulw / TCs;

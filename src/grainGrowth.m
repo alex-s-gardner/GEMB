@@ -1,4 +1,4 @@
-function [re, gdn, gsp]  = grainGrowth(T, dz, d, W, re, gdn, gsp, dt, aIdx)
+function [re, gdn, gsp]  = grainGrowth(T, dz, d, W, re, gdn, gsp, dt, albedo_method)
 % grainGrowth models the effective snow grain size. 
 % 
 %% Syntax 
@@ -56,8 +56,8 @@ Ttol = 1e-10;
 Gdntol = 1e-10;
 Wtol = 1e-13;
 
-%only when aIdx = 1 or 2 do we run grainGrowth: 
-if aIdx~=1 && aIdx ~=2
+%only when albedo_method = 1 or 2 do we run grainGrowth: 
+if albedo_method~=1 && albedo_method ~=2
 	%come out as we came in:
 	return;
 end

@@ -1,5 +1,5 @@
 function [T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
-    managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, dzMin, zMax, zMin, zTop, zY, verbose)
+    managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, column_dzmin, column_zmax, column_zmin, column_ztop, column_zy, verbose)
 % managelayers adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
 % set for the minimum and maximum allowable layer thickness.
@@ -23,14 +23,14 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
 %  m       kg m^-2      Grid cell mass.
 %  EI      J m^-2       Initial energy of snow/ice.
 %  EW      J m^-2       Initial energy of water.
-%  dzMin   m            Minimum allowable grid spacing.
-%  zMax    m            Maximum depth of the total column.
-%  zMin    m            Minimum depth of the total column.
+%  column_dzmin   m            Minimum allowable grid spacing.
+%  column_zmax   m            Maximum depth of the total column.
+%  column_zmin    m            Minimum depth of the total column.
 %  re      mm           Grain size
 %  gdn     unitless     Grain dendricity
 %  gsp     unitless     Grain sphericity
-%  zTop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  zY      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
+%  column_ztop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
+%  column_zy      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
 %  CI      J kg^-1 K^-1 Specific heat capacity of snow/ice.
 %  LF      J kg^-1      Latent heat of fusion.
 %  CtoK    K            273.15 conversion from C to K.
@@ -89,19 +89,19 @@ EW = W .* (LF + CtoK * CI);    % initial enegy of water
 Zcum = cumsum(dz);
 
 % A logical "mask" that indicates which cells are in the top layers:
-top_layers = Zcum <= (zTop + Dtol);
+top_layers = Zcum <= (column_ztop + Dtol);
 
-% Define dzMin2 array using the top-layers' dzMin value for the entire column:
-dzMin2 = dzMin * ones(n,1);
+% Define column_dzmin2 array using the top-layers' column_dzmin value for the entire column:
+column_dzmin2 = column_dzmin * ones(n,1);
 
 % Overwrite the bottom layers as the cumulative product times the stretching factor:
-dzMin2(~top_layers) = cumprod(zY * ones(sum(~top_layers),1))*dzMin;
+column_dzmin2(~top_layers) = cumprod(column_zy * ones(sum(~top_layers),1))*column_dzmin;
 
-% Define dzMax2 array using the top-layers' dzMin value for the entire column:
-dzMax2 = 2 * dzMin * ones(n,1);
+% Define dzMax2 array using the top-layers' column_dzmin value for the entire column:
+dzMax2 = 2 * column_dzmin * ones(n,1);
 
-% In the bottom layers, dzMax2 is the larger of (zY * dzMin2) or (2 * dzMin)
-dzMax2(~top_layers) = max(zY * dzMin2(~top_layers), 2 * dzMin);
+% In the bottom layers, dzMax2 is the larger of (column_zy * column_dzmin2) or (2 * column_dzmin)
+dzMax2(~top_layers) = max(column_zy * column_dzmin2(~top_layers), 2 * column_dzmin);
 
 %%
 
@@ -111,7 +111,7 @@ delete_cell = false(n,1);
 % Check to see if any cells are too small and need to be merged
 for i=1:n
 
-    if dz(i) < (dzMin2(i) - Dtol)
+    if dz(i) < (column_dzmin2(i) - Dtol)
 
         % dz has not met minimum thickness requirements, so we will delete it
         % and merge its contents into another cell:
@@ -202,7 +202,7 @@ gsp   =   gsp(fs);
 % Calculate total model depth:
 Ztot = sum(dz);
 
-if Ztot < zMin-Dtol
+if Ztot < column_zmin-Dtol
 
     % Mass and energy to be added:
     mAdd   = m(end) + W(end);
@@ -223,7 +223,7 @@ if Ztot < zMin-Dtol
     gdn   = [  gdn;   gdn(end)];
     gsp   = [  gsp;   gsp(end)];
 
-elseif Ztot > zMax+Dtol
+elseif Ztot > column_zmax+Dtol
 
     % Mass and energy loss:
     mAdd   = -(m(end) + W(end));

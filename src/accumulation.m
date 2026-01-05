@@ -1,6 +1,6 @@
 function [T, dz, d, W, re, gdn, gsp, a, adiff, Ra] = accumulation(T, dz,...
-    d, W, re, gdn, gsp, a, adiff, T_air, P, V, dIce, aIdx, dsnowIdx,...
-    Tmean, dz_min, C, Vmean, a_SNOW)
+    d, W, re, gdn, gsp, a, adiff, T_air, P, V, dIce, albedo_method, new_snow_method,...
+    T_mean, dz_min, C, V_mean, a_SNOW)
 
 % accumulation adds precipitation and deposition to the model grid.
 %
@@ -46,7 +46,7 @@ gspNew = 0.5;    % new snow sphericity
 Ra     = 0;      % rainfall [mm w.e. or kg m^-3]
 
 % Density of fresh snow [kg m-3]
-switch (dsnowIdx)
+switch (new_snow_method)
     case 0 % Default value defined above
 
     case 1 % Density of Antarctica snow
@@ -64,10 +64,10 @@ switch (dsnowIdx)
     case 3 %Surface snow accumulation density from Kaspers et al., 2004, Antarctica
         %dSnow = alpha1 + beta1*T + delta1*C + epsilon1*W
         %     7.36x10-2  1.06x10-3  6.69x10-2  4.77x10-3
-        dSnow=(7.36e-2 + 1.06e-3*min(Tmean,CtoK-Ttol) + 6.69e-2*C/1000. + 4.77e-3*Vmean)*1000.;
+        dSnow=(7.36e-2 + 1.06e-3*min(T_mean,CtoK-Ttol) + 6.69e-2*C/1000. + 4.77e-3*V_mean)*1000.;
 
     case 4 % Kuipers Munneke and others (2015), Greenland
-        dSnow = 481.0 + 4.834*(Tmean-CtoK);
+        dSnow = 481.0 + 4.834*(T_mean-CtoK);
 end
 
 mInit = d .* dz;
@@ -106,7 +106,7 @@ if P > 0+Ptol
             T(1) = (T_air * P + T(1) * mInit(1))/mass;
 
             % adjust a, re, gdn & gsp
-            if aIdx>0
+            if albedo_method>0
                 a(1) = (a_SNOW * P + a(1) * mInit(1))/mass;
             end
 

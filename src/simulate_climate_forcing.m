@@ -1,4 +1,4 @@
-function [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_forcing(set_id)
+function [daten, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_forcing(set_id)
 
     % load climate simulation parameter set
     [location_parameters, coeffs] = simulation_parameter_sets(set_id);
@@ -6,7 +6,7 @@ function [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_f
     % initialize times and random seed
     dec_year = location_parameters.start_date:location_parameters.time_step:location_parameters.end_date+1;
     dec_year = dec_year(:);
-    dateN = decyear2datenum(dec_year);
+    daten = decyear2datenum(dec_year);
     rng(location_parameters.rand_seed);
     
     % simulate downward shortave radiation
@@ -46,7 +46,7 @@ function [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_f
 
     LP.Vz = location_parameters.Vz;
     LP.Tz = location_parameters.Tz;
-    LP.Tmean = location_parameters.Tmean;
+    LP.T_mean = location_parameters.T_mean;
     LP.C = location_parameters.C;
     LP.elev = location_parameters.elev;
     LP.lat = location_parameters.lat;

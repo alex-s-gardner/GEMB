@@ -1,4 +1,4 @@
-function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart, verbose)
+function GEMB(daten, Ta0, V0, dlw0, dsw0, eAir0, pAir0, P0, S, is_restart, verbose)
 % GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
 %
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed
@@ -37,9 +37,9 @@ function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart, verbos
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 
-disp(['------------------ STARTING RUN # ' num2str(S.runID) ' --------------------' ])
+disp(['------------------ STARTING RUN # ' num2str(S.run_id) ' --------------------' ])
 tic                                     % start timer
-dt = (dateN(2)-dateN(1)) * (60*60*24);  % input time step in seconds
+dt = (daten(2)-daten(1)) * (60*60*24);  % input time step in seconds
 
 if rem(dt,1) ~= 0
     warning('rounding dt as it is not an exact integer: dt = %0.4f', dt)
@@ -62,7 +62,7 @@ dIce = 910;     % density of ice [kg m-3]
 % if checkInput
 %     % display input parameter ranges to screen for sanity check
 %     disp(' - - - - - check input forcing - - - - - ')
-%     X = {'dateN', 'Ta0', 'V0', 'dsw0', 'dlw0', 'P0', 'eAir0', 'pAir0', 'dt'};
+%     X = {'daten', 'Ta0', 'V0', 'dsw0', 'dlw0', 'P0', 'eAir0', 'pAir0', 'dt'};
 %     for i = 1:length(X)
 %
 %         fprintf('%s \t : %6.2f - %6.2f \t size : [%7.0f %7.0f]\n', ...
@@ -73,7 +73,7 @@ dIce = 910;     % density of ice [kg m-3]
 
 %% Generate model grid
 
-dz = gridInitialize(S.zTop, S.dzTop, S.zMax, S.zY);
+dz = gridInitialize(S.column_ztop, S.column_dztop, S.column_zmax, S.column_zy);
 
 %% Initialize model variables
 
@@ -89,7 +89,7 @@ dz = gridInitialize(S.zTop, S.dzTop, S.zMax, S.zY);
 
 % initialize profile variables
 
-if isrestart
+if is_restart
     m     = S.Sizeini;
     a     = S.Aini;               % albedo [fraction]
     adiff = S.Adiffini;           % albedo [fraction]
@@ -103,14 +103,14 @@ if isrestart
     W     = S.Wini;               % water content [kg m-2]
 else
     m     = length(dz);
-    a     = zeros(m,1) + S.aSnow; % albedo equal to fresh snow [fraction]
-    adiff = zeros(m,1) + S.aSnow; % albedo equal to fresh snow [fraction]
+    a     = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
+    adiff = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
     d     = zeros(m,1) + dIce;    % density to that of ice [kg m-3]
     EC    = 0;                    % surface evaporation (-) condensation (+) [kg m-2]
     gdn   = zeros(m,1);           % grain dentricity to old snow
     gsp   = zeros(m,1);           % grain sphericity to old snow
     re    = zeros(m,1) + 2.5;     % grain size to old snow [mm]
-    T     = zeros(m,1) + S.Tmean; % initial grid cell temperature to the annual mean temperature [K]
+    T     = zeros(m,1) + S.T_mean; % initial grid cell temperature to the annual mean temperature [K]
     W     = zeros(m,1);           % water content to zero [kg m-2]
 end
 
@@ -123,8 +123,8 @@ Ra    = zeros(m,1);               % rain amount to zero [kg m-2]
 T_bottom = T(end);
 
 % deteremine save time steps
-dateV = datevec([dateN; (dateN(end) + dateN(end)-dateN(end-1))]);
-switch S.outputFreq
+dateV = datevec([daten; (daten(end) + daten(end)-daten(end-1))]);
+switch S.output_frequency
     case 'monthly'
         outIdx = (dateV(1:end-1,2) - dateV(2:end,2)) ~= 0;
     case 'daily'
@@ -140,7 +140,7 @@ S.varName.monolevel = {'time', 'Ta', 'P', 'M', 'R', 'F', 'EC', 'netSW', ...
     'netLW', 'shf', 'lhf', 'a1', 'netQ', 're1', 'd1', 'm', 'FAC'};
 
 Z       = nan(1,sum(outIdx));
-O.time  = dateN(outIdx)';
+O.time  = daten(outIdx)';
 O.M     = Z;
 O.R     = Z;
 O.F     = Z;
@@ -200,7 +200,7 @@ end
 OV.count = 0;
 
 %% Start year loop for model spin up
-for yIdx = 1:S.spinUp + 1
+for yIdx = 1:S.n_spinup_cycles + 1
 
     % Determine initial mass [kg]:
     initMass   = sum (dz .* d) + sum(W);
@@ -218,7 +218,7 @@ for yIdx = 1:S.spinUp + 1
     %% Start loop for data frequency
 
     % Specify the time range over which the mass balance is to be calculated:
-    for dIdx = 1:length(dateN)
+    for dIdx = 1:length(daten)
 
         % Extract daily data:
         dlw  =  dlw0(dIdx);    % downward longwave radiation flux [W m-2]
@@ -230,47 +230,47 @@ for yIdx = 1:S.spinUp + 1
         pAir = pAir0(dIdx);    % screen level air pressure [Pa]
 
         % if we are provided with cc and cot values, extract for the timestep
-        if numel(S.ccsnowValue)>1
-            ccsnowValue = S.ccsnowValue(dIdx);
+        if numel(S.black_carbon_snow)>1
+            black_carbon_snow = S.black_carbon_snow(dIdx);
         else
-            ccsnowValue = S.ccsnowValue;
+            black_carbon_snow = S.black_carbon_snow;
         end
 
-        if numel(S.cciceValue)>1
-            cciceValue = S.cciceValue(dIdx);
+        if numel(S.black_carbon_ice)>1
+            black_carbon_ice = S.black_carbon_ice(dIdx);
         else
-            cciceValue = S.cciceValue;
+            black_carbon_ice = S.black_carbon_ice;
         end
 
-        if numel(S.cotValue)>1
-            cotValue = S.cotValue(dIdx);
+        if numel(S.cloud_optical_thickness)>1
+            cloud_optical_thickness = S.cloud_optical_thickness(dIdx);
         else
-            cotValue = S.cotValue;
+            cloud_optical_thickness = S.cloud_optical_thickness;
         end
 
-        if numel(S.szaValue)>1
-            szaValue = S.szaValue(dIdx);
+        if numel(S.solar_zenith_angle)>1
+            solar_zenith_angle = S.solar_zenith_angle(dIdx);
         else
-            szaValue = S.szaValue;
+            solar_zenith_angle = S.solar_zenith_angle;
         end
 
-        if numel(S.dswdiffrf)>1
-            dswdiffrf = S.dswdiffrf(dIdx);
+        if numel(S.dsw_diffuse)>1
+            dsw_diffuse = S.dsw_diffuse(dIdx);
         else
-            dswdiffrf = S.dswdiffrf;
+            dsw_diffuse = S.dsw_diffuse;
         end
 
-        if numel(S.cldFrac)>1
-            cldFrac = S.cldFrac(dIdx);
+        if numel(S.cloud_fraction)>1
+            cloud_fraction = S.cloud_fraction(dIdx);
         else
-            cldFrac = S.cldFrac;
+            cloud_fraction = S.cloud_fraction;
         end
 
         [T, dz, d, W, re, gdn, gsp, a, adiff, EC, Msurf, netSW, shf, ...
             lhf, ulw, Ra, M, R, F, mAdd, addE, comp1, comp2] = ...
-            gemb_step(T, dz, d, W, re, gdn, gsp, a, adiff, dt, P, EC, Msurf, ...
-            dIce, ccsnowValue, cciceValue, szaValue, cotValue, cldFrac, dsw, ...
-            dswdiffrf, dlw, Ta, V, eAir, pAir, S, verbose);
+            gemb_core(T, dz, d, W, re, gdn, gsp, a, adiff, dt, P, EC, Msurf, ...
+            dIce, black_carbon_snow, black_carbon_ice, solar_zenith_angle, cloud_optical_thickness, cloud_fraction, dsw, ...
+            dsw_diffuse, dlw, Ta, V, eAir, pAir, S, verbose);
         
         % calculate upward longwave radiation flux [W m-2]
         % not used in energy balance
@@ -307,7 +307,7 @@ for yIdx = 1:S.spinUp + 1
             error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
 
-        if yIdx == S.spinUp + 1
+        if yIdx == S.n_spinup_cycles + 1
             % initialize cumulative and average variables for output
             d1   = d(1);
             a1   = a(1);
@@ -359,14 +359,14 @@ for yIdx = 1:S.spinUp + 1
     end
 
     % display cycle completed and time to screen
-    disp([num2str(S.runID) ': cycle: ' num2str(yIdx) ' of '  ...
-        num2str(S.spinUp + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
-        ' avg melt: ' num2str(round(sumM/(dateN(end)-dateN(1))*365.25)) ...
+    disp([num2str(S.run_id) ': cycle: ' num2str(yIdx) ' of '  ...
+        num2str(S.n_spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
+        ' avg melt: ' num2str(round(sumM/(daten(end)-daten(1))*365.25)) ...
         ' kg/m2/yr']);
 end
 
 %% Save model output and model run settings
-save(fullfile(S.outDIR, S.runID), '-struct', 'O', '-v7.3')
-save(fullfile(S.outDIR, S.runID), 'S', '-append')
+save(fullfile(S.output_dir, S.run_id), '-struct', 'O', '-v7.3')
+save(fullfile(S.output_dir, S.run_id), 'S', '-append')
 
 end

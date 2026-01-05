@@ -22,11 +22,11 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, sumM, Msurf, Rsum, Fsum] = ...
 %  Ra:     kg m^-2      Rain.
 %  a       fraction     Albedo.
 %  adiff   fraction     Diffuse albedo.
-%  dzMin   m            Minimum allowable grid spacing.
-%  zMax    m            Maximum depth of the total column.
-%  zMin    m            Minimum depth of the total column.
-%  zTop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  zY      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
+%  column_dzmin   m            Minimum allowable grid spacing.
+%  column_zmax   m            Maximum depth of the total column.
+%  column_zmin    m            Minimum depth of the total column.
+%  column_ztop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
+%  column_zy      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
 %  re      mm           Grain size
 %  gdn     unitless     Grain dendricity
 %  gsp     unitless     Grain sphericity

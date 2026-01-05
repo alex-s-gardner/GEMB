@@ -17,7 +17,7 @@ location_parameters.rand_seed = 42; % Sets the seed to a fixed number
 
 location_parameters.Vz = inputs.LP.Vz; % wind observation height above surface [m]
 location_parameters.Tz = inputs.LP.Tz; % temperature observation height above surface [m]
-location_parameters.Tmean = inputs.LP.Tmean; % average annual temerature [K]
+location_parameters.T_mean = inputs.LP.T_mean; % average annual temerature [K]
 location_parameters.C = inputs.LP.C; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
 
 dec_year = location_parameters.start_date: location_parameters.time_step:location_parameters.end_date+1;
@@ -35,7 +35,7 @@ disp("location_parameters.end_date = " + sprintf('%0.2f ', location_parameters.e
 
 disp("location_parameters.Vz = " + sprintf('%0.1f ', location_parameters.Vz)+ "; % wind observation height above surface [m]")
 disp("location_parameters.Tz = " + sprintf('%0.1f ', location_parameters.Tz)+ "; % temperature observation height above surface [m]")
-disp("location_parameters.Tmean = " + sprintf('%0.1f ', location_parameters.Tmean)+ "; % average annual temerature [K]")
+disp("location_parameters.T_mean = " + sprintf('%0.1f ', location_parameters.T_mean)+ "; % average annual temerature [K]")
 disp("location_parameters.C = " + sprintf('%0.1f ', location_parameters.C)+ "; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]")
 
 disp("location_parameters.time_step = " + sprintf('%0.4f ', location_parameters.time_step) + "; % [fraction of a year]")

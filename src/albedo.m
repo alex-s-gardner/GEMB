@@ -1,6 +1,6 @@
 function [a, adiff] = albedo(TK, dz, d, W, re, a, adiff, dt, P, EC, ...
-    Ms, dIce, clabSnow, clabIce, SZA, COT, n, aIdx, aIce, aSnow, ...
-    aValue, adThresh, t0wet, t0dry, K)
+    Ms, dIce, clabSnow, clabIce, SZA, COT, n, albedo_method, albedo_ice, albedo_snow, ...
+    albedo_fixed, albedo_desnity_threshold, albedo_wet_snow_t0, albedo_dry_snow_t0, albedo_K)
 
 
 % albedo calculates snow, firn and ice albedo as a function of:
@@ -18,12 +18,12 @@ function [a, adiff] = albedo(TK, dz, d, W, re, a, adiff, dt, P, EC, ...
 %
 %
 %% Inputs
-% aIdx      = albedo method to use
+% albedo_method      = albedo method to use
 %
 % Method 0
-%  aValue   = direct input value for albedo, override all changes to albedo
+%  albedo_fixed   = direct input value for albedo, override all changes to albedo
 %
-% adThresh
+% albedo_desnity_threshold
 %  Apply below method to all areas with densities below this value,
 %  or else apply direct input value, allowing albedo to be altered.
 %
@@ -39,20 +39,20 @@ function [a, adiff] = albedo(TK, dz, d, W, re, a, adiff, dt, P, EC, ...
 % Method 3
 %   d       = snow surface density [kg m-3]
 %   n       = cloud amount
-%   aIce    = albedo of ice
-%   aSnow   = albedo of fresh snow
+%   albedo_ice    = albedo of ice
+%   albedo_snow   = albedo of fresh snow
 %
 % Method 4
-%   aIce    = albedo of ice
-%   aSnow   = albedo of fresh snow
+%   albedo_ice    = albedo of ice
+%   albedo_snow   = albedo of fresh snow
 %   a       = grid cell albedo from prevous time step;
 %   T       = grid cell temperature [k]
 %   W       = pore water [kg]
 %   P       = precipitation [mm w.e.] or [kg m-3]
 %   EC      = surface evaporation (-) condensation (+) [kg m-2]
-%   t0wet   = time scale for wet snow (15-21.9) [d]
-%   t0dry   = warm snow timescale [15] [d]
-%   K       = time scale temperature coef. (7) [d]
+%   albedo_wet_snow_t0   = time scale for wet snow (15-21.9) [d]
+%   albedo_dry_snow_t0   = warm snow timescale [15] [d]
+%   albedo_K       = time scale temperature coef. (7) [d]
 %   dt      = time step of input data [s]
 %% Outputs
 %
@@ -84,14 +84,14 @@ Wtol = 1e-13;
 dSnow  = 300.0; % density of fresh snow [kg m-3]
 dPHC   = 830.0; % Pore closeoff density
 ai_max = 0.58;  % maximum ice albedo, from Lefebre,2003
-ai_min = aIce;  % minimum ice albedo
+ai_min = albedo_ice;  % minimum ice albedo
 as_min = 0.65;  % minimum snow albedo, from Alexander 2014
 
 %% Function
-if(aIdx==0 || (adThresh - d(1))<Dtol)
-    a(1) = aValue;
+if(albedo_method==0 || (albedo_desnity_threshold - d(1))<Dtol)
+    a(1) = albedo_fixed;
 else
-    switch aIdx
+    switch albedo_method
         case 1 % function of effective grain radius
 
             % clabSnow, IssmDouble clabIce, IssmDouble SZA, IssmDouble COT, int m
@@ -120,7 +120,7 @@ else
         case 3 % a as a function of density
 
             % calculate albedo
-            a(1) = aIce + (d(1) - dIce)*(aSnow - aIce) ...
+            a(1) = albedo_ice + (d(1) - dIce)*(albedo_snow - albedo_ice) ...
                 / (dSnow - dIce) + (0.05 * (n - 0.5));
 
         case 4 % exponential time decay & wetness
@@ -136,23 +136,23 @@ else
 
             % specify constants
             % a_wet = 0.15;        % water albedo (0.15)
-            % a_new = aSnow        % new snow albedo (0.64 - 0.89)
-            % a_old = aIce;        % old snow/ice albedo (0.27-0.53)
-            % t0_wet = t0wet;      % time scale for wet snow (15-21.9) [d]
-            % t0_dry = t0dry;      % warm snow timescale [15] [d]
-            % K = 7                % time scale temperature coef. (7) [d]
+            % a_new = albedo_snow        % new snow albedo (0.64 - 0.89)
+            % a_old = albedo_ice;        % old snow/ice albedo (0.27-0.53)
+            % t0_wet = albedo_wet_snow_t0;      % time scale for wet snow (15-21.9) [d]
+            % t0_dry = albedo_dry_snow_t0;      % warm snow timescale [15] [d]
+            % albedo_K = 7                % time scale temperature coef. (7) [d]
             % W0 = 300;            % 200 - 600 [mm]
             z_snow = 15;           % 16 - 32 [mm]
 
             % determine timescale for albedo decay
-            t0(W > 0+Wtol) = t0wet;               % wet snow timescale
+            t0(W > 0+Wtol) = albedo_wet_snow_t0;               % wet snow timescale
             T = TK - 273.15;                       % change T from K to °C
-            t0warm = abs(T) * K + t0dry;          % 'warm' snow timescale
+            t0warm = abs(T) * albedo_K + albedo_dry_snow_t0;          % 'warm' snow timescale
             t0(abs(W)<Wtol & T >= -10-Ttol) = t0warm(abs(W)<Wtol & T >= -10-Ttol);
-            t0(T < -10-Ttol,1) =  10 * K + t0dry; % 'cold' snow timescale
+            t0(T < -10-Ttol,1) =  10 * albedo_K + albedo_dry_snow_t0; % 'cold' snow timescale
 
             % calculate new albedo
-            d_a = (a - aIce) ./ t0 * dt;           % change in albedo
+            d_a = (a - albedo_ice) ./ t0 * dt;           % change in albedo
             a = a - d_a;                            % new albedo
 
             % modification of albedo due to thin layer of snow or solid
@@ -163,12 +163,12 @@ else
                 P = P + (EC/dSnow) * 1000;  % add cond to precip [mm]
             end
 
-            a(1) = aSnow - (aSnow - a(1)) * exp(-P./z_snow);
+            a(1) = albedo_snow - (albedo_snow - a(1)) * exp(-P./z_snow);
 
     end
 
     %If we do not have fresh snow
-    if (aIdx<3 && aIdx>0 && (adThresh - d(1))>=Dtol)
+    if (albedo_method<3 && albedo_method>0 && (albedo_desnity_threshold - d(1))>=Dtol)
         % In a snow layer < 10cm, account for mix of ice and snow,
         % after P. Alexander et al., 2014
         lice = find([d; 999]>=dPHC-Dtol);
@@ -190,8 +190,8 @@ else
             else %surface layer is density of ice
 
                 %When density is > dIce (typically 910 kg m^-3, 920 is used by Alexander in MAR),
-                %ai=ai_min + (ai_max - ai_min)*e^(-1*(Msw(t)/K))
-                %K is a scale factor (set to 200 kg m^-2)
+                %ai=ai_min + (ai_max - ai_min)*e^(-1*(Msw(t)/albedo_K))
+                %albedo_K is a scale factor (set to 200 kg m^-2)
                 %Msw(t) is the time-dependent accumulated amount of excessive surface meltwater
                 %  before run-off in kg m^-2 (melt per GEMB timestep, i.e. 3 hourly)
                 M = Ms+W(1);
