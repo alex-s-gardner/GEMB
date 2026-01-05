@@ -321,8 +321,13 @@ for yIdx = 1:S.spinUp + 1
         % add snow/rain to top grid cell adjusting cell depth, temperature 
         % and density
 
-        [T, dz, d, Ra, W, a, adiff, re, gdn, gsp] = accumulation(S.aIdx, S.dsnowIdx, S.Tmean, Ta, T, dz, d, ...
-            P, W, S.dzMin, S.C, V, S.Vmean, a, adiff, S.aSnow, re, gdn, gsp, dIce);
+         
+
+        [T, dz, d, W, re, gdn, gsp, a, adiff, Ra] = ...
+            accumulation(T, dz, d, W, re, gdn, gsp, a, adiff, Ta, P, V, dIce, S.aIdx, S.dsnowIdx, S.Tmean,  ...
+             S.dzMin, S.C,  S.Vmean, S.aSnow);
+
+        
 
         % calculate water production, M [kg m-2] resulting from snow/ice
         % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2] 
