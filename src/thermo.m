@@ -1,5 +1,7 @@
-function [shf_cum, lhf_cum, T, EC, ulwrf] = thermo(T, re, dz, d, swf, dlwrf, Ta, V, eAir, pAir, tcIdx, eIdx, ...
-        teValue, dulwrfValue, teThresh, Ws, dt0, dzMin, Vz, Tz, dtScaling, dIce, isdeltaLWup, verbose)
+function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, dlwrf, Ta, V, eAir, pAir, dIce, tcIdx, eIdx, ...
+            teValue, dulwrfValue, teThresh, dzMin, Vz, Tz, TdtScaling, ...
+            isdeltaLWup, verbose)
+
 % thermo computes new temperature profile accounting for energy absorption 
 % and thermal diffusion.
 %

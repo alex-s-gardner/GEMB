@@ -307,10 +307,11 @@ for yIdx = 1:S.spinUp + 1
         netSW = sum(swf);
 
         % calculate new temperature-depth  profile   
-        % and calculate turbulent heat fluxes [W m-2]     
-        [shf, lhf, T, EC, ulw] = thermo(T, re, dz, d, swf, dlw, Ta, V, eAir, pAir, S.tcIdx, S.eIdx, ...
-            S.teValue, S.dulwrfValue, S.teThresh, W(1), dt, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, dIce, ...
-            S.isdeltaLWup, verbose);     
+        % and calculate turbulent heat fluxes [W m-2]   
+        
+        [T, shf, lhf, EC, ulw] = thermo(T, dz, d, W(1), re, dt, swf, dlw, Ta, V, eAir, pAir, dIce, S.tcIdx, S.eIdx, ...
+            S.teValue, S.dulwrfValue, S.teThresh, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, ...
+            S.isdeltaLWup, verbose);   
 
         % change in thickness of top cell due to evaporation/condensation
         % assuming same density as top cell
