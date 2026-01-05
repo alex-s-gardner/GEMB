@@ -14,7 +14,7 @@ S.spinUp = 2;   % number of cycles of met data run before output
 % select method of calculating albedo and subsurface absorption (default is 1)
 %   0 : direct input from aValue parameter, no use of adThresh
 %   1 : effective grain radius (Gardner & Sharp, 2009)
-%   2 : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with swIdx=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992) 
+%   2 : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with swIdx=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
 %   3 : density and cloud amount (Greuell & Konzelmann, 1994)
 %   4 : exponential time decay & wetness (Bougamont & Bamber, 2005)
 S.aIdx = 1;
@@ -22,7 +22,7 @@ S.aIdx = 1;
 % Default value is rho water (1023 kg m-3).
 S.adThresh = 1023;
 
-% apply all SW to top grid cell (0) or allow SW to penetrate surface (1) 
+% apply all SW to top grid cell (0) or allow SW to penetrate surface (1)
 % (default 0: if swIdx=1 and aIdx=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
 S.swIdx = 0;
 
@@ -81,7 +81,7 @@ S.Vmean=10.0;
 
 %optional inputs:
 S.teValue = 1.0;     % Outward longwave radiation thermal emissivity forcing at every element (default in code is 1).
-                     % Used only if eIdx==0, or effective grain radius exceeds teThresh
+% Used only if eIdx==0, or effective grain radius exceeds teThresh
 
 S.isdeltaLWup=false; % True to perturb the long wave radiation upwards.
 S.dulwrfValue = 0.0; % Delta with which to perturb the long wave radiation upwards. Use if isdeltaLWup is true.
@@ -110,20 +110,20 @@ switch S.aIdx
         % METHOD 1 & 2
         S.aSnow = 0.85;         % new snow albedo (0.64 - 0.89)
         S.aIce = 0.48;          % range 0.27-0.58 for old snow
-	S.aValue = S.aSnow;  % Albedo forcing at every element.  Used only if aIdx == 0, or density exceeds adThresh
+    	S.aValue = S.aSnow;  % Albedo forcing at every element.  Used only if aIdx == 0, or density exceeds adThresh
 
-	%Defaut values, but these can also be set as time series forcing
-	S.dswdiffrf=0.0;        % downward diffusive shortwave radiation flux [W/m^2]
-	S.szaValue=0.0;         % Solar Zenith Angle [degree]
-	S.cotValue=0.0;         % Cloud Optical Thickness
-	S.ccsnowValue=0.0;      % concentration of light absorbing carbon for snow [ppm1]
-	S.cciceValue=0.0;       % concentration of light absorbing carbon for ice [ppm1]
-        
+    	%Defaut values, but these can also be set as time series forcing
+    	S.dswdiffrf=0.0;        % downward diffusive shortwave radiation flux [W/m^2]
+    	S.szaValue=0.0;         % Solar Zenith Angle [degree]
+    	S.cotValue=0.0;         % Cloud Optical Thickness
+    	S.ccsnowValue=0.0;      % concentration of light absorbing carbon for snow [ppm1]
+    	S.cciceValue=0.0;       % concentration of light absorbing carbon for ice [ppm1]
+
     case 3
         % RADIATION CORRECTION FACTORS
         % -> only used for met station data and Greuell & Konzelmann, 1994 albedo
         S.cldFrac = 0.1;        % average cloud amount
-        
+
     case 4
         % additonal tuning parameters albedo as a funtion of age and water content
         % (Bougamont et al., 2005)

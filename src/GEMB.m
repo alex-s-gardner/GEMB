@@ -1,39 +1,39 @@
 function GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S, isrestart, verbose)
-% GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023. 
-%                                   
-% GEMB calculates a 1-D surface glacier mass balance, includes detailed 
-% representation of subsurface processes, and key features include: 
+% GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
+%
+% GEMB calculates a 1-D surface glacier mass balance, includes detailed
+% representation of subsurface processes, and key features include:
 %
 % * melt water percolation and refreeze
-% * pore water retention                                               
-% * dynamic albedo with long-term memory                               
-% * subsurface temperature diffusion                                   
-% * subsurface penetration of shortwave radiation   
-% 
-%% Syntax 
-% 
-% 
+% * pore water retention
+% * dynamic albedo with long-term memory
+% * subsurface temperature diffusion
+% * subsurface penetration of shortwave radiation
+%
+%% Syntax
+%
+%
 %
 %% Description
-% 
-% 
-% 
+%
+%
+%
 %% Inputs
-% 
-% 
-% 
+%
+%
+%
 %% Outputs
-% 
-% 
+%
+%
 %% Documentation
-% 
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
-% 
-%% References 
-% If you use GEMB, please cite the following: 
-% 
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
+%
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
+%
+%% References
+% If you use GEMB, please cite the following:
+%
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 
@@ -58,13 +58,13 @@ dIce = 910;     % density of ice [kg m-3]
 %     disp('--> setting precipitation to annual mean <--')
 %     P0(:) = S.C*(dt/(60*60*24*364.25)); % FIX NUM DAYS IN YEAR
 % end
-% 
+%
 % if checkInput
 %     % display input parameter ranges to screen for sanity check
 %     disp(' - - - - - check input forcing - - - - - ')
 %     X = {'dateN', 'Ta0', 'V0', 'dsw0', 'dlw0', 'P0', 'eAir0', 'pAir0', 'dt'};
 %     for i = 1:length(X)
-% 
+%
 %         fprintf('%s \t : %6.2f - %6.2f \t size : [%7.0f %7.0f]\n', ...
 %             X{i}, min(eval(X{i})), max(eval(X{i})), size(eval(X{i}),1), ...
 %             size(eval(X{i}),2))
@@ -78,13 +78,13 @@ dz = gridInitialize(S.zTop, S.dzTop, S.zMax, S.zY);
 %% Initialize model variables
 
 % --------------- INPORTANT NOTE ABOUT GRAIN PROPERTIES -------------------
-% initial grain properties must be chosen carefully since snow with a 
+% initial grain properties must be chosen carefully since snow with a
 % density that exceeds 400 kg m-3 will no longer undergo metamorphosis and
 % therefore if grain properties are set inappropriately they will be
-% carried all through the model run.  
+% carried all through the model run.
 %
 % !!!! grainGrowth model needs to be fixed to allow evolution of snow !!!!!
-% !!!!  grains for densities > 400 kg m-3                             !!!!!  
+% !!!!  grains for densities > 400 kg m-3                             !!!!!
 % -------------------------------------------------------------------------
 
 % initialize profile variables
@@ -107,8 +107,8 @@ else
     adiff = zeros(m,1) + S.aSnow; % albedo equal to fresh snow [fraction]
     d     = zeros(m,1) + dIce;    % density to that of ice [kg m-3]
     EC    = 0;                    % surface evaporation (-) condensation (+) [kg m-2]
-    gdn   = zeros(m,1);           % grain dentricity to old snow 
-    gsp   = zeros(m,1);           % grain sphericity to old snow 
+    gdn   = zeros(m,1);           % grain dentricity to old snow
+    gsp   = zeros(m,1);           % grain sphericity to old snow
     re    = zeros(m,1) + 2.5;     % grain size to old snow [mm]
     T     = zeros(m,1) + S.Tmean; % initial grid cell temperature to the annual mean temperature [K]
     W     = zeros(m,1);           % water content to zero [kg m-2]
@@ -120,7 +120,7 @@ Msurf = 0;                        % initialize surface melt for albedo parameter
 Ra    = zeros(m,1);               % rain amount to zero [kg m-2]
 
 % fixed lower temperature bounday condition - T is fixed
-T_bottom = T(end);  
+T_bottom = T(end);
 
 % deteremine save time steps
 dateV = datevec([dateN; (dateN(end) + dateN(end)-dateN(end-1))]);
@@ -137,25 +137,25 @@ end
 
 % single level time series
 S.varName.monolevel = {'time', 'Ta', 'P', 'M', 'R', 'F', 'EC', 'netSW', ...
-    'netLW', 'shf', 'lhf', 'a1', 'netQ', 're1', 'd1', 'm', 'FAC'}; 
+    'netLW', 'shf', 'lhf', 'a1', 'netQ', 're1', 'd1', 'm', 'FAC'};
 
-Z       = nan(1,sum(outIdx));    
+Z       = nan(1,sum(outIdx));
 O.time  = dateN(outIdx)';
-O.M     = Z; 
-O.R     = Z; 
-O.F     = Z; 
-O.netSW = Z; 
-O.netLW = Z; 
-O.shf   = Z; 
-O.lhf   = Z; 
-O.a1    = Z; 
-O.netQ  = Z; 
-O.re1   = Z; 
+O.M     = Z;
+O.R     = Z;
+O.F     = Z;
+O.netSW = Z;
+O.netLW = Z;
+O.shf   = Z;
+O.lhf   = Z;
+O.a1    = Z;
+O.netQ  = Z;
+O.re1   = Z;
 O.d1    = Z;
-O.Ta    = Z; 
-O.P     = Z; 
-O.comp1 = Z; 
-O.comp2 = Z; 
+O.Ta    = Z;
+O.P     = Z;
+O.comp1 = Z;
+O.comp2 = Z;
 O.ps    = Z;
 O.m     = Z;
 
@@ -175,14 +175,14 @@ end
 S.varName.profile = {'d', 'T', 'W', 'a', 'dz', 're', 'gdn', 'gsp'};
 S.addCells        = 10000;   % number of addtional vertical levels
 
-Z     = nan(length(d)+S.addCells,length(I));       
-O.d   = Z; 
-O.T   = Z; 
-O.W   = Z; 
-O.dz  = Z; 
+Z     = nan(length(d)+S.addCells,length(I));
+O.d   = Z;
+O.T   = Z;
+O.W   = Z;
+O.dz  = Z;
 O.re  = Z;
-O.gdn = Z; 
-O.gsp = Z; 
+O.gdn = Z;
+O.gsp = Z;
 O.ps  = Z;
 
 % clear unwanted variables
@@ -204,22 +204,22 @@ for yIdx = 1:S.spinUp + 1
 
     % Determine initial mass [kg]:
     initMass   = sum (dz .* d) + sum(W);
-    
+
     % Initialize cumulative variables:
-    sumR       = 0; 
-    sumF       = 0; 
-    sumM       = 0; 
-    sumEC      = 0; 
-    sumP       = 0; 
-    sumMassAdd = 0; 
-    sumMsurf   = 0; 
+    sumR       = 0;
+    sumF       = 0;
+    sumM       = 0;
+    sumEC      = 0;
+    sumP       = 0;
+    sumMassAdd = 0;
+    sumMsurf   = 0;
     sumRa      = 0;
 
     %% Start loop for data frequency
-    
+
     % Specify the time range over which the mass balance is to be calculated:
     for dIdx = 1:length(dateN)
-        
+
         % Extract daily data:
         dlw  =  dlw0(dIdx);    % downward longwave radiation flux [W m-2]
         dsw  =  dsw0(dIdx);    % downward shortwave radiation flux [W m-2]
@@ -262,7 +262,7 @@ for yIdx = 1:S.spinUp + 1
                     dswdiffrf = S.dswdiffrf;
                 end
 
-            case 3   
+            case 3
                 if numel(S.cldFrac)>1
                     cldFrac = S.cldFrac(dIdx);
                 else
@@ -270,7 +270,7 @@ for yIdx = 1:S.spinUp + 1
                 end
         end
 
-        
+
         % albedo calculations contained in switch to minimize passing of
         % variables to albedo function
         switch S.aIdx
@@ -285,15 +285,15 @@ for yIdx = 1:S.spinUp + 1
 
                 % determine distribution of absorbed sw radation with depth
                 swf = shortwave(S.swIdx, S.aIdx, dsw, dswdiffrf, a(1), adiff(1), d, dz, re, dIce);
-                
-            case 3   
+
+            case 3
                 % calculate snow, firn and ice albedo
                 [a, adiff] = albedo(S.aIdx, re, dz, d, cldFrac, S.aIce, S.aSnow, S.aValue, S.adThresh,...
                     a, adiff, [], [], [], [], [], [], [], [], [], [], [], [], [], dIce);
 
                 % determine distribution of absorbed sw radation with depth
                 swf = shortwave(S.swIdx, S.aIdx, dsw, [], a(1), adiff(1), d, dz, re, dIce);
-                
+
             case 4
                 % calculate snow, firn and ice albedo
                 [a, adiff] = albedo(S.aIdx, [], [], d, [], S.aIce, S.aSnow, S.aValue, S.adThresh, a, adiff, T, ...
@@ -306,31 +306,31 @@ for yIdx = 1:S.spinUp + 1
         % calculate net shortwave [W m-2]
         netSW = sum(swf);
 
-        % calculate new temperature-depth  profile   
-        % and calculate turbulent heat fluxes [W m-2]   
-        
+        % calculate new temperature-depth  profile
+        % and calculate turbulent heat fluxes [W m-2]
+
         [T, shf, lhf, EC, ulw] = thermo(T, dz, d, W(1), re, dt, swf, dlw, Ta, V, eAir, pAir, dIce, S.tcIdx, S.eIdx, ...
             S.teValue, S.dulwrfValue, S.teThresh, S.dzMin, S.Vz, S.Tz, S.ThermoDeltaTScaling, ...
-            S.isdeltaLWup, verbose);   
+            S.isdeltaLWup, verbose);
 
         % change in thickness of top cell due to evaporation/condensation
         % assuming same density as top cell
         % ## NEED TO FIX THIS IN CASE ALL OR MORE OF CELL EVAPORATES ##
         dz(1) = dz(1) + EC / d(1);
 
-        % add snow/rain to top grid cell adjusting cell depth, temperature 
+        % add snow/rain to top grid cell adjusting cell depth, temperature
         % and density
 
-         
+
 
         [T, dz, d, W, re, gdn, gsp, a, adiff, Ra] = ...
             accumulation(T, dz, d, W, re, gdn, gsp, a, adiff, Ta, P, V, dIce, S.aIdx, S.dsnowIdx, S.Tmean,  ...
-             S.dzMin, S.C,  S.Vmean, S.aSnow);
+            S.dzMin, S.C,  S.Vmean, S.aSnow);
 
         % calculate water production, M [kg m-2] resulting from snow/ice
-        % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2] 
+        % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2]
         % and resulting changes in density and determine wet compaction [m]
-        comp2 = sum(dz); 
+        comp2 = sum(dz);
 
         [T, dz, d, W, re, gdn, gsp, a, adiff, M, Msurf, R, F] = ...
             melt(T, dz, d, W, re, gdn, gsp, a, adiff, Ra, dIce, verbose);
@@ -338,18 +338,18 @@ for yIdx = 1:S.spinUp + 1
 
         % Manage the layering to match the user defined requirements
 
-[T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
-        managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, verbose);
+        [T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
+            managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, verbose);
 
         % allow non-melt densification and determine compaction [m]
-        comp1 = sum(dz); 
+        comp1 = sum(dz);
 
-        
+
         [dz, d] = densification(T, dz, d, re, dt, dIce, S.aIdx, S.denIdx, S.Tmean, S.C, S.swIdx, S.adThresh);
         comp1 = (comp1 - sum(dz));
 
         % calculate upward longwave radiation flux [W m-2]
-        % not used in energy balance 
+        % not used in energy balance
         % CALCULATED FOR EVERY SUB-TIME STEP IN THERMO EQUATIONS
         % ulw = 5.67E-8 * T(1)^4;
 
@@ -372,7 +372,7 @@ for yIdx = 1:S.spinUp + 1
         FAC     = sum(dz.*(dIce - min(d,dIce)))/1000;
         dMass   = sumMass + sumR + sumW - sumP - sumEC - initMass - sumMassAdd;
         dMass   = round(dMass * 100)/100;
-        
+
         % check mass conservation
         if dMass ~= 0
             error('total system mass not conserved in MB function')
@@ -385,9 +385,9 @@ for yIdx = 1:S.spinUp + 1
 
         if yIdx == S.spinUp + 1
             % initialize cumulative and average variables for output
-            d1   = d(1); 
-            a1   = a(1); 
-            re1  = re(1); 
+            d1   = d(1);
+            a1   = a(1);
+            re1  = re(1);
             netQ = netSW + netLW + shf + lhf;
 
             for v = 1:length(OV.varName)
@@ -414,13 +414,13 @@ for yIdx = 1:S.spinUp + 1
 
                 % instantaneous level data
                 o = (size(d,1) - 1);
-                O.re(end-o:end,r)  = re;     
+                O.re(end-o:end,r)  = re;
                 O.d(end-o:end,r)   = d;
-                O.T(end-o:end,r)   = T;       
+                O.T(end-o:end,r)   = T;
                 O.W(end-o:end,r)   = W;
-                O.dz(end-o:end,r)  = dz;     
+                O.dz(end-o:end,r)  = dz;
                 O.gdn(end-o:end,r) = gdn;
-                O.gsp(end-o:end,r) = gsp;   
+                O.gsp(end-o:end,r) = gsp;
                 O.ps(end-o:end,r)  = sum(dz) - sumMass/910;
                 O.m(r)             = o+1;
 
@@ -428,7 +428,7 @@ for yIdx = 1:S.spinUp + 1
                 for v = 1:length(OV.varName)
                     OV.(OV.varName{v}) = 0;
                 end
-                
+
                 OV.count = 0;
             end
         end
