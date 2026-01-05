@@ -1,5 +1,5 @@
 function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = ...
-		managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, CI, LF, CtoK)
+		managelayers(T, d, dz, W, a, adiff, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, verbose)
 % managelayers adjusts the depth and number of vertical layers in the model 
 % to ensure that the thickness of any single layer does not exceed thresholds 
 % set for the minimum and maximum allowable layer thickness.
@@ -65,7 +65,26 @@ function [d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, EI, EW, re, gdn, gsp] = 
 
 Dtol = 1e-11; % tolerance for numerical comparison. 
 
-n = numel(T);
+% Specify constants:
+CtoK = 273.15;   % Celsius to Kelvin conversion
+CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
+LF   = 0.3345E6; % latent heat of fusion (J kg-1)
+
+% store initial mass [kg] and energy [J]
+m  = dz .* d;                  % grid cell mass [kg]
+EI = m .* T * CI;              % initial enegy of snow/ice
+EW = W .* (LF + CtoK * CI);    % initial enegy of water
+
+mSum0 = sum(W) + sum(m);       % total mass [kg]
+sumE0 = sum(EI) + sum(EW);     % total energy [J]
+
+T_bottom = T(end);
+n    = numel(T);
+
+% store initial mass [kg] and energy [J]
+m  = dz .* d;                  % grid cell mass [kg]
+EI = m .* T * CI;              % initial enegy of snow/ice
+EW = W .* (LF + CtoK * CI);    % initial enegy of water
 
 Zcum = cumsum(dz);
 
@@ -230,6 +249,34 @@ else
 	mAdd   = 0;
 	addE   = 0;
 	dz_add = 0;
+
+end
+
+% The temperature of the bottom grid cell may have been modified when
+% layers were merged. After checking for energy conservation, set:
+%       T(end) = T_bottom
+% This is to satisfy the Constant Temperature (Dirichlet) boundary
+% condition. If this is not done then then thermal diffusion will blow up
+addE   = addE + ((T_bottom - T(end)) * m(end) * CI);
+T(end) = T_bottom;
+
+%% CHECK FOR MASS AND ENERGY CONSERVATION
+if verbose
+    % Calculate final mass [kg] and energy [J]
+   
+    EI    = m .* T * CI;
+    EW    = W .* (LF + CtoK * CI);
+    
+    mSum1 = sum(W) + sum(m);
+    sumE1 = sum(EI) + sum(EW);
+    
+    dm = round((mSum0 - mSum1 + mAdd)*100)/100.;
+    dE = round(sumE0 - sumE1 + addE);
+    
+    if dm ~= 0 || dE ~= 0
+        error(['Mass and energy are not conserved in melt equations:' newline ' dm: ' ...
+            num2str(dm) ' dE: ' num2str(dE) newline])
+    end
 
 end
 

@@ -1,5 +1,5 @@
-function [sumM, Msurf, Rsum, Fsum, T, d, dz, W, mAdd, dz_add, a, adiff, re, gdn, gsp] = ...
-     melt(T, d, dz, W, Ra, a, adiff, dzMin, zMax, zMin, zTop, zY, re, gdn, gsp, dIce, verbose)
+function [sumM, Msurf, Rsum, Fsum, T, d, dz, W, a, adiff, re, gdn, gsp] = ...
+     melt(T, d, dz, W, Ra, a, adiff, re, gdn, gsp, dIce, verbose)
 % melt computes the quantity of meltwater due to snow temperature in excess 
 % of 0 deg C, determines pore water content and adjusts grid spacing.
 %
@@ -318,10 +318,6 @@ end
  
 Fsum = sum(F);
 
-% Manage the layering to match the user defined requirements
-[d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, ~, ~, re, gdn, gsp] = ...
-        managelayers(T, d, dz, W, a, adiff, m, EI, EW, dzMin, zMax, zMin, re, gdn, gsp, zTop, zY, CI, LF, CtoK);
-
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 if verbose
     % Calculate final mass [kg] and energy [J]
@@ -332,8 +328,8 @@ if verbose
     mSum1 = sum(W) + sum(m) + Rsum;
     sumE1 = sum(EI) + sum(EW);
     
-    dm = round((mSum0 - mSum1 + mAdd)*100)/100.;
-    dE = round(sumE0 - sumE1 - sumER + addE - surplusE);
+    dm = round((mSum0 - mSum1)*100)/100.;
+    dE = round(sumE0 - sumE1 - sumER - surplusE);
     
     if dm ~= 0 || dE ~= 0
         error(['Mass and energy are not conserved in melt equations:' newline ' dm: ' ...
@@ -345,9 +341,3 @@ if verbose
     end
 end
 
-% The temperature of the bottom grid cell may have been modified when
-% layers were merged. After checking for energy conservation, set:
-%       T(end) = T_bottom
-% This is to satisfy the Constant Temperature (Dirichlet) boundary
-% condition. If this is not done then then thermal diffusion will blow up
-T(end) = T_bottom; 

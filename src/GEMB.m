@@ -322,15 +322,22 @@ for yIdx = 1:S.spinUp + 1
 
         [T, dz, d, Ra, W, a, adiff, re, gdn, gsp] = accumulation(S.aIdx, S.dsnowIdx, S.Tmean, Ta, T, dz, d, ...
             P, W, S.dzMin, S.C, V, S.Vmean, a, adiff, S.aSnow, re, gdn, gsp, dIce);
-        
+
         % calculate water production, M [kg m-2] resulting from snow/ice
         % temperature exceeding 273.15 deg K (> 0 deg C), runoff R [kg m-2] 
         % and resulting changes in density and determine wet compaction [m]
         comp2 = sum(dz); 
-        [M, Msurf, R, F, T, d, dz, W, mAdd, ~, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
-            S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, re, gdn, gsp, dIce, verbose);
+        [M, Msurf, R, F, T, d, dz, W, a, adiff, re, gdn, gsp] = melt(T, d, dz, W, Ra, a, adiff,...
+            re, gdn, gsp, dIce, verbose);
         comp2 = (comp2 - sum(dz));
-        
+
+        % Manage the layering to match the user defined requirements
+[d, T, dz, W, mAdd, dz_add, addE, a, adiff, m, ~, ~, re, gdn, gsp] = ...
+        managelayers(T, d, dz, W, a, adiff, S.dzMin, S.zMax, S.zMin, re, gdn, gsp, S.zTop, S.zY, verbose);
+  % check bottom grid cell T is unchanged
+        if abs(T(end)-T_bottom) > 0.001
+            error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
+        end
         % allow non-melt densification and determine compaction [m]
         comp1 = sum(dz); 
         [d, dz] = densification(S.denIdx, S.aIdx, S.swIdx, S.adThresh, d, T, dz, S.C, dt, re, S.Tmean, dIce);
