@@ -1,4 +1,6 @@
-function [d, dz] = densification(denIdx, aIdx, swIdx, adThresh, d, T, dz, C, dt, re, Tmean, dIce)
+function [dz, d] = densification(T, dz, d, re, dt, dIce, aIdx, denIdx, Tmean, C, swIdx, adThresh)
+
+
 % densification computes the densification of snow/firn using the emperical model of
 % Herron and Langway (1980) or the semi-emperical model of Anthern et al. (2010).
 %

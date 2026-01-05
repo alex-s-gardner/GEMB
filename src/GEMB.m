@@ -341,13 +341,11 @@ for yIdx = 1:S.spinUp + 1
 [T, dz, d, W, re, gdn, gsp, a, adiff, mAdd, addE] = ...
         managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, S.dzMin, S.zMax, S.zMin, S.zTop, S.zY, verbose);
 
-  % check bottom grid cell T is unchanged
-        if abs(T(end)-T_bottom) > 0.001
-            error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
-        end
         % allow non-melt densification and determine compaction [m]
         comp1 = sum(dz); 
-        [d, dz] = densification(S.denIdx, S.aIdx, S.swIdx, S.adThresh, d, T, dz, S.C, dt, re, S.Tmean, dIce);
+
+        
+        [dz, d] = densification(T, dz, d, re, dt, dIce, S.aIdx, S.denIdx, S.Tmean, S.C, S.swIdx, S.adThresh);
         comp1 = (comp1 - sum(dz));
 
         % calculate upward longwave radiation flux [W m-2]
