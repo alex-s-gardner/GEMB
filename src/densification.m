@@ -141,7 +141,7 @@ switch densification_method
         elseif (albedo_method < 3) && (sw_absorption_method > 0)
             M0 = max(2.2191 - (0.2301 * log(P_mean)),0.25);
             M1 = max(2.2917 - (0.2710 * log(P_mean)),0.25);
-        else
+        else % ASG Changed 05/01/2026
             % ERA5 new albedo_method=2, sw_absorption_method=0
             %elseif (albedo_method==2)
             %From Ligtenberg
@@ -181,7 +181,7 @@ switch densification_method
         elseif albedo_method<3 && sw_absorption_method>0
             M0 = max(1.7834 - (0.1409 * log(P_mean)),0.25);
             M1 = max(1.9260 - (0.1527 * log(P_mean)),0.25);
-        else
+        else % ASG Changed 05/01/2026
             % ERA5 new albedo_method=2, sw_absorption_method=0
             %elseif (albedo_method==2)
             % From Kuipers Munneke
@@ -192,8 +192,8 @@ switch densification_method
             M1 = max(1.9983 - (0.2511 * log(P_mean)),0.25);
         end
 
-        c0 = M0*c0arth(idx);
-        c1 = M1*c1arth(~idx);
+        c0 = M0 * c0arth(idx);
+        c1 = M1 * c1arth(~idx);
 
 end
 
