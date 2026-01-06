@@ -1,16 +1,16 @@
-function pAir = simulate_air_pressure(dec_year, Ta, lat, elev)
+function p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
 % SIMULATE_AIR_PRESSURE Simulates screen-level atmospheric pressure [Pa].
 %
-%   pAir = simulate_air_pressure(dec_year, Ta, lat, elev)
+%   p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
 %
 %   INPUTS:
 %   dec_year - Decimal year (e.g., 2024.5). Vector.
-%   Ta       - Near-surface air temperature in Kelvin [K]. Vector.
+%   T_air       - Near-surface air temperature in Kelvin [K]. Vector.
 %   lat      - Latitude in degrees.
 %   elev     - Elevation in meters.
 %
 %   OUTPUT:
-%   pAir     - Screen-level air pressure in Pascals [Pa].
+%   p_air     - Screen-level air pressure in Pascals [Pa].
 %
 %   PHYSICS MODEL:
 %   1. Simulates Mean Sea Level Pressure (MSLP) as a stochastic process.
@@ -18,16 +18,16 @@ function pAir = simulate_air_pressure(dec_year, Ta, lat, elev)
 %      - Weather: AR(1) "Red Noise" simulating High/Low pressure systems.
 %      - Variance: Scales with latitude (Storm tracks have higher variance).
 %   2. Calculates Local Pressure using the Hypsometric Equation.
-%      - Uses inputs 'elev' and 'Ta' to determine air column density.
+%      - Uses inputs 'elev' and 'T_air' to determine air column density.
 %      - P_local = P_mslp * exp( -g*z / (R * T_column) )
 
     %% 1. Input Sanitization
     if ~isscalar(dec_year), dec_year = dec_year(:); end
-    if ~isscalar(Ta), Ta = Ta(:); end
+    if ~isscalar(T_air), T_air = T_air(:); end
     
     % Ensure time and temp vectors match
-    if length(Ta) ~= length(dec_year)
-        error('Input vectors dec_year and Ta must be the same length.');
+    if length(T_air) ~= length(dec_year)
+        error('Input vectors dec_year and T_air must be the same length.');
     end
 
     %% 2. Simulate Mean Sea Level Pressure (MSLP) Weather Patterns
@@ -75,7 +75,7 @@ function pAir = simulate_air_pressure(dec_year, Ta, lat, elev)
     % Approximation: T_column_avg = T_surface + (0.5 * Lapse_Rate * Elevation)
     
     LapseRate = 0.0065; % K/m
-    T_column_avg = Ta + (0.5 * LapseRate * elev);
+    T_column_avg = T_air + (0.5 * LapseRate * elev);
     
     % Physical Constants
     g = 9.80665; % Gravity (m/s^2)
@@ -85,6 +85,6 @@ function pAir = simulate_air_pressure(dec_year, Ta, lat, elev)
     % P_local = P_msl * exp( -g*z / (R*T) )
     exponent = (-g * elev) ./ (R .* T_column_avg);
     
-    pAir = P_msl .* exp(exponent);
+    p_air = P_msl .* exp(exponent);
 
 end

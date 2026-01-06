@@ -1,7 +1,7 @@
-function Ta = simulate_air_temperature(dec_year, lat, elev, coeffs)
+function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
 % SIMULATE_AIR_TEMPERATURE Simulates air temp using fitted coefficients.
 %
-%   Ta = simulate_air_temperature(dec_year, lat, elev, coeffs)
+%   T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
 %
 %   INPUTS:
 %   dec_year - Decimal year (e.g., 2024.5).
@@ -15,7 +15,7 @@ function Ta = simulate_air_temperature(dec_year, lat, elev, coeffs)
 %              .mean_offset (mean offset adjustment inKelvin [K])
 %
 %   OUTPUT:
-%   Ta       - Near-surface air temperature in Kelvin [K].
+%   T_air       - Near-surface air temperature in Kelvin [K].
 
     %% 1. Input Setup & Extraction
     if ~isscalar(dec_year), dec_year = dec_year(:); end
@@ -99,7 +99,7 @@ function Ta = simulate_air_temperature(dec_year, lat, elev, coeffs)
     weather_signal = interp1(1:num_days, daily_noise, user_day_indices, 'linear', 'extrap');
 
     %% 6. Final Combination
-    Ta = T_mean ...
+    T_air = T_mean ...
        + (T_amp_annual .* seasonal_signal) ... % Annual Season
        + (T_amp_daily  .* diurnal_signal) ...  % Daily Cycle
        + weather_signal;                       % Random Weather

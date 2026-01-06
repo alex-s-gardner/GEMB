@@ -1,5 +1,4 @@
-% number of processors to use
-S.n_workers = 1;
+% Source of climate forcing
 S.run_id    = "test_1";
 
 %% GEMB INITIALIZATION
@@ -81,7 +80,7 @@ S.V_mean = 10.0;
 S.emissivity = 1.0;     % Outward longwave radiation thermal emissivity forcing at every element (default in code is 1).
 % Used only if emissivity_method==0, or effective grain radius exceeds emissivity_re_threshold
 
-S.ulw_delta = 0.0; % Delta [W/m²] with which to perturb the long wave radiation upwards. ulw_delta = 0.0 unless you have very good reason
+S.ulw_delta  = 0.0; % Delta [W/m²] with which to perturb the long wave radiation upwards. ulw_delta = 0.0 unless you have very good reason
 
 S.is_restart = false;   % True if we want to restart from *ini parameters set in S struct
 
@@ -124,21 +123,16 @@ S.density_ice = 910;     % density of ice [kg m-3]
 
 %% RUN GEMB
 
-% open matlab pool for parallel processing
-if S.n_workers > 1
-    parpool(S.n_workers)
-end
-
 switch S.run_id
     case "test_1"
         verbose = true;
         % output directory
         S.output_dir = '../test_1';
 
-        [daten, P, Ta, V, dlw, dsw, eAir, pAir, LP] = simulate_climate_forcing(run_id);
+        [daten, P, T_air, V, dlw, dsw, e_air, p_air, LP] = simulate_climate_forcing(run_id);
         S = combineStrucData_GEMB(S,LP,1);
     
-        GEMB(daten, Ta, V, dlw, dsw, eAir, pAir, P, S, S.is_restart, verbose)
+        GEMB(daten, T_air, V, dlw, dsw, e_air, p_air, P, S, S.is_restart, verbose)
     otherwise
         error("input case not defined")
 end

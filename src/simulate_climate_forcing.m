@@ -1,4 +1,4 @@
-function [daten, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_forcing(set_id)
+function [daten, P0, T_air0, V0, dlw0, dsw0, e_air0, p_air0, LP] = simulate_climate_forcing(set_id)
 
     % load climate simulation parameter set
     [location_parameters, coeffs] = simulation_parameter_sets(set_id);
@@ -13,10 +13,10 @@ function [daten, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_f
     dsw0 = simulate_shortwave_irradiance(dec_year, location_parameters.lat);
     
     % simulate downward longwave radiation
-    Ta0 = simulate_air_temperature(dec_year, location_parameters.lat, location_parameters.elev, coeffs.Ta);
+    T_air0 = simulate_air_temperature(dec_year, location_parameters.lat, location_parameters.elev, coeffs.T_air);
     
     % screen level air temperature [K]
-    pAir0 = simulate_air_pressure(dec_year, Ta0, location_parameters.lat, location_parameters.elev);
+    p_air0 = simulate_air_pressure(dec_year, T_air0, location_parameters.lat, location_parameters.elev);
     
     % screen level relative humidity [%]
     varname = "rh";
@@ -25,11 +25,11 @@ function [daten, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_f
     rh0(rh0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
     
     % screen level vapor pressure [Pa]
-    eAir0 = simulate_vapor_pressure(Ta0, rh0);
+    e_air0 = simulate_vapor_pressure(T_air0, rh0);
     
     % downward logwave radiation [W m⁻²]
     varname = "dlw";
-    dlw0 = simulate_longwave_irradiance(Ta0, eAir0);
+    dlw0 = simulate_longwave_irradiance(T_air0, e_air0);
     dlw0 = dlw0  + simulate_longwave_irradiance_delta(dec_year, coeffs.(varname));
     dlw0(dlw0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
     dlw0(dlw0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
@@ -47,7 +47,7 @@ function [daten, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_f
     LP.Vz = location_parameters.Vz;
     LP.Tz = location_parameters.Tz;
     LP.T_mean = location_parameters.T_mean;
-    LP.C = location_parameters.C;
+    LP.P_mean = location_parameters.P_mean;
     LP.elev = location_parameters.elev;
     LP.lat = location_parameters.lat;
     LP.lon = location_parameters.lon;

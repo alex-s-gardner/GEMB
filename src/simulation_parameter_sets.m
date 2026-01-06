@@ -11,7 +11,7 @@ function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
 %   OUTPUT:
 %       location_parameters - Struct containing lat, elev, start_date, end_date, 
 %                             time_step, and rand_seed.
-%       coeffs - Struct containing sub-structs (Ta, rh, dlw, V) for temperature, 
+%       coeffs - Struct containing sub-structs (T_air, rh, dlw, V) for temperature, 
 %                humidity, longwave radiation, and wind speed coefficients.
 %
 %   EXAMPLE:
@@ -33,16 +33,16 @@ function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
         location_parameters.Vz = 10.0 ; % wind observation height above surface [m]
         location_parameters.Tz = 2.0 ; % temperature observation height above surface [m]
         location_parameters.T_mean = 259.4 ; % average annual temerature [K]
-        location_parameters.C = 1177.3 ; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
+        location_parameters.P_mean = 1177.3 ; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
         location_parameters.time_step = 0.0001 ; % [fraction of a year]
         location_parameters.rand_seed = 42 ; % [seed for random number generator]
          
         %% screen level air temperature [K]
-        coeffs.Ta.mean_offset = 9.8847 ;
-        coeffs.Ta.lat_scale = 0.1635 ;
-        coeffs.Ta.daily_amp_scale = 0.0000 ;
-        coeffs.Ta.weather_sigma_scale = 0.8418 ;
-        coeffs.Ta.weather_corr = 0.7315 ;
+        coeffs.T_air.mean_offset = 9.8847 ;
+        coeffs.T_air.lat_scale = 0.1635 ;
+        coeffs.T_air.daily_amp_scale = 0.0000 ;
+        coeffs.T_air.weather_sigma_scale = 0.8418 ;
+        coeffs.T_air.weather_corr = 0.7315 ;
          
         %% screen level relative humidity [%]
         coeffs.rh.beta = [79.9128 -0.2619 1.3055 5.0727 0.5081 ]';

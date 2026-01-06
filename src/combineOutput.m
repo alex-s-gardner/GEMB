@@ -2,7 +2,7 @@
 
 %% USER INPUT
 
-varMerge = {'Ta','P','M','R','EC','elev','a1', 'compaction_dens', ...
+varMerge = {'T_air','P','M','R','EC','elev','a1', 'compaction_dens', ...
     'compaction_melt', 'd_50m','sw_net', 'lw_net', 'shf', 'lhf',};
 S.run_prefix = 'S2A1D2';
 S.inputDIR = '../input/CFSR/T62';
@@ -51,7 +51,7 @@ for v = 1:length(varMerge)
             units       = 'kg/m2';
             monolevel   = true;
             depthAvg    = false;
-        case 'Ta'
+        case 'T_air'
             longName    = '2 meter surface temperautre';
             shortName   = 'air';
             units       = 'K';

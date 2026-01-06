@@ -71,7 +71,7 @@ function [dz, z_center] = gridInitialize(z_top, dz_top, z_max, beta)
 % Calculate number of top grid points:
 n_top = z_top/dz_top;
 
-Dtol = 1e-11; % Depth tolerance 
+d_tolerance  = 1e-11; % Depth tolerance 
 
 % Check to see if the top grid cell structure length (dz_top) goes evenly 
 % into specified top structure depth (column_ztop)
@@ -79,7 +79,7 @@ assert(mod(n_top,1)==0,['Top grid cell structure length does not go evenly into 
         'specified top structure depth, adjust dz_top or column_ztop.'])
 
 % Make sure top grid cell structure length (dz_top) is greater than 5 cm
-if dz_top < 0.05-Dtol
+if dz_top < 0.05-d_tolerance 
     warning('Initial top grid cell length (dz_top) is < 0.05 m.')
 end
 
@@ -96,7 +96,7 @@ gp0 = dz_top;
 z0  = z_top;
 k   = 1;
 
-while z_max > z0+Dtol
+while z_max > z0+d_tolerance 
     dzB(k,1) = gp0 * beta;
     gp0 = dzB(k,1);
     z0 = z0 + gp0;

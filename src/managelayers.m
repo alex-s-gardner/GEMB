@@ -1,5 +1,6 @@
-function [T, dz, d, W, re, gdn, gsp, a, adiff, mass_added, energy_added] = ...
-    managelayers(T, dz, d, W, re, gdn, gsp, a, adiff, column_dzmin, column_zmax, column_zmin, column_ztop, column_zy, verbose)
+function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, mass_added, energy_added] = ...
+    managelayers(T, dz, d, W, re, gdn, gsp, a, a_diffuse, column_dzmin, ...
+    column_zmax, column_zmin, column_ztop, column_zy, verbose)
 % managelayers adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
 % set for the minimum and maximum allowable layer thickness.
@@ -14,43 +15,42 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, mass_added, energy_added] = ...
 %
 %% Inputs
 %
-%  T       K            Grid cell temperature.
-%  d       kg m^-3      Grid cell density.
-%  dz      m            Grid cell thickness.
-%  W       kg m^-2      Water content.
-%  a       fraction     Albedo.
-%  adiff   fraction     Diffuse albedo.
-%  m       kg m^-2      Grid cell mass.
-%  EI      J m^-2       Initial energy of snow/ice.
-%  EW      J m^-2       Initial energy of water.
-%  column_dzmin   m            Minimum allowable grid spacing.
-%  column_zmax   m            Maximum depth of the total column.
-%  column_zmin    m            Minimum depth of the total column.
-%  re      mm           Grain size
-%  gdn     unitless     Grain dendricity
-%  gsp     unitless     Grain sphericity
-%  column_ztop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  column_zy      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
-%  CI      J kg^-1 K^-1 Specific heat capacity of snow/ice.
-%  LF      J kg^-1      Latent heat of fusion.
-%  CtoK    K            273.15 conversion from C to K.
+%  T            : K            Grid cell temperature.
+%  d            : kg m^-3      Grid cell density.
+%  dz           : m            Grid cell thickness.
+%  W            : kg m^-2      Water content.
+%  a            : fraction     Albedo.
+%  a_diffuse    : fraction     Diffuse albedo.
+%  M            : kg m^-2      Grid cell mass.
+%  EI           : J m^-2       Initial energy of snow/ice.
+%  EW           : J m^-2       Initial energy of water.
+%  column_dzmin : m            Minimum allowable grid spacing.
+%  column_zmax  : m            Maximum depth of the total column.
+%  column_zmin  : m            Minimum depth of the total column.
+%  re           : mm           Grain size
+%  gdn          : unitless     Grain dendricity
+%  gsp          : unitless     Grain sphericity
+%  column_ztop  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
+%  column_zy    : unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
+%  CI           : J kg^-1 K^-1 Specific heat capacity of snow/ice.
+%  LF           : J kg^-1      Latent heat of fusion.
+%  CtoK         : K            273.15 conversion from C to K.
 %
 %% Outputs
 %
-%  d       kg m^-3      Grid cell density.
-%  T       K            Grid cell temperature.
-%  W       kg m^-2      Water content.
-%  mass_added:   kg m^-2      Mass added to the column.
-%  dz_add: m            Thickness added to the column.
-%  energy_added:   J m^-2       Energy added to the column.
-%  a       fraction     Albedo.
-%  adiff   fraction     Diffuse albedo.
-%  m       kg m^-2      Grid cell mass.
-%  EI      J m^-2       Initial energy of snow/ice.
-%  EW      J m^-2       Initial energy of water.
-%  re      mm           Grain size
-%  gdn     unitless     Grain dendricity
-%  gsp     unitless     Grain sphericity
+%  d            : kg m^-3      Grid cell density.
+%  T            : K            Grid cell temperature.
+%  W            : kg m^-2      Water content.
+%  mass_added   : kg m^-2      Mass added to the column.
+%  energy_added : J m^-2       Energy added to the column.
+%  a            : fraction     Albedo.
+%  a_diffuse    : fraction     Diffuse albedo.
+%  m            : kg m^-2      Grid cell mass.
+%  EI           : J m^-2       Initial energy of snow/ice.
+%  EW           : J m^-2       Initial energy of water.
+%  re           : mm           Grain size
+%  gdn          : unitless     Grain dendricity
+%  gsp          : unitless     Grain sphericity
 %
 %% Documentation
 %
@@ -63,7 +63,7 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, mass_added, energy_added] = ...
 % Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
 % Model Dev., 16, 2277-2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023
 
-Dtol = 1e-11; % tolerance for numerical comparison.
+d_tolerance  = 1e-11; % tolerance for numerical comparison.
 
 % Specify constants:
 CtoK = 273.15;   % Celsius to Kelvin conversion
@@ -71,34 +71,34 @@ CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
 LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 
 % store initial mass [kg] and energy [J]
-m  = dz .* d;                  % grid cell mass [kg]
-EI = m .* T * CI;              % initial enegy of snow/ice
+M  = dz .* d;                  % grid cell mass [kg]
+EI = M .* T * CI;              % initial enegy of snow/ice
 EW = W .* (LF + CtoK * CI);    % initial enegy of water
 
-mSum0 = sum(W) + sum(m);       % total mass [kg]
-sumE0 = sum(EI) + sum(EW);     % total energy [J]
+M0_total = sum(W) + sum(M);       % total mass [kg]
+E0_total = sum(EI) + sum(EW);     % total energy [J]
 
 T_bottom = T(end);
-n    = numel(T);
+m    = length(T);
 
 % store initial mass [kg] and energy [J]
-m  = dz .* d;                  % grid cell mass [kg]
-EI = m .* T * CI;              % initial enegy of snow/ice
+M  = dz .* d;                  % grid cell mass [kg]
+EI = M .* T * CI;              % initial enegy of snow/ice
 EW = W .* (LF + CtoK * CI);    % initial enegy of water
 
-Zcum = cumsum(dz);
+Z_cumulative = cumsum(dz);
 
 % A logical "mask" that indicates which cells are in the top layers:
-top_layers = Zcum <= (column_ztop + Dtol);
+top_layers = Z_cumulative <= (column_ztop + d_tolerance );
 
 % Define column_dzmin2 array using the top-layers' column_dzmin value for the entire column:
-column_dzmin2 = column_dzmin * ones(n,1);
+column_dzmin2 = column_dzmin * ones(m,1);
 
 % Overwrite the bottom layers as the cumulative product times the stretching factor:
-column_dzmin2(~top_layers) = cumprod(column_zy * ones(sum(~top_layers),1))*column_dzmin;
+column_dzmin2(~top_layers) = cumprod(column_zy * ones(sum(~top_layers),1)) * column_dzmin;
 
 % Define dzMax2 array using the top-layers' column_dzmin value for the entire column:
-dzMax2 = 2 * column_dzmin * ones(n,1);
+dzMax2 = 2 * column_dzmin * ones(m,1);
 
 % In the bottom layers, dzMax2 is the larger of (column_zy * column_dzmin2) or (2 * column_dzmin)
 dzMax2(~top_layers) = max(column_zy * column_dzmin2(~top_layers), 2 * column_dzmin);
@@ -106,20 +106,20 @@ dzMax2(~top_layers) = max(column_zy * column_dzmin2(~top_layers), 2 * column_dzm
 %%
 
 % Preallocate a logical array that will be true for any cell to be deleted:
-delete_cell = false(n,1);
+delete_cell = false(m,1);
 
 % Check to see if any cells are too small and need to be merged
-for i=1:n
+for i=1:m
 
-    if dz(i) < (column_dzmin2(i) - Dtol)
+    if dz(i) < (column_dzmin2(i) - d_tolerance)
 
         % dz has not met minimum thickness requirements, so we will delete it
         % and merge its contents into another cell:
         delete_cell(i) = true;
 
         % Detemine the target location for the cell contents to go:
-        if i==n
-            % If the very bottom cell (i==n) is too small, find the lowermost
+        if i == m
+            % If the very bottom cell (i==m) is too small, find the lowermost
             % cell that isn't going to be deleted:
             i_target = find(~delete_cell,1,'last');
         else
@@ -128,13 +128,13 @@ for i=1:n
 
         % Move the quantities to the target location. Quantities are
         % calculated as linearly weighted functions of mass:
-        m_new           = m(i) + m(i_target);
-        T(i_target)     = (    T(i)*m(i) +     T(i_target)*m(i_target)) / m_new;
-        a(i_target)     = (    a(i)*m(i) +     a(i_target)*m(i_target)) / m_new;
-        adiff(i_target) = (adiff(i)*m(i) + adiff(i_target)*m(i_target)) / m_new;
+        m_new               = M(i) + M(i_target);
+        T(i_target)         = (T(i) * M(i) + T(i_target) * M(i_target)) / m_new;
+        a(i_target)         = (a(i) * M(i) + a(i_target) * M(i_target)) / m_new;
+        a_diffuse(i_target) = (a_diffuse(i) * M(i) + a_diffuse(i_target) * M(i_target)) / m_new;
 
         % Use grain properties from lower cell:
-        re(i_target)  =  re(i);
+        re(i_target)  = re(i);
         gdn(i_target) = gdn(i);
         gsp(i_target) = gsp(i);
 
@@ -142,114 +142,105 @@ for i=1:n
         dz(i_target) = dz(i) + dz(i_target);         % combine cell depths
         d(i_target)  = m_new / dz(i_target);         % combine top densities
         W(i_target)  = W(i) + W(i_target);           % combine liquid water
-        m(i_target)  = m_new;                        % combine top masses
+        M(i_target)  = m_new;                        % combine top masses
 
     end
 end
 
 % Delete combined cells:
-m(delete_cell)      = [];
-W(delete_cell)      = [];
-dz(delete_cell)     = [];
-d(delete_cell)      = [];
-T(delete_cell)      = [];
-a(delete_cell)      = [];
-re(delete_cell)     = [];
-gdn(delete_cell)    = [];
-gsp(delete_cell)    = [];
-adiff(delete_cell)  = [];
-EI(delete_cell)     = [];
-EW(delete_cell)     = [];
-dzMax2(delete_cell) = [];
+M(delete_cell)          = [];
+W(delete_cell)          = [];
+dz(delete_cell)         = [];
+d(delete_cell)          = [];
+T(delete_cell)          = [];
+a(delete_cell)          = [];
+re(delete_cell)         = [];
+gdn(delete_cell)        = [];
+gsp(delete_cell)        = [];
+a_diffuse(delete_cell)  = [];
+EI(delete_cell)         = [];
+EW(delete_cell)         = [];
+dzMax2(delete_cell)     = [];
 
 % Calculate *new* length of cells:
-n = numel(T);
+m = length(T);
 
 %% Split cells
 % * An early implementation of this code used a loop which is included in comments at the bottom of this function for posterity.
 
 % Find the cells that exceed tolerances:
-f = find(dz > dzMax2+Dtol);
+f = find(dz > (dzMax2 + d_tolerance));
 
 % Conserve quantities among the cells that will be split:
 dz(f) = dz(f)/2;
-W(f)  =  W(f)/2;
-m(f)  =  m(f)/2;
+W(f)  = W(f)/2;
+M(f)  = M(f)/2;
 EI(f) = EI(f)/2;
 EW(f) = EW(f)/2;
 
 % Sort the indices of all the cells including the ones that will be duplicated:
-fs = sort([(1:n)';f]);
+fs = sort([(1:m)';f]);
 
 % Recreate the variables with split cells:
-dz    =    dz(fs);
-W     =     W(fs);
-m     =     m(fs);
-T     =     T(fs);
-d     =     d(fs);
-a     =     a(fs);
-adiff = adiff(fs);
-EI    =    EI(fs);
-EW    =    EW(fs);
-re    =    re(fs);
-gdn   =   gdn(fs);
-gsp   =   gsp(fs);
+dz        = dz(fs);
+W         = W(fs);
+M         = M(fs);
+T         = T(fs);
+d         = d(fs);
+a         = a(fs);
+a_diffuse = a_diffuse(fs);
+EI        = EI(fs);
+EW        = EW(fs);
+re        = re(fs);
+gdn       = gdn(fs);
+gsp       = gsp(fs);
 
 %% CORRECT FOR TOTAL MODEL DEPTH
 % WORKS FINE BUT HAS BEEN DISABLED FOR CONVIENCE OF MODEL OUTPUT
 % INTERPRETATION
 
 % Calculate total model depth:
-Ztot = sum(dz);
+Z_total = sum(dz);
 
-if Ztot < column_zmin-Dtol
+if Z_total < (column_zmin - d_tolerance)
 
     % Mass and energy to be added:
-    mass_added   = m(end) + W(end);
-    energy_added   = T(end) * m(end) * CI + W(end) * (LF+CtoK*CI);
-    dz_add = dz(end);
+    mass_added     = M(end) + W(end);
+    energy_added   = T(end) * M(end) * CI + W(end) * (LF + CtoK * CI);
 
     % Add a grid cell of the same size and temperature to the bottom:
-    dz    = [   dz;    dz(end)];
-    T     = [    T;     T(end)];
-    W     = [    W;     W(end)];
-    m     = [    m;     m(end)];
-    d     = [    d;     d(end)];
-    a     = [    a;     a(end)];
-    adiff = [adiff; adiff(end)];
-    EI    = [   EI;    EI(end)];
-    EW    = [   EW;    EW(end)];
-    re    = [   re;    re(end)];
-    gdn   = [  gdn;   gdn(end)];
-    gsp   = [  gsp;   gsp(end)];
+    dz        = [   dz;    dz(end)];
+    T         = [    T;     T(end)];
+    W         = [    W;     W(end)];
+    M         = [    M;     M(end)];
+    d         = [    d;     d(end)];
+    a         = [    a;     a(end)];
+    a_diffuse = [a_diffuse; a_diffuse(end)];
+    re        = [   re;    re(end)];
+    gdn       = [  gdn;   gdn(end)];
+    gsp       = [  gsp;   gsp(end)];
 
-elseif Ztot > column_zmax+Dtol
+elseif Z_total > column_zmax+d_tolerance 
 
     % Mass and energy loss:
-    mass_added   = -(m(end) + W(end));
-    energy_added   = -(T(end) * m(end) * CI) - W(end) * (LF+CtoK*CI);
-    dz_add = -(dz(end));
+    mass_added   = -(M(end) + W(end));
+    energy_added   = -(T(end) * M(end) * CI) - W(end) * (LF+CtoK*CI);
 
     % Remove a grid cell from the bottom:
-    dz(end)    = [];
-    T(end)     = [];
-    W(end)     = [];
-    m(end)     = [];
-    d(end)     = [];
-    a(end)     = [];
-    re(end)    = [];
-    gdn(end)   = [];
-    gsp(end)   = [];
-    adiff(end) = [];
-    EI(end)    = [];
-    EW(end)    = [];
-
+    dz(end)        = [];
+    T(end)         = [];
+    W(end)         = [];
+    M(end)         = [];
+    d(end)         = [];
+    a(end)         = [];
+    re(end)        = [];
+    gdn(end)       = [];
+    gsp(end)       = [];
+    a_diffuse(end) = [];
 else
     % No mass or energy is added or removed:
-    mass_added   = 0;
+    mass_added     = 0;
     energy_added   = 0;
-    dz_add = 0;
-
 end
 
 % The temperature of the bottom grid cell may have been modified when
@@ -257,25 +248,25 @@ end
 %       T(end) = T_bottom
 % This is to satisfy the Constant Temperature (Dirichlet) boundary
 % condition. If this is not done then then thermal diffusion will blow up
-energy_added   = energy_added + ((T_bottom - T(end)) * m(end) * CI);
-T(end) = T_bottom;
+energy_added   = energy_added + ((T_bottom - T(end)) * M(end) * CI);
+T(end)         = T_bottom;
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 if verbose
     % Calculate final mass [kg] and energy [J]
 
-    EI    = m .* T * CI;
+    EI    = M .* T * CI;
     EW    = W .* (LF + CtoK * CI);
 
-    mSum1 = sum(W) + sum(m);
-    sumE1 = sum(EI) + sum(EW);
+    M1_total = sum(W) + sum(M);
+    E1_total = sum(EI) + sum(EW);
 
-    dm = round((mSum0 - mSum1 + mass_added)*100)/100.;
-    dE = round(sumE0 - sumE1 + energy_added);
+    M_delta = round((M0_total - M1_total + mass_added)*100)/100.;
+    E_delta = round(E0_total - E1_total + energy_added);
 
-    if dm ~= 0 || dE ~= 0
-        error(['Mass and energy are not conserved in melt equations:' newline ' dm: ' ...
-            num2str(dm) ' dE: ' num2str(dE) newline])
+    if M_delta ~= 0 || E_delta ~= 0
+        error(['Mass and energy are not conserved in melt equations:' newline ' M_delta: ' ...
+            num2str(M_delta) ' E_delta: ' num2str(E_delta) newline])
     end
 
 end
@@ -286,17 +277,17 @@ end
 % % This loop was in Alex Gardner's original code. Chad Greene vectorized
 % % it in July 2024:
 %
-% for j=n:-1:1
-%     if (dz(j) > dzMax2(j)+Dtol)
+% for j=m:-1:1
+%     if (dz(j) > dzMax2(j)+d_tolerance )
 %
 %         % split in two
 %         dz =    [   dz(1:j-1) ;    dz(j)/2 ;    dz(j)/2 ;    dz(j+1:end)];
 %         W =     [    W(1:j-1) ;     W(j)/2 ;     W(j)/2 ;     W(j+1:end)];
-%         m =     [    m(1:j-1) ;     m(j)/2 ;     m(j)/2 ;     m(j+1:end)];
+%         M =     [    M(1:j-1) ;     M(j)/2 ;     M(j)/2 ;     M(j+1:end)];
 %         T =     [    T(1:j-1) ;     T(j)   ;     T(j)   ;     T(j+1:end)];
 %         d =     [    d(1:j-1) ;     d(j)   ;     d(j)   ;     d(j+1:end)];
 %         a =     [    a(1:j-1) ;     a(j)   ;     a(j)   ;     a(j+1:end)];
-%         adiff = [adiff(1:j-1) ; adiff(j)   ; adiff(j)   ; adiff(j+1:end)];
+%         a_diffuse = [a_diffuse(1:j-1) ; a_diffuse(j)   ; a_diffuse(j)   ; a_diffuse(j+1:end)];
 %         EI =    [   EI(1:j-1) ;    EI(j)/2 ;    EI(j)/2 ;    EI(j+1:end)];
 %         EW =    [   EW(1:j-1) ;    EW(j)/2 ;    EW(j)/2 ;    EW(j+1:end)];
 %         re =    [   re(1:j-1) ;    re(j)   ;    re(j)   ;    re(j+1:end)];

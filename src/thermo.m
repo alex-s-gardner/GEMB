@@ -1,5 +1,7 @@
-function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, dlwrf, Ta, V, eAir, pAir, density_ice, thermal_conductivity_method, emissivity_method, ...
-    emissivity, ulw_delta, emissivity_re_threshold, Vz, Tz, verbose)
+function [T, shf_cum, lhf_cum, EC, ulwrf] = ...
+    thermo(T, dz, d, W_surface, re, swf, dlwrf, T_air, V, e_air, p_air, dt0, ...
+    density_ice, Vz, Tz, emissivity, ulw_delta, emissivity_re_threshold, ...
+    emissivity_method, thermal_conductivity_method, verbose)
 
 % thermo computes new temperature profile accounting for energy absorption
 % and thermal diffusion.
@@ -14,23 +16,23 @@ function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, d
 %
 %% Inputs
 %
-% * T: grid cell temperature [k]
-% * dz: grid cell depth [m]
-% * d: grid cell density [kg m-3]
-% * swf: shortwave radiation fluxes [W m-2]
-% * dlwrf: downward longwave radiation fluxes [W m-2]
-% * Ta: 2 m air temperature
-% * V:  wind velocity [m s-1]
-% * eAir: screen level vapor pressure [Pa]
-% * Ws: surface water content [kg]
-% * dt0: time step of input data [s]
-% * Vz: air temperature height above surface [m]
-% * Tz: wind height above surface [m]
+% * T:         grid cell temperature [k]
+% * dz:        grid cell depth [m]
+% * d:         grid cell density [kg m-3]
+% * swf:       shortwave radiation fluxes [W m-2]
+% * dlwrf:     downward longwave radiation fluxes [W m-2]
+% * T_air:        2 m air temperature
+% * V:         wind velocity [m s-1]
+% * e_air:      screen level vapor pressure [Pa]
+% * W_surface: surface water content [kg]
+% * dt0:       time step of input data [s]
+% * Vz:        air temperature height above surface [m]
+% * Tz:        wind height above surface [m]
 %
 %% Outputs
 %
-% * T: grid cell temperature [k]
-% * EC: evaporation/condensation [kg]
+% * T:     grid cell temperature [k]
+% * EC:    evaporation/condensation [kg]
 % * ulwrf: upward longwave radiation flux [W m-2]
 %
 %% Documentation
@@ -44,26 +46,22 @@ function [T, shf_cum, lhf_cum, EC, ulwrf] = thermo(T, dz, d, Ws, re, dt0, swf, d
 % Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
-if nargin < 24
-    verbose = false;
-end
-
 %% INITIALIZE
 CI = 2102;          % heat capacity of snow/ice (J kg-1 k-1)
 R  = 8.314;         % gas constant [mol-1 K-1]
 SB = 5.67E-8;       % Stefan-Boltzmann constant [W m-2 K-4]
 
-Dtol = 1e-11;
-Gdntol = 1e-10;
-Wtol = 1e-13;
+d_tolerance    = 1e-11;
+gdn_tolerance  = 1e-10;
+W_tolerance    = 1e-13;
 
 ds = d(1);      % density of top grid cell
 
 % calculated air density [kg/m3]
-dAir = 0.029 * pAir /(R * Ta);
+density_air = 0.029 * p_air / (R * T_air);
 
 % thermal capacity of top grid cell [J/k]
-TCs = d(1)*dz(1)*CI;
+TCs = d(1) * dz(1) * CI;
 
 % determine grid point 'center' vector size
 m = length(d);
@@ -78,14 +76,14 @@ lhf_cum = 0.0;
 shf_cum = 0.0;
 
 if verbose
-    T_btm = T(end);
+    T_bottom = T(end);
 end
 
 %% SURFACE ROUGHNESS (Bougamont, 2005)
 % wind/temperature surface roughness height [m]
-if ds < density_ice-Dtol && Ws < Wtol
+if (ds < (density_ice - d_tolerance))  && (W_surface < W_tolerance)
     z0 = 0.00012;       % 0.12 mm for dry snow
-elseif ds >= density_ice-Dtol
+elseif ds >= (density_ice - d_tolerance)
     z0 = 0.0032;        % 3.2 mm for ice
 else
     z0 = 0.0013;        % 1.3 mm for wet snow
@@ -93,15 +91,15 @@ end
 
 % zT and zQ are percentage of z0 (Foken 2008)
 zratio = 10.0;
-zT = z0/zratio;
-zQ = z0/zratio;
+zT     = z0 / zratio;
+zQ     = z0 / zratio;
 
 % if V = 0 goes to infinity therfore if V = 0 change
-V(V < 0.01-Dtol) = 0.01;
+V(V < 0.01-d_tolerance) = 0.01;
 
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
 % calculate new thermal conductivity (K) profile [W m-1 K-1]
-K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method);
+K = thermal_conductivity(T, d, density_ice, thermal_conductivity_method);
 
 %% THERMAL DIFFUSION COEFFICIENTS
 
@@ -184,7 +182,7 @@ Np(m) = 1;
 Nd(m) = 0;
 
 % zero flux at surface
-Nu(1) = 0; % Disconnect from the node above (Air/Ghost node)
+Nu(1) = 0;         % Disconnect from the node above (Air/Ghost node)
 Np(1) = 1 - Nd(1); % Balance the center node to conserve energy (Weights must sum to 1)
 
 
@@ -222,17 +220,18 @@ for i = 1:dt:dt0
         base_flux = Ad(end-1) * (T(end) - T(end-1)) * dt;
     end
 
-    % calculate temperature of snow surface (Ts)
+    % calculate temperature of snow surface (T_surface)
     % when incoming SW radition is allowed to penetrate the surface,
-    % the modeled energy balance becomes very sensitive to how Ts is
+    % the modeled energy balance becomes very sensitive to how T_surface is
     % calculated.  Here, we take the surface temperature to be T(1), but
     % note that the estimated enegy balance & melt are significanly
-    % less when Ts is taken as the mean of the x top grid cells (T(1) + T(2))/2.0.
-    Ts = T(1);
-    Ts = min(273.15,Ts);    % don't allow Ts to exceed 273.15 K (0 deg C)
+    % less when T_surface is taken as the mean of the x top grid cells (T(1) + T(2))/2.0.
+    T_surface = T(1);
+    T_surface = min(273.15, T_surface);    % don't allow T_surface to exceed 273.15 K (0 deg C)
 
     % TURBULENT HEAT FLUX
-    [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz, z0, zT, zQ);
+    [shf, lhf, L] = turbulent_heat_flux(T_air, T_surface, p_air, e_air, ...
+        V, density_air, Vz, Tz, z0, zT, zQ);
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
@@ -243,13 +242,13 @@ for i = 1:dt:dt0
 
     % If user wants to directly set emissivity, or grain radius is larger than the
     % threshold, or emissivity_method is 2 and we have wet snow or ice, use prescribed emissivity
-    if (emissivity_method==0 || (emissivity_re_threshold - re(1))<=Gdntol || (emissivity_method==2 & z0>0.001+Gdntol))
+    if (emissivity_method == 0) || ((emissivity_re_threshold - re(1)) <= gdn_tolerance)  || ((emissivity_method == 2) && (z0 > 0.001+gdn_tolerance))
         emissivity = emissivity;
     else
         emissivity = 1.0;
     end
 
-    ulw    = -(SB * Ts.^4.0 * emissivity + ulw_delta) * dt;
+    ulw    = -(SB * T_surface.^4.0 * emissivity + ulw_delta) * dt;
 
     ulwrf  = ulwrf - ulw/dt0;
     dT_ulw = ulw / TCs;
@@ -265,7 +264,7 @@ for i = 1:dt:dt0
     % Tu: Shift T down one step.
     % The first element is the 'Ghost Node' above surface.
     % For Zero Flux, T_ghost = T(1).
-    Tu(1) = T(1);
+    Tu(1)     = T(1);
     Tu(2:end) = T(1:end-1);
 
     % Td: Shift T up one step.
@@ -273,29 +272,29 @@ for i = 1:dt:dt0
     % Since T(m) is fixed (Nu(m)=0, Nd(m)=0), this value is unused,
     % but duplicating T(end) keeps the vector size correct.
     Td(1:end-1) = T(2:end);
-    Td(end) = T(end);
+    Td(end)     = T(end);
 
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
 
     % calculate cumulative evaporation (+)/condensation(-)
-    EC = EC + (EC_day/86400)*dt;
+    EC = EC + (EC_day / 86400) * dt;
 
-    lhf_cum = lhf_cum+lhf*dt/dt0;
-    shf_cum = shf_cum+shf*dt/dt0;
+    lhf_cum = lhf_cum + lhf * dt / dt0;
+    shf_cum = shf_cum + shf * dt / dt0;
 
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
         E_used = sum(T .* (CI * d .* dz)) - E_init;
         E_sup = sum(sw) + dlw + ulw + turb + base_flux;
-        E_diff = E_used - E_sup;
+        E_delta = E_used - E_sup;
 
-        if abs(E_diff) > 1E-4 || isnan(E_diff)
+        if abs(E_delta) > 1E-4 || isnan(E_delta)
             fprintf('sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, turb = %0.10g J, base_flux = %0.10g J \n', sum(sw) , dlw , ulw , turb , base_flux)
             error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J', E_sup, E_used)
         end
 
-        if T_btm ~= T(end)
-            error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_btm,T(end))
+        if T_bottom ~= T(end)
+            error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
     end
 end

@@ -1,4 +1,4 @@
-function K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method)
+function K = thermal_conductivity(T, d, density_ice, thermal_conductivity_method)
 % thermal_conductivity computes the thermal conductivity profile for snow, 
 % firn, and ice based on density and temperature.
 %
@@ -31,7 +31,7 @@ function K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method
 
     %% CONSTANTS & INITIALIZATION
     % Tolerance to prevent floating point errors at the density threshold
-    Dtol = 1e-11;
+    d_tolerance  = 1e-11;
     
     % Get number of grid cells
     m = length(d);
@@ -41,7 +41,7 @@ function K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method
     
     %% IDENTIFY SNOW VS ICE
     % Create logical mask: True for snow/firn, False for ice
-    sfIdx = d < density_ice - Dtol;
+    sfIdx = d < density_ice - d_tolerance ;
     
     %% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
     % Use empirical density-based regressions

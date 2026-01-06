@@ -1,4 +1,4 @@
-function GEMB(daten, Ta0, V0, dlw0, dsw0, eAir0, pAir0, P0, S, is_restart, verbose)
+function GEMB(daten, T_air0, V0, dlw0, dsw0, e_air0, p_air0, P0, S, is_restart, verbose)
 % GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
 %
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed
@@ -65,28 +65,28 @@ dz = grid_initialize(S.column_ztop, S.column_dztop, S.column_zmax, S.column_zy);
 
 % initialize profile variables
 if is_restart
-    m     = S.Sizeini;
-    a     = S.Aini;               % albedo [fraction]
-    adiff = S.Adiffini;           % albedo [fraction]
-    dz    = S.Dzini;              % layering
-    d     = S.Dini;               % density [kg m-3]
-    EC    = S.ECini;              % surface evaporation (-) condensation (+) [kg m-2]
-    gdn   = S.Gdnini;             % grain dentricity
-    gsp   = S.Gspini;             % grain sphericity
-    re    = S.Reini;              % grain size [mm]
-    T     = S.Tini;               % snow temperature [K]
-    W     = S.Wini;               % water content [kg m-2]
+    m         = S.Sizeini;
+    a         = S.Aini;               % albedo [fraction]
+    a_diffuse = S.Adiffini;           % albedo [fraction]
+    dz        = S.Dzini;              % layering
+    d         = S.Dini;               % density [kg m-3]
+    EC        = S.ECini;              % surface evaporation (-) condensation (+) [kg m-2]
+    gdn       = S.Gdnini;             % grain dentricity
+    gsp       = S.Gspini;             % grain sphericity
+    re        = S.Reini;              % grain size [mm]
+    T         = S.Tini;               % snow temperature [K]
+    W         = S.Wini;               % water content [kg m-2]
 else
-    m     = length(dz);
-    a     = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
-    adiff = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
-    d     = zeros(m,1) + S.density_ice;    % density to that of ice [kg m-3]
-    EC    = 0;                    % surface evaporation (-) condensation (+) [kg m-2]
-    gdn   = zeros(m,1);           % grain dentricity to old snow
-    gsp   = zeros(m,1);           % grain sphericity to old snow
-    re    = zeros(m,1) + 2.5;     % grain size to old snow [mm]
-    T     = zeros(m,1) + S.T_mean; % initial grid cell temperature to the annual mean temperature [K]
-    W     = zeros(m,1);           % water content to zero [kg m-2]
+    m         = length(dz);
+    a         = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
+    a_diffuse = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
+    d         = zeros(m,1) + S.density_ice;    % density to that of ice [kg m-3]
+    EC        = 0;                    % surface evaporation (-) condensation (+) [kg m-2]
+    gdn       = zeros(m,1);           % grain dentricity to old snow
+    gsp       = zeros(m,1);           % grain sphericity to old snow
+    re        = zeros(m,1) + 2.5;     % grain size to old snow [mm]
+    T         = zeros(m,1) + S.T_mean; % initial grid cell temperature to the annual mean temperature [K]
+    W         = zeros(m,1);           % water content to zero [kg m-2]
 end
 
 F      = zeros(m,1);               % refreeze to zero [kg m-2]
@@ -111,7 +111,7 @@ end
 % initialize output structure
 
 % single level time series
-S.varname.monolevel = {'time', 'Ta', 'P', 'M', 'R', 'F', 'EC', 'sw_net', ...
+S.varname.monolevel = {'time', 'T_air', 'P', 'M', 'R', 'F', 'EC', 'sw_net', ...
     'lw_net', 'shf', 'lhf', 'a1', 'Q_net', 're1', 'd1', 'm', 'FAC'};
 
 O.time            = daten(output_index)';
@@ -126,7 +126,7 @@ O.a1              = O.M;
 O.Q_net           = O.M;
 O.re1             = O.M;
 O.d1              = O.M;
-O.Ta              = O.M;
+O.T_air           = O.M;
 O.P               = O.M;
 O.compaction_dens = O.M;
 O.compaction_melt = O.M;
@@ -137,10 +137,10 @@ O.m               = O.M;
 I = find(output_index);                      % save index
 for i = 1:length(I)
     if i == 1
-        O.Ta(i) = mean(Ta0(1:I(i))) - 273.15;  % convert from K to deg C
+        O.T_air(i) = mean(T_air0(1:I(i))) - 273.15;  % convert from K to deg C
         O.P(i)  = sum(P0(1:I(i)));
     else
-        O.Ta(i) = mean(Ta0((I(i-1)+1):I(i))) - 273.15;
+        O.T_air(i) = mean(T_air0((I(i-1)+1):I(i))) - 273.15;
         O.P(i)  = sum(P0((I(i-1)+1):I(i)));
     end
 end
@@ -159,8 +159,9 @@ O.gsp = O.d;
 O.ps  = O.d;
 
 % initialize cumulative output values
-OV.varname = {'R', 'M', 'F', 'P', 'EC', 'Ra', 'mass_added', 'sw_net', 'lw_net', 'shf', ...
-    'lhf', 'a1', 're1', 'ulw', 'd1', 'compaction_dens', 'compaction_melt', 'm', 'Q_net', 'FAC'};
+OV.varname = {'R', 'M', 'F', 'P', 'EC', 'Ra', 'mass_added', 'sw_net', ...
+    'lw_net', 'shf', 'lhf', 'a1', 're1', 'ulw', 'd1', 'compaction_dens', ...
+    'compaction_melt', 'm', 'Q_net', 'FAC'};
 
 % set cumulative values zero
 for v = 1:length(OV.varname)
@@ -191,13 +192,13 @@ for yIdx = 1:S.n_spinup_cycles + 1
     for dIdx = 1:length(daten)
 
         % Extract daily data:
-        dlw  =  dlw0(dIdx);    % downward longwave radiation flux [W m-2]
-        dsw  =  dsw0(dIdx);    % downward shortwave radiation flux [W m-2]
-        Ta   =   Ta0(dIdx);    % screen level air temperature [K]
-        P    =    P0(dIdx);    % precipitation [kg m-2]
-        V    =    V0(dIdx);    % wind speed [m s-1]
-        eAir = eAir0(dIdx);    % screen level vapor pressure [Pa]
-        pAir = pAir0(dIdx);    % screen level air pressure [Pa]
+        dlw     =  dlw0(dIdx);    % downward longwave radiation flux [W m-2]
+        dsw     =  dsw0(dIdx);    % downward shortwave radiation flux [W m-2]
+        T_air   =   T_air0(dIdx);    % screen level air temperature [K]
+        P       =    P0(dIdx);    % precipitation [kg m-2]
+        V       =    V0(dIdx);    % wind speed [m s-1]
+        e_air   = e_air0(dIdx);    % screen level vapor pressure [Pa]
+        p_air   = p_air0(dIdx);    % screen level air pressure [Pa]
 
         % if we are provided with cc and cot values, extract for the timestep
         if numel(S.black_carbon_snow)>1
@@ -236,11 +237,13 @@ for yIdx = 1:S.n_spinup_cycles + 1
             cloud_fraction = S.cloud_fraction;
         end
 
-        [T, dz, d, W, re, gdn, gsp, a, adiff, EC, M_surf, sw_net, shf, ...
-            lhf, ulw, Ra, M, R, F, mass_added, energy_added, compaction_dens, compaction_melt] = ...
-            gemb_core(T, dz, d, W, re, gdn, gsp, a, adiff, dt, P, EC, M_surf, ...
-            S.density_ice, black_carbon_snow, black_carbon_ice, solar_zenith_angle, cloud_optical_thickness, cloud_fraction, dsw, ...
-            dsw_diffuse, dlw, Ta, V, eAir, pAir, S, verbose);
+        [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
+            lhf, ulw, Ra, M, R, F, mass_added, energy_added, ...
+            compaction_dens, compaction_melt] = ...
+            gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, dt, P, EC, ...
+            M_surf, S.density_ice, black_carbon_snow, black_carbon_ice, ...
+            solar_zenith_angle, cloud_optical_thickness, cloud_fraction, ...
+            dsw, dsw_diffuse, dlw, T_air, V, e_air, p_air, S, verbose);
         
         % calculate upward longwave radiation flux [W m-2]
         % not used in energy balance
