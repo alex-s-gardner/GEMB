@@ -2,9 +2,9 @@
 
 %% USER INPUT
 
-varMerge = {'Ta','P','M','R','EC','elev','a1', 'comp1', ...
-    'comp2', 'd_50m','netSW', 'netLW', 'shf', 'lhf',};
-S.runPfx = 'S2A1D2';
+varMerge = {'T_air','P','M','R','EC','elev','a1', 'compaction_dens', ...
+    'compaction_melt', 'd_50m','sw_net', 'lw_net', 'shf', 'lhf',};
+S.run_prefix = 'S2A1D2';
 S.inputDIR = '../input/CFSR/T62';
 
 %% Combine output and place into a netcdf
@@ -12,7 +12,7 @@ S.inputDIR = '../input/CFSR/T62';
 load(fullfile(S.inputDIR, 'mask'))
 
 % find all output data files
-f = dir(fullfile('..','Output', [S.runPfx '*.mat']));
+f = dir(fullfile('..','Output', [S.run_prefix '*.mat']));
 fName = {f(:).name};
 
 % read in time stamp from first file
@@ -51,7 +51,7 @@ for v = 1:length(varMerge)
             units       = 'kg/m2';
             monolevel   = true;
             depthAvg    = false;
-        case 'Ta'
+        case 'T_air'
             longName    = '2 meter surface temperautre';
             shortName   = 'air';
             units       = 'K';
@@ -63,15 +63,15 @@ for v = 1:length(varMerge)
             units       = 'unitless';
             monolevel   = true;
             depthAvg    = false;
-        case 'comp1'
+        case 'compaction_dens'
             longName    = 'elevation lowering due to dry-snow densification';
-            shortName   = 'comp1';
+            shortName   = 'compaction_dens';
             units       = 'm';
             monolevel   = true;
             depthAvg    = false;
-        case 'comp2'
+        case 'compaction_melt'
             longName    = 'elevation lowering due to wet-snow densification and runoff';
-            shortName   = 'comp2';
+            shortName   = 'compaction_melt';
             units       = 'm';
             mmonolevel   = true;
             depthAvg    = false;
@@ -172,12 +172,12 @@ for v = 1:length(varMerge)
     end
     
     switch var
-        case {'elev', 'comp1', 'comp2'}
+        case {'elev', 'compaction_dens', 'compaction_melt'}
             OUT = OUT - repmat(OUT(:,:,1), [1,1,size(OUT,3)]);
     end
     
     %% place into netcdf file
-    outFileName = fullfile('..','Output', [S.runPfx '_' var '.nc']);
+    outFileName = fullfile('..','Output', [S.run_prefix '_' var '.nc']);
     [numrow, numcol]= size(mask.value);
     ncid = netcdf.create(outFileName,'NC_SHARE');
     
@@ -236,7 +236,7 @@ for v = 1:length(varMerge)
     % add attributes
     netcdf.putAtt(ncid, varid, 'long_name', longName)
     netcdf.putAtt(ncid, varid, 'units', units)
-    netcdf.putAtt(ncid, varid, 'model_run', ['GEMB0.2_' S.runPfx])
+    netcdf.putAtt(ncid, varid, 'model_run', ['GEMB0.2_' S.run_prefix])
     netcdf.putAtt(ncid, varid, 'units', units)
     
     netcdf.putAtt(ncid, varidX, 'long_name', xLongName)

@@ -1,31 +1,30 @@
-function [dz, d] = densification(T, dz, d, re, dt, dIce, aIdx, denIdx, Tmean, C, swIdx, adThresh)
-
+function [dz, d] = densification(T, dz, d, re, dt, density_ice, T_mean, P_mean, albedo_desnity_threshold, albedo_method, sw_absorption_method, densification_method)
 
 % densification computes the densification of snow/firn using the emperical model of
 % Herron and Langway (1980) or the semi-emperical model of Anthern et al. (2010).
 %
 % Inputs:
-%   denIdx = densification model to use:
+%   densification_method = densification model to use:
 %       1 = emperical model of Herron and Langway (1980)
 %       2 = semi-imerical model of Anthern et al. (2010)
 %       3 = physical model from Appendix B of Anthern et al. (2010)
 %   d   = initial snow/firn density [kg m-3]
 %   T   = temperature [K]
 %   dz  = grid cell size [m]
-%   C   = average accumulation rate [kg m-2 yr-1]
+%   P_mean   = average accumulation rate [kg m-2 yr-1]
 %   dt  = time lapsed [s]
 %   re  = effective grain radius [mm];
-%   Ta  = mean annual temperature
+%   T_air  = mean annual temperature
 %
 %% FOR TESTING
-% denIdx = 2;
+% densification_method = 2;
 % d = 800;
 % T = 270;
 % dz = 0.005;
-% C = 200;
+% P_mean = 200;
 % dt = 60*60;
 % re = 0.7;
-% Tmean = 273.15-18;
+% T_mean = 273.15-18;
 %
 %% Syntax
 %
@@ -64,8 +63,7 @@ function [dz, d] = densification(T, dz, d, re, dt, dIce, aIdx, denIdx, Tmean, C,
 
 %% MAIN FUNCTION
 
-Dtol = 1e-11;
-Ptol = 1e-6;
+d_tolerance  = 1e-11;
 
 % specify constants
 dt      = dt / 86400;  % convert from [s] to [d]
@@ -81,17 +79,17 @@ mass_init = d .* dz;
 % calculate new snow/firn density for:
 %   snow with densities <= 550 [kg m-3]
 %   snow with densities > 550 [kg m-3]
-idx = d <= 550.0+Dtol;
-switch denIdx
+idx = d <= (550.0 + d_tolerance);
+switch densification_method
     case 1 % Herron and Langway (1980)
-        c0 = (11 * exp(-10160 ./ (T(idx) * R))) .* C/1000;
-        c1 = (575 * exp(-21400 ./ (T(~idx)* R))) .* (C/1000)^0.5;
+        c0 = ( 11 * exp(-10160 ./ (T(idx)  * R))) .* P_mean/1000;
+        c1 = (575 * exp(-21400 ./ (T(~idx) * R))) .* (P_mean/1000)^0.5;
 
     case 2 % Arthern et al. (2010) [semi-emperical]
         % common variable
         % NOTE: Ec=60000, Eg=42400 (i.e. should be in J not kJ)
-        H = exp((-60000./(T * R)) + (42400./(Tmean .* R))) ...
-            .* (C * 9.81);
+        H = exp((-60000./(T * R)) + (42400./(T_mean .* R))) ...
+            .* (P_mean * 9.81);
 
         c0 = 0.07 * H(idx);
         c1 = 0.03 * H(~idx);
@@ -106,104 +104,107 @@ switch denIdx
         c1 = 3.7E-9 * H(~idx);
 
     case 4 % Li and Zwally (2004)
-        c0 = (C./dIce) .* max(139.21 - 0.542*Tmean,1).*8.36.*max(CtoK - T,1.0) .^ -2.061;
+        c0 = (P_mean./density_ice) .* max(139.21 - 0.542*T_mean,1) .* 8.36 .* max(CtoK - T,1.0).^-2.061;
         c1 = c0;
         c0 = c0(idx);
         c1 = c1(~idx);
 
     case 5 % Helsen et al. (2008)
         % common variable
-        c0 = (C./dIce) .* max(76.138 - 0.28965*Tmean,1).*8.36.*max(CtoK - T,1.0) .^ -2.061;
+        c0 = (P_mean./density_ice) .* max(76.138 - 0.28965 * T_mean, 1) .* 8.36 .* max(CtoK - T,1.0).^-2.061;
         c1 = c0;
         c0 = c0(idx);
         c1 = c1(~idx);
 
     case 6 % Ligtenberg and others (2011) [semi-emperical], Antarctica
         % common variable
-        % From literature: H = exp((-60000.0/(Tmean * R)) + (42400.0/(Tmean * R))) * (C * 9.81);
-        H = exp((-60000.0./(T * R)) + (42400.0./(Tmean .* R))) .* (C .* 9.81);
+        % From literature: H = exp((-60000.0/(T_mean * R)) + (42400.0/(T_mean * R))) * (P_mean * 9.81);
+        H      = exp((-60000.0 ./ (T * R)) + (42400.0 ./ (T_mean .* R))) .* (P_mean .* 9.81);
         c0arth = 0.07 * H;
         c1arth = 0.03 * H;
-        % ERA5 new aIdx=1, swIdx=0
-        if aIdx==1 && swIdx==0
-            if abs(adThresh - 820.0) < Dtol
+
+        % ERA5 new albedo_method=1, sw_absorption_method=0
+        if (albedo_method == 1) && (sw_absorption_method == 0)
+            if abs(albedo_desnity_threshold - 820.0) < d_tolerance 
                 % ERA5 v4 (Paolo et al., 2023)
-                M0 = max(1.5131 - (0.1317 * log(C)),0.25);
-                M1 = max(1.8819 - (0.2158 * log(C)),0.25);
+                M0 = max(1.5131 - (0.1317 * log(P_mean)),0.25);
+                M1 = max(1.8819 - (0.2158 * log(P_mean)),0.25);
             else
-                % ERA5 new aIdx=1, swIdx=0
-                %M0 = max(1.8785 - (0.1811 * log(C)),0.25);
-                %M1 = max(2.0005 - (0.2346 * log(C)),0.25);
-                % ERA5 new aIdx=1, swIdx=0, bare ice
-                M0 = max(1.8422 - (0.1688 * log(C)),0.25);
-                M1 = max(2.4979 - (0.3225 * log(C)),0.25);
+                % ERA5 new albedo_method=1, sw_absorption_method=0
+                %M0 = max(1.8785 - (0.1811 * log(P_mean)),0.25);
+                %M1 = max(2.0005 - (0.2346 * log(P_mean)),0.25);
+                % ERA5 new albedo_method=1, sw_absorption_method=0, bare ice
+                M0 = max(1.8422 - (0.1688 * log(P_mean)),0.25);
+                M1 = max(2.4979 - (0.3225 * log(P_mean)),0.25);
             end
-    		% ERA5 new aIdx=2, swIdx=1
-        elseif aIdx<3 && swIdx>0
-            M0 = max(2.2191 - (0.2301 * log(C)),0.25);
-            M1 = max(2.2917 - (0.2710 * log(C)),0.25);
+    		% ERA5 new albedo_method=2, sw_absorption_method=1
+        elseif (albedo_method < 3) && (sw_absorption_method > 0)
+            M0 = max(2.2191 - (0.2301 * log(P_mean)),0.25);
+            M1 = max(2.2917 - (0.2710 * log(P_mean)),0.25);
+        else % ASG Changed 05/01/2026
+            % ERA5 new albedo_method=2, sw_absorption_method=0
+            %elseif (albedo_method==2)
+            %From Ligtenberg
+            %H = exp((-60000.0/(T_mean * R)) + (42400.0/(T_mean * R))) * (P_mean * 9.81);
+            %M0 = max(1.435 - (0.151 * log(P_mean)),0.25);
+            %M1 = max(2.366 - (0.293 * log(P_mean)),0.25);
+            %RACMO callibration, default (Gardner et al., 2023)
+            M0 = max(1.6383 - (0.1691 * log(P_mean)),0.25);
+            M1 = max(1.9991 - (0.2414 * log(P_mean)),0.25);
         end
 
-        % ERA5 new aIdx=2, swIdx=0
-        %elseif (aIdx==2)
-        %From Ligtenberg
-        %H = exp((-60000.0/(Tmean * R)) + (42400.0/(Tmean * R))) * (C * 9.81);
-        %M0 = max(1.435 - (0.151 * log(C)),0.25);
-        %M1 = max(2.366 - (0.293 * log(C)),0.25);
-        %RACMO callibration, default (Gardner et al., 2023)
-        M0 = max(1.6383 - (0.1691 * log(C)),0.25);
-        M1 = max(1.9991 - (0.2414 * log(C)),0.25);
-        c0 = M0*c0arth(idx);
-        c1 = M1*c1arth(~idx);
+        c0 = M0 * c0arth(idx);
+        c1 = M1 * c1arth(~idx);
 
     case 7 % Kuipers Munneke and others (2015) [semi-emperical], Greenland
         % common variable
-        % From literature: H = exp((-60000.0/(T[i] * R)) + (42400.0/(T[i] * R))) * (C * 9.81);
-        H = exp((-60000.0./(T * R)) + (42400.0./(Tmean .* R))) .* (C .* 9.81);
+        % From literature: H = exp((-60000.0/(T[i] * R)) + (42400.0/(T[i] * R))) * (P_mean * 9.81);
+        H = exp((-60000.0 ./ (T * R)) + (42400.0 ./ (T_mean .* R))) .* (P_mean .* 9.81);
 
         c0arth = 0.07 * H;
         c1arth = 0.03 * H;
-        % ERA5 new aIdx=1, swIdx=0
-        if aIdx==1 && swIdx==0
-            if abs(adThresh - 820.0) < Dtol
+        % ERA5 new albedo_method=1, sw_absorption_method=0
+        if (albedo_method == 1) && (sw_absorption_method == 0)
+            if abs(albedo_desnity_threshold - 820.0) < d_tolerance 
                 % ERA5 v4
-                M0 = max(1.3566 - (0.1350 * log(C)),0.25);
-                M1 = max(1.8705 - (0.2290 * log(C)),0.25);
+                M0 = max(1.3566 - (0.1350 * log(P_mean)),0.25);
+                M1 = max(1.8705 - (0.2290 * log(P_mean)),0.25);
             else
-                % ERA5 new aIdx=1, swIdx=0
-                %M0 = max(1.4574 - (0.1123 * log(C)),0.25);
-                %M1 = max(2.0238 - (0.2070 * log(C)),0.25);
-                % ERA5 new aIdx=1, swIdx=0, bare ice
-                M0 = max(1.4318 - (0.1055 * log(C)),0.25);
-                M1 = max(2.0453 - (0.2137 * log(C)),0.25);
+                % ERA5 new albedo_method=1, sw_absorption_method=0
+                %M0 = max(1.4574 - (0.1123 * log(P_mean)),0.25);
+                %M1 = max(2.0238 - (0.2070 * log(P_mean)),0.25);
+                % ERA5 new albedo_method=1, sw_absorption_method=0, bare ice
+                M0 = max(1.4318 - (0.1055 * log(P_mean)),0.25);
+                M1 = max(2.0453 - (0.2137 * log(P_mean)),0.25);
             end
-    		% ERA5 new aIdx=2, swIdx=1
-        elseif aIdx<3 && swIdx>0
-            M0 = max(1.7834 - (0.1409 * log(C)),0.25);
-            M1 = max(1.9260 - (0.1527 * log(C)),0.25);
+    		% ERA5 new albedo_method=2, sw_absorption_method=1
+        elseif albedo_method<3 && sw_absorption_method>0
+            M0 = max(1.7834 - (0.1409 * log(P_mean)),0.25);
+            M1 = max(1.9260 - (0.1527 * log(P_mean)),0.25);
+        else % ASG Changed 05/01/2026
+            % ERA5 new albedo_method=2, sw_absorption_method=0
+            %elseif (albedo_method==2)
+            % From Kuipers Munneke
+            %M0 = max(1.042 - (0.0916 * log(P_mean)),0.25);
+            %M1 = max(1.734 - (0.2039 * log(P_mean)),0.25);
+            %RACMO callibration, default (Gardner et al., 2023)
+            M0 = max(1.2691 - (0.1184 * log(P_mean)),0.25);
+            M1 = max(1.9983 - (0.2511 * log(P_mean)),0.25);
         end
 
-        % ERA5 new aIdx=2, swIdx=0
-        %elseif (aIdx==2)
-        % From Kuipers Munneke
-        %M0 = max(1.042 - (0.0916 * log(C)),0.25);
-        %M1 = max(1.734 - (0.2039 * log(C)),0.25);
-        %RACMO callibration, default (Gardner et al., 2023)
-        M0 = max(1.2691 - (0.1184 * log(C)),0.25);
-        M1 = max(1.9983 - (0.2511 * log(C)),0.25);
-        c0 = M0*c0arth(idx);
-        c1 = M1*c1arth(~idx);
+        c0 = M0 * c0arth(idx);
+        c1 = M1 * c1arth(~idx);
 
 end
 
 % new snow density
-d(idx) = d(idx) + (c0 .* (dIce - d(idx)) / 365 * dt);
-d(~idx) = d(~idx) + (c1 .* (dIce - d(~idx)) / 365 * dt);
+d(idx)  = d(idx)  + (c0 .* (density_ice - d(idx)) / 365 * dt);
+d(~idx) = d(~idx) + (c1 .* (density_ice - d(~idx)) / 365 * dt);
 
-%disp((num2str(nanmean(c0 .* (dIce - d(idx)) / 365 * dt))))
+%disp((num2str(nanmean(c0 .* (density_ice - d(idx)) / 365 * dt))))
 
 % do not allow densities to exceed the density of ice
-d(d > dIce-Ptol) = dIce;
+d(d > (density_ice - d_tolerance)) = density_ice;
 
 % calculate new grid cell length
 dz = mass_init ./ d;

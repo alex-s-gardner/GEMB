@@ -1,30 +1,36 @@
-% number of processors to use
-mod.NW = 48;
-mod.PC = 'off'; %'flux'; %'flux'; % 'on';
-TEST = true;
+% Source of climate forcing
+S.run_id    = "test_1";
+
+% sw = 18234.77002 J, dlw = 42343.72922 J, ulw = -56084.2946 J, turb = 1746.594377 J, base_flux = 3.56696875e-11 J 
+% energy not conserved in thermodynamics equations: supplied = 6240.799015 J, used = 6240.799118 J
+
+% sw = 18234.77002 J, dlw = 42343.72922 J, ulw = -56132.56598 J, turb = 1724.457821 J, base_flux = -3.864216137e-11 J
+% energy not conserved in thermodynamics equations: supplied = 6170.391081 J, used = 6170.39119 J
 
 %% GEMB INITIALIZATION
 % unique model run ID to save output as
-S.runPfx = 'S2A1D2';
+S.run_prefix = 'S2A1D2';
 
 % spin-up
-S.spinUp = 2;   % number of cycles of met data run before output
+% number of cycles of met data run before output
 % calcualted, set spinUp = 0 for no spin up
+S.n_spinup_cycles = 2;  
 
 % select method of calculating albedo and subsurface absorption (default is 1)
-%   0 : direct input from aValue parameter, no use of adThresh
+%   0 : direct input from albedo_fixed parameter, no use of albedo_desnity_threshold
 %   1 : effective grain radius (Gardner & Sharp, 2009)
-%   2 : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with swIdx=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
+%   2 : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with sw_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
 %   3 : density and cloud amount (Greuell & Konzelmann, 1994)
 %   4 : exponential time decay & wetness (Bougamont & Bamber, 2005)
-S.aIdx = 1;
-% Apply aIdx method to all areas with densities below this value, or else apply direct input value from aValue, allowing albedo to be altered.
+S.albedo_method = 1;
+
+% Apply albedo_method method to all areas with densities below this value, or else apply direct input value from albedo_fixed, allowing albedo to be altered.
 % Default value is rho water (1023 kg m-3).
-S.adThresh = 1023;
+S.albedo_desnity_threshold = 1023;
 
 % apply all SW to top grid cell (0) or allow SW to penetrate surface (1)
-% (default 0: if swIdx=1 and aIdx=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
-S.swIdx = 0;
+% (default 0: if sw_absorption_method=1 and albedo_method=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
+S.sw_absorption_method = 0;
 
 % select densification model to use (default is 2):
 %   1 = emperical model of Herron and Langway (1980)
@@ -34,7 +40,7 @@ S.swIdx = 0;
 %   5 = DO NOT USE: modified emperical model (4) by Helsen et al. (2008)
 %   6 = Antarctica semi-emperical model of Ligtenberg et al. (2011)
 %   7 = Greenland semi-emperical model of Kuipers Munneke et al. (2015)
-S.denIdx = 2;
+S.densification_method = 2;
 
 % select model for fresh snow accumulation density (default is 1):
 %   0 = Original GEMB value, 150 kg/m^3
@@ -42,110 +48,96 @@ S.denIdx = 2;
 %   2 = Greenland value of fresh snow density, 315 kg/m^3, Fausto et al. (2018)
 %   3 = Antarctica model of Kaspers et al. (2004)
 %   4 = Greenland model of Kuipers Munneke et al. (2015)
-S.dsnowIdx = 1;
+S.new_snow_method = 1;
 
 % select method for calculating emissivity (default is 1)
-%   0: direct input from teValue parameter, no use of teThresh
-%   1: default value of 1, in areas with grain radius below teThresh
-%   2: default value of 1, in areas with grain radius below teThresh and areas of dry snow (not bare ice or wet) at the surface
-S.eIdx = 1;
-% Apply eIdx method to all areas with grain radii above this value (mm), or else apply direct input value from teValue, allowing emissivity to be altered.
+%   0: direct input from emissivity parameter, no use of emissivity_re_threshold
+%   1: default value of 1, in areas with grain radius below emissivity_re_threshold
+%   2: default value of 1, in areas with grain radius below emissivity_re_threshold and areas of dry snow (not bare ice or wet) at the surface
+S.emissivity_method = 1;
+
+% Apply emissivity_method method to all areas with effective grain radii (re) above this value (mm), or else apply direct input value from emissivity, allowing emissivity to be altered.
 % Default value is a effective grain radius of 10 mm.
-S.teThresh = 10;
+S.emissivity_re_threshold = 10;
 
 % select method for calculating thermal conductivity (default is 1)
 % 1: after Sturm et al, 1997
 % 2: after Calonne et al., 2011
-S.tcIdx = 1;
+S.thermal_conductivity_method = 1;
 
 % GRID INITIALIZATION
 % set depth of top grid cell structure (constant grid length) [m]
-S.zTop = 10;
+S.column_ztop = 10;
 
 % set initial top vertical and min allowable grid spacings [m]
-S.dzTop = 0.05; %0.05;
-S.dzMin = S.dzTop / 2;
+S.column_dztop = 0.05;
+S.column_dzmin = S.column_dztop / 2;
 
 % set initial/max and min model depth [m]
-S.zMax = 250;
-S.zMin = ceil(S.zMax/2 /10)*10;
+S.column_zmax = 250;
+S.column_zmin = ceil(S.column_zmax/2 /10)*10;
 
 % strech grid cells bellow top_z by a [top_dz * y ^ (cells bellow top_z)]
-S.zY = 1.10;
-
-%thermal: scaling factor to multiply the thermal diffusion timestep (delta t)
-S.ThermoDeltaTScaling = 1/11;
+S.column_zy  = 1.10;
 
 % mean annual wind velocity [m s-1], climatology
-S.Vmean=10.0;
+S.V_mean     = 10.0;
 
-%optional inputs:
-S.teValue = 1.0;     % Outward longwave radiation thermal emissivity forcing at every element (default in code is 1).
-% Used only if eIdx==0, or effective grain radius exceeds teThresh
+% optional inputs:
+S.emissivity = 1.0;     % Outward longwave radiation thermal emissivity forcing at every element (default in code is 1).
 
-S.isdeltaLWup=false; % True to perturb the long wave radiation upwards.
-S.dulwrfValue = 0.0; % Delta with which to perturb the long wave radiation upwards. Use if isdeltaLWup is true.
+S.ulw_delta  = 0.0; % Delta [W/m²] with which to perturb the long wave radiation upwards. ulw_delta = 0.0 unless you have very good reason
 
-S.isrestart=false;   % True if we want to restart from *ini parameters set in S struct
+S.is_restart = false;   % True if we want to restart from *ini parameters set in S struct
 
 % OTHER
 % specify frequency to output data (density, grid length, and temperature)
 %   - 'monthly'
 %   - 'daily'
-S.outputFreq = 'monthly';
-
-% input data directory
-if TEST
-    S.outDIR = fullfile('..','TEST_DATA/');
-else
-    % output directory
-    S.outDIR = '/Volumes/MasterBrain/data/GEMB/Output/';
-end
+S.output_frequency = 'monthly';
 
 % FIXED ALBEDO VARIABLES
 % albedo tuning parameters 
 % for methods of calculating albedo see albedo function
 % ----------------------------- METHODS 1 & 2 -----------------------------
-S.aSnow = 0.85;         % new snow albedo (0.64 - 0.89)
-S.aIce = 0.48;          % range 0.27-0.58 for old snow
-S.aValue = S.aSnow;  % Albedo forcing at every element.  Used only if aIdx == 0, or density exceeds adThresh
+S.albedo_snow  = 0.85;              % new snow albedo (0.64 - 0.89)
+S.albedo_ice   = 0.48;              % range 0.27-0.58 for old snow
+S.albedo_fixed = S.albedo_snow;     % Albedo forcing at every element.  Used only if albedo_method == 0, or density exceeds albedo_desnity_threshold
 
 %Defaut values, but these can also be set as time series forcing
-S.dswdiffrf=0.0;        % downward diffusive shortwave radiation flux [W/m^2]
-S.szaValue=0.0;         % Solar Zenith Angle [degree]
-S.cotValue=0.0;         % Cloud Optical Thickness
-S.ccsnowValue=0.0;      % concentration of light absorbing carbon for snow [ppm1]
-S.cciceValue=0.0;       % concentration of light absorbing carbon for ice [ppm1]
+S.dsw_diffuse             = 0.0;    % downward diffusive shortwave radiation flux [W/m^2]
+S.solar_zenith_angle      = 0.0;    % Solar Zenith Angle [degree]
+S.cloud_optical_thickness = 0.0;    % Cloud Optical Thickness
+S.black_carbon_snow       = 0.0;    % concentration of light absorbing carbon for snow [ppm1]
+S.black_carbon_ice        = 0.0;    % concentration of light absorbing carbon for ice [ppm1]
 
 % ------------------------------- METHOD 3 --------------------------------
 % RADIATION CORRECTION FACTORS
 % -> only used for met station data and Greuell & Konzelmann, 1994 albedo
-S.cldFrac = 0.1;        % average cloud amount
+S.cloud_fraction = 0.1;        % average cloud amount
 
 % ------------------------------- METHOD 4 --------------------------------
 % additonal tuning parameters albedo as a funtion of age and water content
 % (Bougamont et al., 2005)
-S.t0wet = 15;           % time scale for wet snow (15-21.9) [d]
-S.t0dry = 30;           % warm snow timescale (30) [d]
-S.K = 7;                % time scale temperature coef. (7) [d]
+S.albedo_wet_snow_t0 = 15;     % time scale for wet snow (15-21.9) [d]
+S.albedo_dry_snow_t0 = 30;     % warm snow timescale (30) [d]
+S.albedo_K           = 7;      % time scale temperature coef. (7) [d]
+
+% Constants
+S.density_ice        = 910;     % density of ice [kg m-3]
 
 %% RUN GEMB
-runPfx = S.runPfx;
 
-% open matlab pool for parallel processing
-if strcmp(mod.PC, 'on')
-    parpool(mod.NW)
-elseif strcmp(mod.PC, 'flux')
-    parpool('mpiexecflux', mod.NW)
-end
+switch S.run_id
+    case "test_1"
+        verbose = true;
+        % output directory
+        S.output_dir = '../test_1';
 
-if TEST
-    verbose = true;
-
-    [dateN, P0, Ta0, V0, dlw0, dsw0, eAir0, pAir0, LP] = simulate_climate_forcing(set_id);
-    S0 = combineStrucData_GEMB(S,LP,1);
-
-    GEMB(P0, Ta0, V0, dateN, dlw0, dsw0, eAir0, pAir0, S0, S.isrestart, verbose)
-else
-    error("input case not defined")
+        [daten, P, T_air, V, dlw, dsw, e_air, p_air, LP] = simulate_climate_forcing(run_id);
+        S = combineStrucData_GEMB(S,LP,1);
+    
+        GEMB(daten, T_air, V, dlw, dsw, e_air, p_air, P, S, S.is_restart, verbose)
+    otherwise
+        error("input case not defined")
 end

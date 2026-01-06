@@ -1,21 +1,21 @@
-function eAir = simulate_vapor_pressure(Ta, rh)
+function e_air = simulate_vapor_pressure(T_air, rh)
 % SIMULATE_VAPOR_PRESSURE Estimates actual vapor pressure from Temp and RH.
 %
-%   eAir = simulate_vapor_pressure(Ta, rh)
+%   e_air = simulate_vapor_pressure(T_air, rh)
 %
 %   INPUTS:
-%   Ta   - Near-surface air temperature in Kelvin [K] (Scalar or Vector)
+%   T_air   - Near-surface air temperature in Kelvin [K] (Scalar or Vector)
 %   rh   - Relative Humidity in Percent [%] (0-100) (Scalar or Vector)
 %
 %   OUTPUT:
-%   eAir - Actual Vapor Pressure in Pascals [Pa]
+%   e_air - Actual Vapor Pressure in Pascals [Pa]
 %
 %   METHOD:
 %   1. Calculate saturation vapor pressure (es) using Tetens' formula.
-%   2. Apply humidity: eAir = es * (rh / 100)
+%   2. Apply humidity: e_air = es * (rh / 100)
 
     % 1. Convert Kelvin to Celsius (required for Tetens' coefficients)
-    Tc = Ta - 273.15;
+    Tc = T_air - 273.15;
 
     % 2. Calculate Saturation Vapor Pressure (es)
     %    Constants for saturation over liquid water (Buck/Tetens)
@@ -26,6 +26,6 @@ function eAir = simulate_vapor_pressure(Ta, rh)
     es = A .* exp((B .* Tc) ./ (Tc + C));
 
     % 3. Calculate Actual Vapor Pressure
-    eAir = es .* (rh ./ 100);
+    e_air = es .* (rh ./ 100);
 
 end

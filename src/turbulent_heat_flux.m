@@ -1,20 +1,22 @@
-function [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz, z0, zT, zQ)
+function [shf, lhf, L] = turbulent_heat_flux(T_air, T_surface, p_air, ...
+    e_air, V, density_air, Vz, Tz, z0, zT, zQ)
+
 % CALC_TURBULENT_HEAT_FLUX Calculates sensible and latent heat fluxes.
 %
 %   [shf, lhf, coefM, coefHT, coefHQ] = calc_turbulent_heat_flux(...)
 %
 %   Inputs:
-%       Ta   : Air Temperature [K] (at height Tz)
-%       Ts   : Surface Temperature [K]
-%       pAir : Atmospheric Pressure [Pa]
-%       eAir : Screen level vapor pressure [Pa]
-%       V    : Wind Speed [m s-1] (at height Vz)
-%       dAir : Air Density [kg m-3]
-%       Vz   : Measurement height for wind [m]
-%       Tz   : Measurement height for temperature [m]
-%       z0   : Aerodynamic roughness length [m]
-%       zT   : Thermal roughness length [m]
-%       zQ   : Humidity roughness length [m]
+%       T_air       : Air Temperature [K] (at height Tz)
+%       T_surface   : Surface Temperature [K]
+%       p_air       : Atmospheric Pressure [Pa]
+%       e_air       : Screen level vapor pressure [Pa]
+%       V           : Wind Speed [m s-1] (at height Vz)
+%       density_air : Air Density [kg m-3]
+%       Vz          : Measurement height for wind [m]
+%       Tz          : Measurement height for temperature [m]
+%       z0          : Aerodynamic roughness length [m]
+%       zT          : Thermal roughness length [m]
+%       zQ          : Humidity roughness length [m]
 %
 %   Outputs:
 %       shf    : Sensible Heat Flux [W m-2]
@@ -24,9 +26,9 @@ function [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz
 %       coefHQ : Transfer coefficient for humidity
 
     %% CONSTANTS & INITIALIZATION
-    Ttol = 1e-10;       % Tolerance
-    CA   = 1005.0;      % Specific heat capacity of air [J kg-1 K-1]
-    g    = 9.81;        % Gravity [m s-2]
+    T_tolerance  = 1e-10;       % Tolerance
+    CA           = 1005.0;      % Specific heat capacity of air [J kg-1 K-1]
+    g            = 9.81;        % Gravity [m s-2]
     
     % Constants for Latent Heat
     CtoK = 273.15;      % Kelvin to Celsius conversion
@@ -41,14 +43,15 @@ function [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz
     % Ohmura, A., 1982: Climate and Energy-Balance on the Arctic Tundra.
     
     % Bulk Richardson Number (Ri)
-    Ri = ((100000/pAir)^0.286)*(2.0 * g * (Ta - Ts)) / (Tz*(Ta + Ts)*(((V/Vz)^2.0)));
+    Ri = ((100000 / p_air)^0.286) * ...
+        (2.0 * g * (T_air - T_surface)) / (Tz*(T_air + T_surface)*(((V/Vz)^2.0)));
     
     % Constants for Beljaars and Holtslag (1991)
-    a1 = 1.0; b1 = 2.0/3.0; c1 = 5.0; d1 = 0.35;
+    a1 = 1.0; b1 = 2.0 / 3.0; c1 = 5.0; d1 = 0.35;
     PhiMz0 = 0.0; PhiHzT = 0.0; PhiHzQ = 0.0;
     
-    if (Ri > 0.0 + Ttol) % --- STABLE ---
-        if (Ri < 0.2 - Ttol)
+    if (Ri > 0.0 + T_tolerance ) % --- STABLE ---
+        if (Ri < 0.2 - T_tolerance )
             zL = Ri/(1.0 - 5.0*Ri);
         else
             zL = Ri;
@@ -81,29 +84,28 @@ function [shf, lhf, L] = turbulent_heat_flux(Ta, Ts, pAir, eAir, V, dAir, Vz, Tz
     coefHQ = log(Tz/zQ) - PhiHz + PhiHzQ; 
     
     %% SENSIBLE HEAT FLUX [W m-2]
-    shf = dAir * C * CA * (Ta - Ts) * (100000/pAir)^0.286;
+    shf = density_air * C * CA * (T_air - T_surface) * (100000/p_air)^0.286;
     shf = shf/(coefM*coefHT);
 
     %% LATENT HEAT FLUX [W m-2]
     
     % Determine Phase (Melting or Freezing) for Latent Heat Constant and Saturation Pressure
-    if (Ts >= CtoK - Ttol)
+    if (T_surface >= CtoK - T_tolerance )
         % Liquid water surface
         L = LV; 
         % Saturation Vapor Pressure (Murray 1967)
-        eS = 610.78 * exp(17.2693882 * (Ts - CtoK - 0.01) / (Ts - 35.86));
+        eS = 610.78 * exp(17.2693882 * (T_surface - CtoK - 0.01) / (T_surface - 35.86));
     else
         % Ice surface
         L = LS; 
         % Saturation Vapor Pressure (Ding et al., 2019 / Bolton 1980)
-        eS = 610.78 * exp(21.8745584 * (Ts - CtoK - 0.01) / (Ts - 7.66));
+        eS = 610.78 * exp(21.8745584 * (T_surface - CtoK - 0.01) / (T_surface - 7.66));
     end
 
     % Calculate Latent Heat Flux
     % 461.9 is the specific gas constant for water vapor [J kg-1 K-1]
-    lhf = C * L * (eAir - eS) / (461.9 * (Ta + Ts) / 2.0);
+    lhf = C * L * (e_air - eS) / (461.9 * (T_air + T_surface) / 2.0);
     
     % Adjust using Monin-Obukhov stability theory
     lhf = lhf / (coefM * coefHQ);
-
 end

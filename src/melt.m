@@ -1,6 +1,5 @@
-function [T, dz, d, W, re, gdn, gsp, a, adiff, sumM, Msurf, Rsum, Fsum] = ...
-    melt(T, dz, d, W, re, gdn, gsp, a, adiff, Ra, dIce, verbose)
-
+function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_total, M_surf, R_total, F_total] = ...
+    melt(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, density_ice, verbose)
 
 % melt computes the quantity of meltwater due to snow temperature in excess
 % of 0 deg C, determines pore water content and adjusts grid spacing.
@@ -15,40 +14,40 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, sumM, Msurf, Rsum, Fsum] = ...
 %
 %% Inputs
 %
-%  T       K            Grid cell temperature.
-%  d       kg m^-3      Grid cell density.
-%  dz      m            Grid cell thickness.
-%  W       kg m^-2      Water content.
-%  Ra:     kg m^-2      Rain.
-%  a       fraction     Albedo.
-%  adiff   fraction     Diffuse albedo.
-%  dzMin   m            Minimum allowable grid spacing.
-%  zMax    m            Maximum depth of the total column.
-%  zMin    m            Minimum depth of the total column.
-%  zTop    m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  zY      unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
-%  re      mm           Grain size
-%  gdn     unitless     Grain dendricity
-%  gsp     unitless     Grain sphericity
-%  dIce:   kg m^-3      Ice density
+%  T            : K            Grid cell temperature.
+%  d            : kg m^-3      Grid cell density.
+%  dz           : m            Grid cell thickness.
+%  W            : kg m^-2      Water content.
+%  Ra           : kg m^-2      Rain.
+%  a            : fraction     Albedo.
+%  a_diffuse    : fraction     Diffuse albedo.
+%  column_dzmin : m            Minimum allowable grid spacing.
+%  column_zmax  : m            Maximum depth of the total column.
+%  column_zmin  : m            Minimum depth of the total column.
+%  column_ztop  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
+%  column_zy    : unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
+%  re           : mm           Grain size
+%  gdn          : unitless     Grain dendricity
+%  gsp          : unitless     Grain sphericity
+%  density_ice  : kg m^-3      Ice density
 %
 %% Outputs
 %
-%  sumM:   kg m^-2      Total column melt.
-%  Msurf:  kg m^-2      Surface layer melt.
-%  Rsum:   kg m^-2      Total column runoff.
-%  Fsum:   kg m^-2      Total column refreeze.
-%  T       K            Grid cell temperature.
-%  d       kg m^-3      Grid cell density.
-%  dz      m            Grid cell thickness.
-%  W       kg m^-2      Water content.
-%  mAdd:   kg m^-2      Mass added to the column.
-%  dz_add: m            Thickness added to the column.
-%  a       fraction     Albedo.
-%  adiff   fraction     Diffuse albedo.
-%  re      mm           Grain size
-%  gdn     unitless     Grain dendricity
-%  gsp     unitless     Grain sphericity
+%  M_total    : kg m^-2      Total column melt.
+%  M_surf     : kg m^-2      Surface layer melt.
+%  R_total    : kg m^-2      Total column runoff.
+%  F_total    : kg m^-2      Total column refreeze.
+%  T          : K            Grid cell temperature.
+%  d          : kg m^-3      Grid cell density.
+%  dz         : m            Grid cell thickness.
+%  W          : kg m^-2      Water content.
+%  mass_added : kg m^-2      Mass added to the column.
+%  dz_add     : m            Thickness added to the column.
+%  a          : fraction     Albedo.
+%  a_diffuse  : fraction     Diffuse albedo.
+%  re         : mm           Grain size
+%  gdn        : unitless     Grain dendricity
+%  gsp        : unitless     Grain sphericity
 %
 %% Documentation
 %
@@ -63,146 +62,145 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, sumM, Msurf, Rsum, Fsum] = ...
 
 %% INITIALIZATION
 
-Ttol = 1e-10;
-Dtol = 1e-11;
-Wtol = 1e-13;
+T_tolerance  = 1e-10;
+d_tolerance  = 1e-11;
+W_tolerance  = 1e-13;
 
 % Specify constants:
-CtoK = 273.15;   % Celsius to Kelvin conversion
-CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
-LF   = 0.3345E6; % latent heat of fusion (J kg-1)
-dPHC = 830.0;    % pore hole close off density [kg m-3]
+CtoK        = 273.15;   % Celsius to Kelvin conversion
+CI          = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
+LF          = 0.3345E6; % latent heat of fusion (J kg-1)
+density_phc = 830.0;    % pore hole close off density [kg m-3]
 
-n    = numel(T);
-dW   = zeros(n,1);
+m         = length(T);
+W_delta   = zeros(m,1);
 
 % store initial mass [kg] and energy [J]
-m  = dz .* d;                  % grid cell mass [kg]
-EI = m .* T * CI;              % initial enegy of snow/ice
-EW = W .* (LF + CtoK * CI);    % initial enegy of water
+M0  = dz .* d;                   % grid cell mass [kg]
+EI  = M0 .* T * CI;              % initial enegy of snow/ice
+EW  = W .* (LF + CtoK * CI);     % initial enegy of water
 
-mSum0 = sum(W) + sum(m);       % total mass [kg]
-sumE0 = sum(EI) + sum(EW);     % total energy [J]
+M0_total = sum(W) + sum(M0);       % total mass [kg]
+E0_total = sum(EI) + sum(EW);      % total energy [J]
 
 % initialize melt and runoff scalars
-Rsum   = 0;   % sum runoff [kg m^-2]
-sumM   = 0;   % total melt [kg m^-2]
-Msurf  = 0;   % surface layer melt
+R_total   = 0;   % sum runoff [kg m^-2]
+M_total   = 0;   % total melt [kg m^-2]
+M_surf    = 0;   % surface layer melt
 
 % output
-surplusE = 0;
+E_surplus = 0;
 
 % calculate temperature excess above 0 degC
-exsT = max(0, T - CtoK);        % [K] to [degC]
+T_excess = max(0, T - CtoK);        % [K] to [degC]
 
 % new grid point center temperature, T [K]
 T = min(T,CtoK);
-T_bottom = T(end);
 
 % specify irreducible water content saturation [fraction]
-Swi = 0.07;                     % assumed constant after Colbeck, 1974
+Swi = 0.07;  % assumed constant after Colbeck, 1974
 
 %% REFREEZE PORE WATER
 % check if any pore water
-if sum(W) > 0+Wtol
+if sum(W) > W_tolerance 
     % disp('PORE WATER REFREEZE')
-    % calculate maximum freeze amount, maxF [kg]
-    maxF = max(0, -((T - CtoK) .* m * CI) / LF);
+    % calculate maximum freeze amount, F_max [kg]
+    F_max = max(0, -((T - CtoK) .* M0 * CI) / LF);
 
     % freeze pore water and change snow/ice properties
-    dW = min(maxF, W);                              % freeze mass [kg]
-    W = W - dW;                                     % pore water mass [kg]
-    m = m + dW;                                     % new mass [kg]
-    d = m ./ dz;                                    % density [kg m-3]
-    T = T + double(m>Wtol).*(dW.*(LF+(CtoK - T)*CI)./(m.*CI)); % temperature [K]
+    W_delta  = min(F_max, W);                                                   % freeze mass [kg]
+    W   = W - W_delta;                                                          % pore water mass [kg]
+    M0  = M0 + W_delta;                                                         % new mass [kg]
+    d   = M0 ./ dz;                                                             % density [kg m-3]
+    T   = T + double(M0>W_tolerance ).*(W_delta.*(LF+(CtoK - T)*CI)./(M0.*CI)); % temperature [K]
 
     % if pore water froze in ice then adjust d and dz thickness
-    d(d > dIce-Dtol) = dIce;
-    dz = m ./ d;
+    d(d > density_ice-d_tolerance ) = density_ice;
+    dz = M0 ./ d;
 
 end
 
 % squeeze water from snow pack
-Wi = (dIce - d) .* Swi .* (m ./ d);     % irreducible water content [kg m^-2]
-exsW = max(0, W - Wi);                  % water "squeezed" from snow [kg m^-2]
+W_irreducible = (density_ice - d) .* Swi .* (M0 ./ d);          % irreducible water content [kg m^-2]
+W_excess      = max(0, W - W_irreducible);                      % water "squeezed" from snow [kg m^-2]
 
 %% MELT, PERCOLATION AND REFREEZE
-F = zeros(n,1);
+F = zeros(m,1);
 
-% Add previous refreeze to F and reset dW
-F = F + dW;
-dW(:) = 0;
+% Add previous refreeze to F and reset W_delta
+F = F + W_delta;
+W_delta(:) = 0;
 
 % run melt algorithm if there is melt water or excess pore water
-if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
+if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
     % disp ('MELT OCCURS')
     % check to see if thermal energy exceeds energy to melt entire cell
     % if so redistribute temperature to lower cells (temperature surplus)
     % (maximum T of snow before entire grid cell melts is a constant
     % LF/CI = 159.1342)
-    surpT = max(0, exsT - LF/CI);
+    T_surplus = max(0, T_excess - LF/CI);
 
-    if sum(surpT) > 0.0+Ttol % bug fixed 21/07/2016
+    if sum(T_surplus) > T_tolerance
 
         % calculate surplus energy
-        surpE = surpT .* CI .* m;
+        E_surplus = T_surplus .* CI .* M0;
         i = 1;
 
-        while sum(surpE) > 0.0+Ttol && i<n+1
+        while (sum(E_surplus) > T_tolerance)  && (i < (m+1))
 
-            if i<n
+            if i<m
                 % use surplus energy to increase the temperature of lower cell
-                T(i+1) = surpE(i) / m(i+1) / CI + T(i+1);
+                T(i+1) = E_surplus(i) / M0(i+1) / CI + T(i+1);
 
-                exsT(i+1) = max(0, T(i+1) - CtoK) + exsT(i+1);
-                T(i+1) = min(CtoK, T(i+1));
+                T_excess(i+1) = max(0, T(i+1) - CtoK) + T_excess(i+1);
+                T(i+1)        = min(CtoK, T(i+1));
 
-                surpT(i+1) = max(0, exsT(i+1) - LF/CI);
-                surpE(i+1) = surpT(i+1) * CI * m(i+1);
+                T_surplus(i+1) = max(0, T_excess(i+1) - LF/CI);
+                E_surplus(i+1) = T_surplus(i+1) * CI * M0(i+1);
             else
-                surplusE = surpE(i);
+                E_surplus = E_surplus(i);
                 warning('surplus energy at the base of GEMB column' + newline)
             end
 
             % adjust current cell properties (again 159.1342 is the max T)
-            exsT(i) = LF/CI;
-            surpE(i) = 0;
-            i = i + 1;
+            T_excess(i)  = LF/CI;
+            E_surplus(i) = 0;
+            i            = i + 1;
 
         end
     end
 
     % convert temperature excess to melt [kg]
-    Mmax  = exsT .* d .* dz * CI / LF;
-    M     = min(Mmax, m);               % melt
-    Msurf = M(1);
-    sumM  = max(0,sum(M)-Ra);           % total melt [kg] minus the liquid rain that had been added
+    M_max    = T_excess .* d .* dz * CI / LF;
+    M        = min(M_max, M0);                 % melt
+    M_surf   = M(1);
+    M_total  = max(0,sum(M)-Ra);              % total melt [kg] minus the liquid rain that had been added
 
-    % calculate maximum refreeze amount, maxF [kg]
-    maxF = max(0, -((T - CtoK) .* d .* dz * CI)/ LF);
+    % calculate maximum refreeze amount, F_max [kg]
+    F_max = max(0, -((T - CtoK) .* d .* dz * CI)/ LF);
 
-    % initialize refreeze, runoff, flxDn and dW vectors [kg]
-    R = zeros(n,1);
-    flxDn = [R; 0];
+    % initialize refreeze, runoff, flux_dn and W_delta vectors [kg]
+    R       = zeros(m,1);
+    flux_dn = [R; 0];
 
     % determine the deepest grid cell where melt/pore water is generated
-    X = find((M > 0.0+Wtol | exsW > 0.0+Wtol), 1, 'last');
+    X = find((M > W_tolerance)  | (W_excess > W_tolerance), 1, 'last');
     X(isempty(X)) = 1;
 
-    Xi=1;
-    n = numel(T);
+    Xi = 1;
+    m  = length(T);
 
     % meltwater percolation
-    for i = 1:n
+    for i = 1:m
         % calculate total melt water entering cell
-        inM = M(i)+ flxDn(i);
+        M_input = M(i) + flux_dn(i);
 
-        depthice=0;
+        ice_depth = 0;
         % If this grid cell's density exceeds the pore closeoff density:
-        if d(i) >= dPHC-Dtol
-            for l=i:n
-                if d(l)>=dPHC-Dtol
-                    depthice = depthice+dz(l);
+        if d(i) >= density_phc-d_tolerance 
+            for l=i:m
+                if d(l)>=density_phc-d_tolerance 
+                    ice_depth = ice_depth+dz(l);
                 else
                     break
                 end
@@ -210,76 +208,77 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
         end
 
         % break loop if there is no meltwater and if depth is > mw_depth
-        if abs(inM) < Wtol && i > X
+        if abs(M_input) < W_tolerance  && i > X
             break
 
             % if reaches impermeable ice layer all liquid water runs off (R)
-        elseif d(i) >= dIce-Dtol || (d(i) >= dPHC-Dtol && depthice>0.1+Dtol)  % dPHC = pore hole close off [kg m-3]
+        elseif (d(i) >= (density_ice-d_tolerance))  || ((d(i) >= density_phc-d_tolerance)  && ice_depth>0.1+d_tolerance)  % density_phc = pore hole close off [kg m-3]
             % disp('ICE LAYER')
             % no water freezes in this cell
             % no water percolates to lower cell
             % cell ice temperature & density do not change
 
-            m(i) = m(i) - M(i);                       % mass after melt
-            Wi = (dIce-d(i)) * Swi * (m(i)/d(i));     % irreducible water
-            dW(i) = max(min(inM, Wi - W(i)),-1*W(i)); % change in pore water
-            R(i) = max(0, inM - dW(i));               % runoff
+            M0(i)         = M0(i) - M(i);                                    % mass after melt
+            W_irreducible = (density_ice-d(i)) * Swi * (M0(i)/d(i));         % irreducible water
+            W_delta(i)    = max(min(M_input, W_irreducible - W(i)),-1*W(i)); % change in pore water
+            R(i)          = max(0, M_input - W_delta(i));                    % runoff
 
             % check if no energy to refreeze meltwater
-        elseif abs(maxF(i)) < Dtol
+        elseif abs(F_max(i)) < d_tolerance 
             % disp('REFREEZE == 0')
             % no water freezes in this cell
             % cell ice temperature & density do not change
 
-            m(i) = m(i) - M(i);                       % mass after melt
-            Wi = (dIce-d(i)) * Swi * (m(i)/d(i));     % irreducible water
-            dW(i) = max(min(inM, Wi - W(i)),-1*W(i)); % change in pore water
-            flxDn(i+1) = max(0, inM - dW(i));         % meltwater out
-            R(i) = 0;
+            M0(i)         = M0(i) - M(i);                                    % mass after melt
+            W_irreducible = (density_ice-d(i)) * Swi * (M0(i)/d(i));         % irreducible water
+            W_delta(i)    = max(min(M_input, W_irreducible - W(i)),-1*W(i)); % change in pore water
+            flux_dn(i+1)  = max(0, M_input - W_delta(i));                    % meltwater out
+            R(i)          = 0;
 
             % some or all meltwater refreezes
         else
             % change in density and temperature
             % disp('MELT REFREEZE')
             %-----------------------melt water-----------------------------
-            m(i) = m(i) - M(i);
-            dz_0 = m(i)/d(i);
-            dMax = (dIce - d(i))*dz_0;              % d max = dIce
-            F1   = min(min(inM,dMax),maxF(i));      % maximum refreeze
-            m(i) = m(i) + F1;                       % mass after refreeze
-            d(i) = m(i)/dz_0;
+            M0(i) = M0(i) - M(i);
+            dz_0  = M0(i)/d(i);
+            d_max = (density_ice - d(i))*dz_0;         % d max = density_ice
+            F1    = min(min(M_input,d_max),F_max(i));  % maximum refreeze
+            M0(i) = M0(i) + F1;                        % mass after refreeze
+            d(i)  = M0(i)/dz_0;
 
             %-----------------------pore water-----------------------------
-            Wi = (dIce-d(i))* Swi * dz_0;                % irreducible water
-            dW(i) = max(min(inM - F1, Wi-W(i)),-1*W(i)); % change in pore water
-            F2 = 0;
+            W_irreducible = (density_ice-d(i))* Swi * dz_0;                     % irreducible water
+            W_delta(i)    = max(min(M_input - F1, W_irreducible-W(i)),-1*W(i)); % change in pore water
+            F2            = 0;
 
             % ---------------- THIS HAS NOT BEEN CHECKED-----------------_
-            if dW(i) < 0.0-Wtol                     % excess pore water
-                dMax  = (dIce - d(i))*dz_0;         % maximum refreeze
-                maxF2 = min(dMax, maxF(i)-F1);      % maximum refreeze
-                F2    = min(-1.0*dW(i), maxF2);     % pore water refreeze
-                m(i)  = m(i) + F2;                  % mass after refreeze
-                d(i)  = m(i)/dz_0;
+            if W_delta(i) < 0.0-W_tolerance            % excess pore water
+                d_max  = (density_ice - d(i))*dz_0;    % maximum refreeze
+                F2_max = min(d_max, F_max(i)-F1);      % maximum refreeze
+                F2     = min(-1.0*W_delta(i), F2_max); % pore water refreeze
+                M0(i)  = M0(i) + F2;                   % mass after refreeze
+                d(i)   = M0(i)/dz_0;
             end
             % -------------------------------------------------------------
 
             F(i) = F(i) + F1 + F2;
 
-            flxDn(i+1) = max(0.0,inM - F1 - dW(i)); % meltwater out
-            if m(i)>Wtol
-                T(i) = T(i) + ...                       % change in temperature
-                    ((F1+F2)*(LF+(CtoK - T(i))*CI)./(m(i).*CI));
+            flux_dn(i+1) = max(0.0, M_input - F1 - W_delta(i)); % meltwater out
+
+            if M0(i) > W_tolerance 
+                T(i) = T(i) + ...                               % change in temperature
+                    ((F1+F2)*(LF+(CtoK - T(i))*CI)./(M0(i).*CI));
             end
 
             % check if an ice layer forms
-            if abs(d(i) - dIce) < Dtol
+            if abs(d(i) - density_ice) < d_tolerance 
                 % disp('ICE LAYER FORMS')
                 % excess water runs off
-                R(i) = flxDn(i+1);
+                R(i) = flux_dn(i+1);
 
                 % no water percolates to lower cell
-                flxDn(i+1) = 0;
+                flux_dn(i+1) = 0;
             end
         end
 
@@ -288,57 +287,55 @@ if (sum(exsT) > 0.0+Ttol) || (sum(exsW) > 0.0+Wtol)
 
     % GRID CELL SPACING AND MODEL DEPTH
     if verbose
-        if any(W < 0.0-Wtol)
+        if any(W < 0.0-W_tolerance )
             error('Negative pore water generated in melt equations.')
         end
     end
 
     % delete all cells with zero mass
     % adjust pore water
-    W = W + dW;
+    W = W + W_delta;
 
-    % calculate Rsum:
-    Rsum = sum(R) + flxDn(Xi);
+    % calculate R_total:
+    R_total = sum(R) + flux_dn(Xi);
 
     % delete all cells with zero mass
-    D = (m <= 0+Wtol);
-    m(D)     = [];
-    W(D)     = [];
-    d(D)     = [];
-    T(D)     = [];
-    a(D)     = [];
-    re(D)    = [];
-    gdn(D)   = [];
-    gsp(D)   = [];
-    adiff(D) = [];
-    EI(D)    = [];
-    EW(D)    = [];
+    D            = (M0 <= 0+W_tolerance );
+    M0(D)        = [];
+    W(D)         = [];
+    d(D)         = [];
+    T(D)         = [];
+    a(D)         = [];
+    re(D)        = [];
+    gdn(D)       = [];
+    gsp(D)       = [];
+    a_diffuse(D) = [];
 
     % calculate new grid lengths
-    dz = m ./ d;
+    dz = M0 ./ d;
 end
 
-Fsum = sum(F);
+F_total = sum(F);
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 if verbose
     % Calculate final mass [kg] and energy [J]
-    sumER = Rsum * (LF + CtoK * CI);
-    EI    = m .* T * CI;
+    ER_total = R_total * (LF + CtoK * CI);
+    EI    = M0 .* T * CI;
     EW    = W .* (LF + CtoK * CI);
 
-    mSum1 = sum(W) + sum(m) + Rsum;
-    sumE1 = sum(EI) + sum(EW);
+    M1_total = sum(W) + sum(M0) + R_total;
+    E1_total = sum(EI) + sum(EW);
 
-    dm = round((mSum0 - mSum1)*100)/100.;
-    dE = round(sumE0 - sumE1 - sumER - surplusE);
+    M_delta = round((M0_total - M1_total)*100)/100.;
+    E_delta = round(E0_total - E1_total - ER_total - E_surplus);
 
-    if dm ~= 0 || dE ~= 0
-        error(['Mass and energy are not conserved in melt equations:' newline ' dm: ' ...
-            num2str(dm) ' dE: ' num2str(dE) newline])
+    if M_delta ~= 0 || E_delta ~= 0
+        error(['Mass and energy are not conserved in melt equations:' newline ' M_delta: ' ...
+            num2str(M_delta) ' E_delta: ' num2str(E_delta) newline])
     end
 
-    if any(W < 0.0-Wtol)
+    if any(W < 0.0-W_tolerance )
         error('Negative pore water generated in melt equations.')
     end
 end

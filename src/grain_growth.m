@@ -1,4 +1,4 @@
-function [re, gdn, gsp]  = grainGrowth(T, dz, d, W, re, gdn, gsp, dt, aIdx)
+function [re, gdn, gsp]  = grain_growth(T, dz, d, W, re, gdn, gsp, dt, albedo_method)
 % grainGrowth models the effective snow grain size. 
 % 
 %% Syntax 
@@ -52,12 +52,12 @@ function [re, gdn, gsp]  = grainGrowth(T, dz, d, W, re, gdn, gsp, dt, aIdx)
 % Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
-Ttol = 1e-10;
-Gdntol = 1e-10;
-Wtol = 1e-13;
+T_tolerance    = 1e-10;
+gdn_tolerance  = 1e-10;
+W_tolerance    = 1e-13;
 
-%only when aIdx = 1 or 2 do we run grainGrowth: 
-if aIdx~=1 && aIdx ~=2
+%only when albedo_method = 1 or 2 do we run grainGrowth: 
+if (albedo_method ~= 1) && (albedo_method ~=2)
 	%come out as we came in:
 	return;
 end
@@ -74,39 +74,38 @@ dt = dt/86400;
 lwc = W ./ (d .* dz) * 100;
 
 % set maximum water content by mass to 9 percent (Brun, 1980)
-lwc(lwc > 9+Wtol) = 9;
+lwc(lwc > (9 + W_tolerance)) = 9;
 
 %% Calculate temperature gradiant across grid cells
 % returns the average gradinet across the upper and lower grid cell
 
 % initialize
 dT = zeros(size(T));
-Ti=T;
+Ti = T;
 
 % depth of grid point center from surface
-zGPC = (cumsum(dz) - dz/2);
+z_center = (cumsum(dz) - dz/2);
 
 % Take forward differences on left and right edges
-m=length(zGPC);
-if m>2
-    dT(1) = (T(3) - T(1))/(zGPC(3)-zGPC(1));
-    dT(m) = (T(m) - T(m-2))/(zGPC(m)-zGPC(m-2));
-elseif m>1
-    dT(1) = (T(2) - T(1))/(zGPC(2)-zGPC(1));
-    dT(m) = (T(m) - T(m-1))/(zGPC(m)-zGPC(m-1));
+m = length(z_center);
+if m > 2
+    dT(1) = (T(3) - T(1))/(z_center(3)-z_center(1));
+    dT(m) = (T(m) - T(m-2))/(z_center(m)-z_center(m-2));
+elseif m > 1
+    dT(1) = (T(2) - T(1))/(z_center(2)-z_center(1));
+    dT(m) = (T(m) - T(m-1))/(z_center(m)-z_center(m-1));
 end
 
 % Take centered differences on interior points
-zGPC = zGPC(3:end) - zGPC(1:end-2);
-dT(2:end-1,1) = (T(3:end,1)-T(1:end-2,1))./zGPC(:,1);
+z_center      = z_center(3:end) - z_center(1:end-2);
+dT(2:end-1,1) = (T(3:end,1)-T(1:end-2,1))./z_center(:,1);
 
 % take absolute value of temperature gradient
 dT = abs(dT);
 
 % index for dentricity > 0 & == 0
-G  = gdn > 0+Gdntol;
+G  = gdn > (0 + gdn_tolerance);
 J = ~G;
-
 %% DENDRITIC SNOW METAMORPHISM
 % FOR SNOW DENTRICITY > 0
 
@@ -114,8 +113,8 @@ J = ~G;
 if sum(G) ~= 0
     % disp ('DENDRITIC DRY SNOW METAMORPHISM')
     % index for dentricity > 0 and T gradients < 5 degC m-1 and >= 5 degC m-1
-    H = abs(dT) <= 5+Ttol & G & W <= 0+Wtol; % asg not wet accounted for on 19/08/29
-    I = abs(dT)  > 5+Ttol & G & W <= 0+Wtol;
+    H = (abs(dT) <= 5+T_tolerance)  & G & (W <= 0+W_tolerance); 
+    I = (abs(dT)  > 5+T_tolerance)  & G & (W <= 0+W_tolerance);
     
     % determine coefficients
     A = - 2E8 * exp(-6E3 ./ T(H)) * dt;
@@ -133,11 +132,10 @@ if sum(G) ~= 0
     % WET SNOW METAMORPHISM
     
     % index for dendritic wet snow
-    L = (W > 0+Wtol) & G;
+    L = (W > 0+W_tolerance ) & G;
     
     % check if snowpack is wet
     if sum(L) ~= 0
-        %        disp('DENDRITIC WET SNOW METAMORPHISM')
         % determine coefficient
         D = (1/16) * (lwc(L) .^ 3) * dt;
         
@@ -147,13 +145,13 @@ if sum(G) ~= 0
     end
     
     % dendricity and sphericity can not be > 1 or < 0
-    gdn(gdn <= 0+Gdntol) = 0;
-    gsp(gsp <= 0+Gdntol) = 0;
-    gdn(gdn >= 1-Gdntol) = 1;
-    gsp(gsp >= 1-Gdntol) = 1;
+    gdn(gdn <= 0+gdn_tolerance ) = 0;
+    gsp(gsp <= 0+gdn_tolerance ) = 0;
+    gdn(gdn >= 1-gdn_tolerance ) = 1;
+    gsp(gsp >= 1-gdn_tolerance ) = 1;
     
     % determine new grain size (mm)
-    gsz(G) = max(0.1*(gdn(G)/.99+(1.0-1.0*gdn(G)/.99).*(gsp(G)/.99*3.0+(1.0-gsp(G)/.99)*4.0)),Gdntol*2);
+    gsz(G) = max(0.1*(gdn(G)/.99+(1.0-1.0*gdn(G)/.99).*(gsp(G)/.99*3.0+(1.0-gsp(G)/.99)*4.0)),gdn_tolerance *2);
 end
 
 % if there is snow dentricity == 0
@@ -165,9 +163,9 @@ if sum(J) ~= 0
     % decreases according to Equations (4). When sphericity
     % reaches 0, their size increases according to the functions
     % determined by Marbouty. (Brun et al., 1992)
-    P1 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT)  > 5+Ttol; 
-    P2 = J & gsp>0+Gdntol & gsp<1-Gdntol & abs(dT) <= 5+Ttol & W > 0+Wtol;
-    P3 = J & gsp>0+Gdntol & gsp<1-Gdntol & ~P1 & ~P2;
+    P1 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & (abs(dT)  > 5+T_tolerance); 
+    P2 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & ((abs(dT) <= 5+T_tolerance)  & (W > 0+W_tolerance));
+    P3 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & ~P1 & ~P2;
     
     F1 = (-2e8 .* exp(-6e3 ./ T(P1)) .* dt) .* abs(dT(P1)).^(.4);
     F2 = (1.0/16.0) * lwc(P2).^(3.0) * dt;
@@ -178,14 +176,14 @@ if sum(J) ~= 0
     gsp(P3) = gsp(P3) + F3;
     
     % sphericity can not be > 1 or < 0
-    gsp(gsp <= 0+Gdntol) = 0;
-    gsp(gsp >= 1-Gdntol) = 1;
+    gsp(gsp <= 0+gdn_tolerance) = 0;
+    gsp(gsp >= 1-gdn_tolerance) = 1;
     
     % DRY SNOW METAMORPHISM (Marbouty, 1980)
     % grouped model coefficinets from Marbouty, 1980: Figure 9
-    P = J & (W <= 0+Wtol | (gsp <=0+Gdntol & abs(dT) > 5+Ttol)); % asg not wet accounted for on 19/08/29
-    dTi=dT;
-    Q = Marbouty(Ti(P), d(P), dTi(P));
+    P   = J & (W <= 0+W_tolerance  | (gsp <= 0+gdn_tolerance  & abs(dT) > 5+T_tolerance )); 
+    dTi = dT;
+    Q   = Marbouty(Ti(P), d(P), dTi(P));
     
     % calculate grain growth
     gsz(P) = gsz(P) + Q * dt;
@@ -193,7 +191,7 @@ if sum(J) ~= 0
     % WET SNOW METAMORPHISM (Brun, 1989)
     
     % index for nondendritic wet snow
-    K = J & ~(W <= 0+Wtol | (gsp <=0+Gdntol & abs(dT) > 5+Ttol));
+    K = J & ~((W <= 0+W_tolerance)  | ((gsp <= 0+gdn_tolerance)  & (abs(dT) > 5+T_tolerance)));
     
     % check if snowpack is wet
     if sum(K) ~= 0
@@ -206,10 +204,10 @@ if sum(J) ~= 0
     end
     
     % grains with sphericity == 1 can not have grain sizes > 2 mm (Brun, 1992)
-    gsz(abs(gsp-1)<Wtol & gsz > 2-Wtol) = 2;
+    gsz(abs(gsp-1)<W_tolerance  & gsz > 2-W_tolerance ) = 2;
     
     % grains with sphericity == 0 can not have grain sizes > 5 mm (Brun, 1992)
-    gsz(abs(gsp-1)>=Wtol & gsz > 5-Wtol) = 5;
+    gsz(abs(gsp-1)>=W_tolerance  & gsz > 5-W_tolerance ) = 5;
 end
 
 % convert grain size back to effective grain radius
@@ -224,8 +222,8 @@ function Q = Marbouty(T, d, dT)
 
 %% Initialize
 
-Ttol = 1e-10;
-Dtol = 1e-11;
+T_tolerance  = 1e-10;
+d_tolerance  = 1e-11;
 
 F    = zeros(size(T));
 H    = F;
@@ -237,37 +235,37 @@ dT   = dT/100.0;   % convert dT from degC/m to degC/cm
 
 %% Temperature coefficient F
 
-I    = T > -6+Ttol;
+I    = T > -6+T_tolerance ;
 F(I) =  0.7 + ((T(I)/-6) * 0.3);
 
-I    = T <= -6+Ttol & T > -22+Ttol;
+I    = T <= -6+T_tolerance  & T > -22+T_tolerance ;
 F(I) =  1 - ((T(I)+6)/-16 * 0.8);
 
-I    = T <= -22+Ttol & T > -40+Ttol;
+I    = T <= -22+T_tolerance  & T > -40+T_tolerance ;
 F(I) =  0.2 - ((T(I)+22)/-18 * 0.2);
 
 %% Density coefficient H
 
-H(d < 150-Dtol) = 1;
+H(d < 150-d_tolerance ) = 1;
 
-I    = d >= 150-Dtol & d < 400-Dtol;
+I    = d >= 150-d_tolerance  & d < 400-d_tolerance ;
 H(I) = 1 - ((d(I)-150)/250);
 
 %% Temperature gradient coefficient G
 
-I    = dT >= 0.16-Ttol & dT < 0.25-Ttol;
+I    = dT >= 0.16-T_tolerance  & dT < 0.25-T_tolerance ;
 G(I) = ((dT(I) - 0.16)/0.09) * 0.1;
 
-I    = dT >= 0.25-Ttol & dT < 0.40-Ttol;
+I    = dT >= 0.25-T_tolerance  & dT < 0.40-T_tolerance ;
 G(I) = 0.10 + (((dT(I) - 0.25)/0.15) * 0.57);
 
-I    = dT >= 0.40-Ttol & dT < 0.50-Ttol;
+I    = dT >= 0.40-T_tolerance  & dT < 0.50-T_tolerance ;
 G(I) = 0.67 + (((dT(I) - 0.40)/0.10) * 0.23);
 
-I    = dT >= 0.50-Ttol & dT < 0.70-Ttol;
+I    = dT >= 0.50-T_tolerance  & dT < 0.70-T_tolerance ;
 G(I) = 0.90 + (((dT(I) - 0.50)/0.20) * 0.1);
 
-G(dT >= 0.7-Ttol) = 1;
+G(dT >= 0.7-T_tolerance ) = 1;
 
 %% Grouped coefficient Q
 

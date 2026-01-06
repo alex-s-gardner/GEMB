@@ -1,6 +1,6 @@
-function [T, dz, d, W, re, gdn, gsp, a, adiff, Ra] = accumulation(T, dz,...
-    d, W, re, gdn, gsp, a, adiff, T_air, P, V, dIce, aIdx, dsnowIdx,...
-    Tmean, dz_min, C, Vmean, a_SNOW)
+function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
+    accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, T_air, P, ...
+    V, density_ice, T_mean, column_dzmin, P_mean, V_mean, albedo_snow, albedo_method, new_snow_method)
 
 % accumulation adds precipitation and deposition to the model grid.
 %
@@ -32,9 +32,9 @@ function [T, dz, d, W, re, gdn, gsp, a, adiff, Ra] = accumulation(T, dz,...
 
 %% MAIN FUNCTION
 
-Ttol   = 1e-10;
-Dtol   = 1e-11;
-Gdntol = 1e-10;
+T_tolerance    = 1e-10;
+d_tolerance    = 1e-11;
+gdn_tolerance  = 1e-10;
 Ptol   = 1e-6;
 
 % Specify constants:
@@ -46,7 +46,7 @@ gspNew = 0.5;    % new snow sphericity
 Ra     = 0;      % rainfall [mm w.e. or kg m^-3]
 
 % Density of fresh snow [kg m-3]
-switch (dsnowIdx)
+switch (new_snow_method)
     case 0 % Default value defined above
 
     case 1 % Density of Antarctica snow
@@ -59,15 +59,15 @@ switch (dsnowIdx)
         %From Vionnet et al., 2012 (Crocus)
         gdnNew = min(max(1.29 - 0.17*V,0.20),1.0);
         gspNew = min(max(0.08*V + 0.38,0.5),0.9);
-        reNew  = max(1e-1*(gdnNew/.99+(1.0-1.0*gdnNew/.99).*(gspNew/.99*3.0+(1.0-gspNew/.99)*4.0))/2.0,Gdntol);
+        reNew  = max(1e-1*(gdnNew/.99+(1.0-1.0*gdnNew/.99).*(gspNew/.99*3.0+(1.0-gspNew/.99)*4.0))/2.0,gdn_tolerance );
 
     case 3 %Surface snow accumulation density from Kaspers et al., 2004, Antarctica
-        %dSnow = alpha1 + beta1*T + delta1*C + epsilon1*W
+        %dSnow = alpha1 + beta1*T + delta1*P_mean + epsilon1*W
         %     7.36x10-2  1.06x10-3  6.69x10-2  4.77x10-3
-        dSnow=(7.36e-2 + 1.06e-3*min(Tmean,CtoK-Ttol) + 6.69e-2*C/1000. + 4.77e-3*Vmean)*1000.;
+        dSnow=(7.36e-2 + 1.06e-3*min(T_mean,CtoK-T_tolerance ) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.;
 
     case 4 % Kuipers Munneke and others (2015), Greenland
-        dSnow = 481.0 + 4.834*(Tmean-CtoK);
+        dSnow = 481.0 + 4.834*(T_mean-CtoK);
 end
 
 mInit = d .* dz;
@@ -76,7 +76,7 @@ if P > 0+Ptol
     % determine initial mass
 
     % if snow
-    if T_air <= CtoK+Ttol
+    if T_air <= CtoK+T_tolerance 
 
         z_snow = P/dSnow;               % depth of snow
         dfall  = gdnNew;
@@ -84,13 +84,13 @@ if P > 0+Ptol
         refall = reNew;
 
         % if snow depth is greater than specified min dz, new cell created
-        if z_snow > dz_min+Dtol
+        if z_snow > column_dzmin+d_tolerance 
             T     = [ T_air;     T];    % new cell T
             dz    = [z_snow;    dz];    % new cell dz
             d     = [ dSnow;     d];    % new cell d
             W     = [     0;     W];    % new cell W
-            a     = [a_SNOW;     a];    % new cell a
-            adiff = [a_SNOW; adiff];    % new cell adiff
+            a     = [albedo_snow;     a];    % new cell a
+            a_diffuse = [albedo_snow; a_diffuse];    % new cell a_diffuse
             re    = [refall;    re];    % new cell grain size
             gdn   = [ dfall;   gdn];    % new cell grain dendricity
             gsp   = [ sfall;   gsp];    % new cell grain sphericity
@@ -106,13 +106,13 @@ if P > 0+Ptol
             T(1) = (T_air * P + T(1) * mInit(1))/mass;
 
             % adjust a, re, gdn & gsp
-            if aIdx>0
-                a(1) = (a_SNOW * P + a(1) * mInit(1))/mass;
+            if albedo_method>0
+                a(1) = (albedo_snow * P + a(1) * mInit(1))/mass;
             end
 
             gdn(1) = dfall;
             gsp(1) = sfall;
-            re(1)  = max(0.1*(gdn(1)/.99+(1.0-1.0*gdn(1)/.99).*(gsp(1)/.99*3.0+(1.0-gsp(1)/.99)*4.0))/2,Gdntol);
+            re(1)  = max(0.1*(gdn(1)/.99+(1.0-1.0*gdn(1)/.99).*(gsp(1)/.99*3.0+(1.0-gsp(1)/.99)*4.0))/2,gdn_tolerance );
         end
 
         % if rain
@@ -136,9 +136,9 @@ if P > 0+Ptol
         % adjust grid cell density
         d(1) = mass / dz(1);
 
-        % if d > the density of ice, d = dIce
-        if d(1) > dIce-Dtol
-            d(1)  = dIce;          % adjust d
+        % if d > the density of ice, d = density_ice
+        if d(1) > density_ice-d_tolerance 
+            d(1)  = density_ice;          % adjust d
             dz(1) = mass / d(1);   % dz is adjusted to conserve mass
         end
 

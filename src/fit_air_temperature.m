@@ -1,11 +1,11 @@
-function coeffs = fit_air_temperature(dec_year, Ta, lat, elev)
+function coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
 % FIT_AIR_TEMPERATURE Estimates simulation coefficients from observed data.
 %
-%   coeffs = fit_air_temperature(dec_year, Ta, lat, elev)
+%   coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
 %
 %   INPUTS:
 %   dec_year - Vector of decimal years (e.g. 2024.0, 2024.002).
-%   Ta       - Vector of observed air temperatures in Kelvin [K].
+%   T_air       - Vector of observed air temperatures in Kelvin [K].
 %   lat      - Latitude in degrees (scalar).
 %   elev     - Elevation in meters (scalar).
 %
@@ -16,7 +16,7 @@ function coeffs = fit_air_temperature(dec_year, Ta, lat, elev)
 
     %% 1. Input Sanitization
     dec_year = dec_year(:);
-    Ta = Ta(:);
+    T_air    = T_air(:);
     
     % Constants from the simulation model
     BASE_SIGMA = 8.0; 
@@ -30,14 +30,14 @@ function coeffs = fit_air_temperature(dec_year, Ta, lat, elev)
     T_sea_level_theoretical = 300 - 50 .* sin(phi).^2;
     T_mean_theoretical = T_sea_level_theoretical - (elev .* LAPSE_RATE);
     
-    T_obs_mean = mean(Ta, 'omitnan');
+    T_obs_mean = mean(T_air, 'omitnan');
     
     % RESULT 1: mean_offset
     coeffs.mean_offset = T_obs_mean - T_mean_theoretical;
 
     %% 3. Harmonic Analysis (Least Squares Fit)
     % We remove the mean and fit the Annual and Diurnal cosines.
-    T_anomaly = Ta - T_obs_mean;
+    T_anomaly = T_air - T_obs_mean;
     
     % A. Construct Annual Basis Function
     % Match simulation logic: cos(2*pi * (year_frac - phase))
