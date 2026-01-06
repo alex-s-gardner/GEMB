@@ -1,15 +1,48 @@
-name: Run MATLAB Script
-on: [push]
+name: GEMB Unit Tests
+
+# Trigger this workflow on every Pull Request to the main branch
+on:
+  pull_request:
+    branches: [ main ]
+  # Optional: Also run on pushes to main so you track the baseline status
+  push:
+    branches: [ main ]
+
 jobs:
-  my-job:
-    name: Run MATLAB Script
+  run-tests:
+    name: Run MATLAB Tests
     runs-on: ubuntu-latest
+    
     steps:
+      # 1. Check out the code from the repository
       - name: Check out repository
         uses: actions/checkout@v4
+
+      # 2. Set up the MATLAB environment
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
-      - name: Run script
-        uses: matlab-actions/run-command@v2
+        # Note: If this is a private repo, you may need a self-hosted runner
+        # or specific license configuration. For public repos, this works out of the box.
+
+      # 3. Run the tests
+      - name: Run All Tests
+        uses: matlab-actions/run-tests@v2
         with:
-          command: addpath('test'); testscript
+          # Automatically adds 'src' to the MATLAB path before running tests
+          source-folder: src
+          
+          # Looks for tests recursively inside the 'tests' folder
+          select-by-folder: tests
+          
+          # Optional: Stop strictly on the first failure (saves time)
+          strict: true
+          
+          # Optional: Output results in a format GitHub can display nicely
+          test-results-junit: test-results/results.xml
+
+      # 4. (Optional) Publish Test Report to GitHub UI
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: success() || failure() # Run even if tests fail
+        with:
+          report_paths: 'test-results/results.xml'
