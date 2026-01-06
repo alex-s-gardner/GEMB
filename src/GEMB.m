@@ -49,7 +49,25 @@ end
 
 
 %% Generate model grid
-dz = grid_initialize(S.column_ztop, S.column_dztop, S.column_zmax, S.column_zy);
+    function [T, dz, d, W, re, gdn, gsp, a, a_diffuse model_initialize(S)
+        dz        = grid_initialize(S.column_ztop, S.column_dztop, S.column_zmax, S.column_zy);
+        m         = length(dz);
+        T         = zeros(m,1) + S.T_mean;      % initial grid cell temperature to the annual mean temperature [K]
+        d         = zeros(m,1) + S.density_ice; % density to that of ice [kg m-3]
+        W         = zeros(m,1);                 % water content to zero [kg m-2]
+        gdn       = zeros(m,1);                 % grain dentricity to old snow
+        gsp       = zeros(m,1);                 % grain sphericity to old snow
+        a         = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
+        a_diffuse = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
+      
+       
+        gsp       = zeros(m,1);                 % grain sphericity to old snow
+        re        = zeros(m,1) + 2.5;           % grain size to old snow [mm]
+      
+        
+    end
+
+
 
 %% Initialize model variables
 
@@ -69,26 +87,17 @@ if is_restart
     a         = S.Aini;               % albedo [fraction]
     a_diffuse = S.Adiffini;           % albedo [fraction]
     dz        = S.Dzini;              % layering
-    d         = S.Dini;               % density [kg m-3]
-    EC        = S.ECini;              % surface evaporation (-) condensation (+) [kg m-2]
+    d         = S.Dini;               % density [kg m-3]         
     gdn       = S.Gdnini;             % grain dentricity
     gsp       = S.Gspini;             % grain sphericity
     re        = S.Reini;              % grain size [mm]
     T         = S.Tini;               % snow temperature [K]
     W         = S.Wini;               % water content [kg m-2]
 else
-    m         = length(dz);
-    a         = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
-    a_diffuse = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
-    d         = zeros(m,1) + S.density_ice; % density to that of ice [kg m-3]
-    EC        = 0;                          % surface evaporation (-) condensation (+) [kg m-2]
-    gdn       = zeros(m,1);                 % grain dentricity to old snow
-    gsp       = zeros(m,1);                 % grain sphericity to old snow
-    re        = zeros(m,1) + 2.5;           % grain size to old snow [mm]
-    T         = zeros(m,1) + S.T_mean;      % initial grid cell temperature to the annual mean temperature [K]
-    W         = zeros(m,1);                 % water content to zero [kg m-2]
+   
 end
 
+EC     = 0;                        % surface evaporation (-) condensation (+) [kg m-2]    
 F      = zeros(m,1);               % refreeze to zero [kg m-2]
 M      = zeros(m,1);               % melt water to zero [kg m-2]
 M_surf = 0;                        % initialize surface melt for albedo parameterization

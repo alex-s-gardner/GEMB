@@ -1,6 +1,6 @@
 % Source of climate forcing
 run_id    = "test_1";
-S = model_setup();
+S = model_setup()
 
 %% RUN GEMB
 switch run_id
