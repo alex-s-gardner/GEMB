@@ -1,4 +1,4 @@
-function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, mass_added, energy_added] = ...
+function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
     managelayers(T, dz, d, W, re, gdn, gsp, a, a_diffuse, column_dzmin, ...
     column_zmax, column_zmin, column_ztop, column_zy, verbose)
 % managelayers adjusts the depth and number of vertical layers in the model
@@ -41,8 +41,8 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, mass_added, energy_added] = .
 %  d            : kg m^-3      Grid cell density.
 %  T            : K            Grid cell temperature.
 %  W            : kg m^-2      Water content.
-%  mass_added   : kg m^-2      Mass added to the column.
-%  energy_added : J m^-2       Energy added to the column.
+%  M_added      : kg m^-2      Mass added to the column.
+%  E_added      : J m^-2       Energy added to the column.
 %  a            : fraction     Albedo.
 %  a_diffuse    : fraction     Diffuse albedo.
 %  m            : kg m^-2      Grid cell mass.
@@ -79,7 +79,7 @@ M0_total = sum(W) + sum(M);       % total mass [kg]
 E0_total = sum(EI) + sum(EW);     % total energy [J]
 
 T_bottom = T(end);
-m    = length(T);
+m        = length(T);
 
 % store initial mass [kg] and energy [J]
 M  = dz .* d;                  % grid cell mass [kg]
@@ -205,8 +205,8 @@ Z_total = sum(dz);
 if Z_total < (column_zmin - d_tolerance)
 
     % Mass and energy to be added:
-    mass_added     = M(end) + W(end);
-    energy_added   = T(end) * M(end) * CI + W(end) * (LF + CtoK * CI);
+    M_added   = M(end) + W(end);
+    E_added   = T(end) * M(end) * CI + W(end) * (LF + CtoK * CI);
 
     % Add a grid cell of the same size and temperature to the bottom:
     dz        = [   dz;    dz(end)];
@@ -223,8 +223,8 @@ if Z_total < (column_zmin - d_tolerance)
 elseif Z_total > column_zmax+d_tolerance 
 
     % Mass and energy loss:
-    mass_added   = -(M(end) + W(end));
-    energy_added   = -(T(end) * M(end) * CI) - W(end) * (LF+CtoK*CI);
+    M_added   = -(M(end) + W(end));
+    E_added   = -(T(end) * M(end) * CI) - W(end) * (LF+CtoK*CI);
 
     % Remove a grid cell from the bottom:
     dz(end)        = [];
@@ -239,8 +239,8 @@ elseif Z_total > column_zmax+d_tolerance
     a_diffuse(end) = [];
 else
     % No mass or energy is added or removed:
-    mass_added     = 0;
-    energy_added   = 0;
+    M_added   = 0;
+    E_added   = 0;
 end
 
 % The temperature of the bottom grid cell may have been modified when
@@ -248,8 +248,8 @@ end
 %       T(end) = T_bottom
 % This is to satisfy the Constant Temperature (Dirichlet) boundary
 % condition. If this is not done then then thermal diffusion will blow up
-energy_added   = energy_added + ((T_bottom - T(end)) * M(end) * CI);
-T(end)         = T_bottom;
+E_added   = E_added + ((T_bottom - T(end)) * M(end) * CI);
+T(end)    = T_bottom;
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 if verbose
@@ -261,8 +261,8 @@ if verbose
     M1_total = sum(W) + sum(M);
     E1_total = sum(EI) + sum(EW);
 
-    M_delta = round((M0_total - M1_total + mass_added)*100)/100.;
-    E_delta = round(E0_total - E1_total + energy_added);
+    M_delta = round((M0_total - M1_total + M_added)*100)/100.;
+    E_delta = round(E0_total - E1_total + E_added);
 
     if M_delta ~= 0 || E_delta ~= 0
         error(['Mass and energy are not conserved in melt equations:' newline ' M_delta: ' ...
@@ -272,26 +272,3 @@ if verbose
 end
 
 end
-
-%% Old Split Cells loop
-% % This loop was in Alex Gardner's original code. Chad Greene vectorized
-% % it in July 2024:
-%
-% for j=m:-1:1
-%     if (dz(j) > dzMax2(j)+d_tolerance )
-%
-%         % split in two
-%         dz =    [   dz(1:j-1) ;    dz(j)/2 ;    dz(j)/2 ;    dz(j+1:end)];
-%         W =     [    W(1:j-1) ;     W(j)/2 ;     W(j)/2 ;     W(j+1:end)];
-%         M =     [    M(1:j-1) ;     M(j)/2 ;     M(j)/2 ;     M(j+1:end)];
-%         T =     [    T(1:j-1) ;     T(j)   ;     T(j)   ;     T(j+1:end)];
-%         d =     [    d(1:j-1) ;     d(j)   ;     d(j)   ;     d(j+1:end)];
-%         a =     [    a(1:j-1) ;     a(j)   ;     a(j)   ;     a(j+1:end)];
-%         a_diffuse = [a_diffuse(1:j-1) ; a_diffuse(j)   ; a_diffuse(j)   ; a_diffuse(j+1:end)];
-%         EI =    [   EI(1:j-1) ;    EI(j)/2 ;    EI(j)/2 ;    EI(j+1:end)];
-%         EW =    [   EW(1:j-1) ;    EW(j)/2 ;    EW(j)/2 ;    EW(j+1:end)];
-%         re =    [   re(1:j-1) ;    re(j)   ;    re(j)   ;    re(j+1:end)];
-%         gdn =   [  gdn(1:j-1) ;   gdn(j)   ;   gdn(j)   ;   gdn(j+1:end)];
-%         gsp =   [  gsp(1:j-1) ;   gsp(j)   ;   gsp(j)   ;   gsp(j+1:end)];
-%     end
-% end

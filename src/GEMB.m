@@ -159,7 +159,7 @@ O.gsp = O.d;
 O.ps  = O.d;
 
 % initialize cumulative output values
-OV.varname = {'R', 'M', 'F', 'P', 'EC', 'Ra', 'mass_added', 'sw_net', ...
+OV.varname = {'R', 'M', 'F', 'P', 'EC', 'Ra', 'M_added', 'sw_net', ...
     'lw_net', 'shf', 'lhf', 'a1', 're1', 'ulw', 'd1', 'compaction_dens', ...
     'compaction_melt', 'm', 'Q_net', 'FAC'};
 
@@ -174,7 +174,7 @@ OV.count = 0;
 for yIdx = 1:S.n_spinup_cycles + 1
 
     % Determine initial mass [kg]:
-    mass_initial   = sum (dz .* d) + sum(W);
+    M_initial = sum (dz .* d) + sum(W);
 
     % Initialize cumulative variables:
     R_cumulative          = 0;
@@ -182,7 +182,7 @@ for yIdx = 1:S.n_spinup_cycles + 1
     M_cumulative          = 0;
     EC_cumulative         = 0;
     P_cumulative          = 0;
-    mass_added_cumulative = 0;
+    M_added_cumulative = 0;
     M_surf_cumulative     = 0;
     Ra_cumulative         = 0;
 
@@ -238,7 +238,7 @@ for yIdx = 1:S.n_spinup_cycles + 1
         end
 
         [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
-            lhf, ulw, Ra, M, R, F, mass_added, energy_added, ...
+            lhf, ulw, Ra, M, R, F, M_added, E_added, ...
             compaction_dens, compaction_melt] = ...
             gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, dt, P, EC, ...
             M_surf, S.density_ice, black_carbon_snow, black_carbon_ice, ...
@@ -254,24 +254,24 @@ for yIdx = 1:S.n_spinup_cycles + 1
         lw_net = dlw - ulw;
 
         % sum component mass changes [kg m-2]
-        mass_added_cumulative = mass_added + mass_added_cumulative;
+        M_added_cumulative = M_added + M_added_cumulative;
         M_cumulative          = M + M_cumulative;
         M_surf_cumulative     = M_surf + M_surf_cumulative;
         R_cumulative          = R + R_cumulative;
         W_total               = sum(W);
         P_cumulative          = P +  P_cumulative;
-        EC_cumulative         = EC + EC_cumulative;   % evap (-)/cond(+)
+        EC_cumulative         = EC + EC_cumulative;   % evap(-) / cond(+)
         Ra_cumulative         = Ra + Ra_cumulative;
         F_cumulative          = F + F_cumulative;
 
         % calculate total system mass
-        mass_total    = sum(dz .* d);
+        M_total    = sum(dz .* d);
         FAC           = sum(dz.*(S.density_ice - min(d,S.density_ice)))/1000;
-        mass_change   = mass_total + R_cumulative + W_total- P_cumulative - EC_cumulative - mass_initial - mass_added_cumulative;
-        mass_change   = round(mass_change * 100)/100;
+        M_change   = M_total + R_cumulative + W_total- P_cumulative - EC_cumulative - M_initial - M_added_cumulative;
+        M_change   = round(M_change * 100)/100;
 
         % check mass conservation
-        if mass_change ~= 0
+        if M_change ~= 0
             error('total system mass not conserved in MB function')
         end
 
@@ -301,7 +301,7 @@ for yIdx = 1:S.n_spinup_cycles + 1
 
                 for v = 1:length(OV.varname)
                     % check if output is a cumulative value
-                    if sum(strcmp(OV.varname{v}, {'M', 'R', 'F', 'EC', 'P', 'Ra','mass_added', 'compaction_dens', 'compaction_melt'})) == 1
+                    if sum(strcmp(OV.varname{v}, {'M', 'R', 'F', 'EC', 'P', 'Ra','M_added', 'compaction_dens', 'compaction_melt'})) == 1
                         O.(OV.varname{v})(r) = OV.(OV.varname{v});
                     else
                         % if not cumulative then divide by time steps
@@ -318,7 +318,7 @@ for yIdx = 1:S.n_spinup_cycles + 1
                 O.dz(end-o:end,r)  = dz;
                 O.gdn(end-o:end,r) = gdn;
                 O.gsp(end-o:end,r) = gsp;
-                O.ps(end-o:end,r)  = sum(dz) - mass_total/910;
+                O.ps(end-o:end,r)  = sum(dz) - M_total/910;
                 O.m(r)             = o+1;
 
                 % set cumulative values back to zero

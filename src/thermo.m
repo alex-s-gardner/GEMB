@@ -188,11 +188,14 @@ Np(1) = 1 - Nd(1); % Balance the center node to conserve energy (Weights must su
 %% RADIATIVE FLUXES
 
 % energy supplied by shortwave radiation [J]
-sw = swf * dt;
+sw        = swf * dt;
+
+% ensure no sw reaches bottom cell, add any flux to bottom cell to the cell above
+sw(end-1) = sw(end-1) + sw(end);
+sw(end)   = 0;
 
 % temperature change due to SW
 T_delta_sw      = sw ./ (CI * d .* dz);
-T_delta_sw(end) = 0; % ensure no sw reaches bottom cell 
 
 % Upward longwave radiation flux is calculated from the snow surface
 % temperature which is set equal to the average temperature of the
@@ -216,8 +219,6 @@ for i = 1:dt:dt0
         % total initial heat energy
         E_initial = sum(T .* (CI * d .* dz));
 
-        % energy flux across lower boundary (energy supplied by underling ice)
-        base_flux = Ad(end-1) * (T(end) - T(end-1)) * dt;
     end
 
     % calculate temperature of snow surface (T_surface)
@@ -252,7 +253,6 @@ for i = 1:dt:dt0
 
     ulw         = -(SB * T_surface.^4.0 * emissivity + ulw_delta) * dt;
     T_delta_ulw = ulw / TCs;
-
     ulwrf       = ulwrf - (ulw / dt0); % accumulated for output
 
 
@@ -261,6 +261,12 @@ for i = 1:dt:dt0
     % SW penetrates surface
     T    = T    + T_delta_sw;
     T(1) = T(1) + T_delta_dlw + T_delta_ulw + T_delta_thf;
+
+
+    % energy flux across lower boundary (energy supplied by underling ice)
+    if verbose
+        base_flux = Ad(end-1) * (T(end) - T(end-1)) * dt;
+    end
 
     % temperature diffusion
 
@@ -291,8 +297,8 @@ for i = 1:dt:dt0
         E_supplied = sum(sw) + dlw + ulw + thf + base_flux;
         E_delta    = E_used - E_supplied;
 
-        E_tolerance = 0.01/100;
-        if (abs(E_delta/E_supplied) > E_tolerance) || isnan(E_delta)
+        E_tolerance = 1e-3;
+        if (abs(E_delta) > E_tolerance) || isnan(E_delta)
            
             fprintf('inputs : T_surface = %0.4f K, W_surface = %0.4f kg m-2, re_surface = %0.04f mm, swf = %0.4f W m-2, dlwf = %0.4f W m-2, T_air = %0.4f K, V = %0.4f m/s, e_air = %0.3f Pa, p_air = %0.4f Pa \n', ...
                               T(1)               , W_surface               , re(1)                 , sum(swf)         , dlwrf             , T_air          , V            , e_air           , p_air)
