@@ -80,13 +80,13 @@ else
     m         = length(dz);
     a         = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
     a_diffuse = zeros(m,1) + S.albedo_snow; % albedo equal to fresh snow [fraction]
-    d         = zeros(m,1) + S.density_ice;    % density to that of ice [kg m-3]
-    EC        = 0;                    % surface evaporation (-) condensation (+) [kg m-2]
-    gdn       = zeros(m,1);           % grain dentricity to old snow
-    gsp       = zeros(m,1);           % grain sphericity to old snow
-    re        = zeros(m,1) + 2.5;     % grain size to old snow [mm]
-    T         = zeros(m,1) + S.T_mean; % initial grid cell temperature to the annual mean temperature [K]
-    W         = zeros(m,1);           % water content to zero [kg m-2]
+    d         = zeros(m,1) + S.density_ice; % density to that of ice [kg m-3]
+    EC        = 0;                          % surface evaporation (-) condensation (+) [kg m-2]
+    gdn       = zeros(m,1);                 % grain dentricity to old snow
+    gsp       = zeros(m,1);                 % grain sphericity to old snow
+    re        = zeros(m,1) + 2.5;           % grain size to old snow [mm]
+    T         = zeros(m,1) + S.T_mean;      % initial grid cell temperature to the annual mean temperature [K]
+    W         = zeros(m,1);                 % water content to zero [kg m-2]
 end
 
 F      = zeros(m,1);               % refreeze to zero [kg m-2]
@@ -192,11 +192,11 @@ for yIdx = 1:S.n_spinup_cycles + 1
     for dIdx = 1:length(daten)
 
         % Extract daily data:
-        dlw     =  dlw0(dIdx);    % downward longwave radiation flux [W m-2]
-        dsw     =  dsw0(dIdx);    % downward shortwave radiation flux [W m-2]
-        T_air   =   T_air0(dIdx);    % screen level air temperature [K]
-        P       =    P0(dIdx);    % precipitation [kg m-2]
-        V       =    V0(dIdx);    % wind speed [m s-1]
+        dlw     =  dlw0(dIdx);     % downward longwave radiation flux [W m-2]
+        dsw     =  dsw0(dIdx);     % downward shortwave radiation flux [W m-2]
+        T_air   =   T_air0(dIdx);  % screen level air temperature [K]
+        P       =    P0(dIdx);     % precipitation [kg m-2]
+        V       =    V0(dIdx);     % wind speed [m s-1]
         e_air   = e_air0(dIdx);    % screen level vapor pressure [Pa]
         p_air   = p_air0(dIdx);    % screen level air pressure [Pa]
 

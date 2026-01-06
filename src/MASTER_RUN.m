@@ -1,13 +1,20 @@
 % Source of climate forcing
 S.run_id    = "test_1";
 
+% sw = 18234.77002 J, dlw = 42343.72922 J, ulw = -56084.2946 J, turb = 1746.594377 J, base_flux = 3.56696875e-11 J 
+% energy not conserved in thermodynamics equations: supplied = 6240.799015 J, used = 6240.799118 J
+
+% sw = 18234.77002 J, dlw = 42343.72922 J, ulw = -56132.56598 J, turb = 1724.457821 J, base_flux = -3.864216137e-11 J
+% energy not conserved in thermodynamics equations: supplied = 6170.391081 J, used = 6170.39119 J
+
 %% GEMB INITIALIZATION
 % unique model run ID to save output as
 S.run_prefix = 'S2A1D2';
 
 % spin-up
-S.n_spinup_cycles = 2;   % number of cycles of met data run before output
+% number of cycles of met data run before output
 % calcualted, set spinUp = 0 for no spin up
+S.n_spinup_cycles = 2;  
 
 % select method of calculating albedo and subsurface absorption (default is 1)
 %   0 : direct input from albedo_fixed parameter, no use of albedo_desnity_threshold
@@ -71,14 +78,13 @@ S.column_zmax = 250;
 S.column_zmin = ceil(S.column_zmax/2 /10)*10;
 
 % strech grid cells bellow top_z by a [top_dz * y ^ (cells bellow top_z)]
-S.column_zy = 1.10;
+S.column_zy  = 1.10;
 
 % mean annual wind velocity [m s-1], climatology
-S.V_mean = 10.0;
+S.V_mean     = 10.0;
 
 % optional inputs:
 S.emissivity = 1.0;     % Outward longwave radiation thermal emissivity forcing at every element (default in code is 1).
-% Used only if emissivity_method==0, or effective grain radius exceeds emissivity_re_threshold
 
 S.ulw_delta  = 0.0; % Delta [W/m²] with which to perturb the long wave radiation upwards. ulw_delta = 0.0 unless you have very good reason
 
@@ -89,7 +95,6 @@ S.is_restart = false;   % True if we want to restart from *ini parameters set in
 %   - 'monthly'
 %   - 'daily'
 S.output_frequency = 'monthly';
-
 
 % FIXED ALBEDO VARIABLES
 % albedo tuning parameters 
@@ -119,7 +124,7 @@ S.albedo_dry_snow_t0 = 30;     % warm snow timescale (30) [d]
 S.albedo_K           = 7;      % time scale temperature coef. (7) [d]
 
 % Constants
-S.density_ice = 910;     % density of ice [kg m-3]
+S.density_ice        = 910;     % density of ice [kg m-3]
 
 %% RUN GEMB
 

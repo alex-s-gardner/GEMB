@@ -1,4 +1,4 @@
-function [T, shf_cum, lhf_cum, EC, ulwrf] = ...
+function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
     thermo(T, dz, d, W_surface, re, swf, dlwrf, T_air, V, e_air, p_air, dt0, ...
     density_ice, Vz, Tz, emissivity, ulw_delta, emissivity_re_threshold, ...
     emissivity_method, thermal_conductivity_method, verbose)
@@ -21,9 +21,9 @@ function [T, shf_cum, lhf_cum, EC, ulwrf] = ...
 % * d:         grid cell density [kg m-3]
 % * swf:       shortwave radiation fluxes [W m-2]
 % * dlwrf:     downward longwave radiation fluxes [W m-2]
-% * T_air:        2 m air temperature
+% * T_air:     2 m air temperature
 % * V:         wind velocity [m s-1]
-% * e_air:      screen level vapor pressure [Pa]
+% * e_air:     screen level vapor pressure [Pa]
 % * W_surface: surface water content [kg]
 % * dt0:       time step of input data [s]
 % * Vz:        air temperature height above surface [m]
@@ -72,8 +72,8 @@ end
 % initialize Evaporation - Condensation
 EC      = 0.0;
 ulwrf   = 0.0;
-lhf_cum = 0.0;
-shf_cum = 0.0;
+lhf_cumulative = 0.0;
+shf_cumulative = 0.0;
 
 if verbose
     T_bottom = T(end);
@@ -185,14 +185,14 @@ Nd(m) = 0;
 Nu(1) = 0;         % Disconnect from the node above (Air/Ghost node)
 Np(1) = 1 - Nd(1); % Balance the center node to conserve energy (Weights must sum to 1)
 
-
 %% RADIATIVE FLUXES
 
 % energy supplied by shortwave radiation [J]
 sw = swf * dt;
 
 % temperature change due to SW
-dT_sw = sw ./ (CI * d .* dz);
+T_delta_sw      = sw ./ (CI * d .* dz);
+T_delta_sw(end) = 0; % ensure no sw reaches bottom cell 
 
 % Upward longwave radiation flux is calculated from the snow surface
 % temperature which is set equal to the average temperature of the
@@ -202,7 +202,7 @@ dT_sw = sw ./ (CI * d .* dz);
 dlw = dlwrf * dt;
 
 % temperature change due to dlw_surf
-dT_dlw = dlw / TCs;
+T_delta_dlw = dlw / TCs;
 
 %% PREALLOCATE ARRAYS BEFORE LOOP FOR IMPROVED PERFORMANCE
 Tu = zeros(m,1);
@@ -214,7 +214,7 @@ for i = 1:dt:dt0
     %     % store initial temperature
     if verbose
         % total initial heat energy
-        E_init = sum(T .* (CI * d .* dz));
+        E_initial = sum(T .* (CI * d .* dz));
 
         % energy flux across lower boundary (energy supplied by underling ice)
         base_flux = Ad(end-1) * (T(end) - T(end-1)) * dt;
@@ -237,27 +237,30 @@ for i = 1:dt:dt0
     EC_day = lhf * 86400 / L;
 
     % temperature change due turbulent fluxes
-    turb = (shf + lhf) * dt;
-    dT_turb = turb  / TCs;
+    thf = (shf + lhf) * dt;
+    T_delta_thf = thf  / TCs;
 
     % If user wants to directly set emissivity, or grain radius is larger than the
     % threshold, or emissivity_method is 2 and we have wet snow or ice, use prescribed emissivity
-    if (emissivity_method == 0) || ((emissivity_re_threshold - re(1)) <= gdn_tolerance)  || ((emissivity_method == 2) && (z0 > 0.001+gdn_tolerance))
+    if (emissivity_method == 0) || ((emissivity_re_threshold - re(1)) <= gdn_tolerance) ...
+           || ((emissivity_method == 2) && (z0 > (0.001 + gdn_tolerance)))
+        
         emissivity = emissivity;
     else
         emissivity = 1.0;
     end
 
-    ulw    = -(SB * T_surface.^4.0 * emissivity + ulw_delta) * dt;
+    ulw         = -(SB * T_surface.^4.0 * emissivity + ulw_delta) * dt;
+    T_delta_ulw = ulw / TCs;
 
-    ulwrf  = ulwrf - ulw/dt0;
-    dT_ulw = ulw / TCs;
+    ulwrf       = ulwrf - (ulw / dt0); % accumulated for output
+
 
     % new grid point temperature
 
     % SW penetrates surface
-    T    = T    + dT_sw;
-    T(1) = T(1) + dT_dlw + dT_ulw + dT_turb;
+    T    = T    + T_delta_sw;
+    T(1) = T(1) + T_delta_dlw + T_delta_ulw + T_delta_thf;
 
     % temperature diffusion
 
@@ -279,18 +282,26 @@ for i = 1:dt:dt0
     % calculate cumulative evaporation (+)/condensation(-)
     EC = EC + (EC_day / 86400) * dt;
 
-    lhf_cum = lhf_cum + lhf * dt / dt0;
-    shf_cum = shf_cum + shf * dt / dt0;
+    lhf_cumulative = lhf_cumulative + lhf * dt / dt0;
+    shf_cumulative = shf_cumulative + shf * dt / dt0;
 
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
-        E_used = sum(T .* (CI * d .* dz)) - E_init;
-        E_sup = sum(sw) + dlw + ulw + turb + base_flux;
-        E_delta = E_used - E_sup;
+        E_used     = sum(T .* (CI * d .* dz)) - E_initial;
+        E_supplied = sum(sw) + dlw + ulw + thf + base_flux;
+        E_delta    = E_used - E_supplied;
 
-        if abs(E_delta) > 1E-4 || isnan(E_delta)
-            fprintf('sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, turb = %0.10g J, base_flux = %0.10g J \n', sum(sw) , dlw , ulw , turb , base_flux)
-            error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J', E_sup, E_used)
+        E_tolerance = 0.01/100;
+        if (abs(E_delta/E_supplied) > E_tolerance) || isnan(E_delta)
+           
+            fprintf('inputs : T_surface = %0.4f K, W_surface = %0.4f kg m-2, re_surface = %0.04f mm, swf = %0.4f W m-2, dlwf = %0.4f W m-2, T_air = %0.4f K, V = %0.4f m/s, e_air = %0.3f Pa, p_air = %0.4f Pa \n', ...
+                              T(1)               , W_surface               , re(1)                 , sum(swf)         , dlwrf             , T_air          , V            , e_air           , p_air)
+
+            fprintf('internals : sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, thf = %0.10g J, base_flux = %0.10g J \n', ...
+                                 sum(sw)      , dlw           , ulw           , thf           , base_flux)
+
+            error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J',...
+                                                                     E_supplied         , E_used)
         end
 
         if T_bottom ~= T(end)
