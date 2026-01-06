@@ -35,59 +35,59 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
 T_tolerance    = 1e-10;
 d_tolerance    = 1e-11;
 gdn_tolerance  = 1e-10;
-Ptol   = 1e-6;
+P_tolerance    = 1e-6;
 
 % Specify constants:
-CtoK   = 273.15; % Kelvin to Celsius conversion
-dSnow  = 150;    % density of snow [kg m-3]
-reNew  = 0.05;   % new snow grain size [mm]
-gdnNew = 1.0;    % new snow dendricity
-gspNew = 0.5;    % new snow sphericity
-Ra     = 0;      % rainfall [mm w.e. or kg m^-3]
+CtoK              = 273.15; % Kelvin to Celsius conversion
+re_new_snow       = 0.05;   % new snow grain size [mm]
+gdn_new_snow      = 1.0;    % new snow dendricity
+gsp_new_snow      = 0.5;    % new snow sphericity
+Ra                = 0;      % rainfall [mm w.e. or kg m^-3]
 
 % Density of fresh snow [kg m-3]
-switch (new_snow_method)
-    case 0 % Default value defined above
+switch new_snow_method
+    case "150kgm2" % Default value defined above
+        density_new_snow  = 150;    % density of snow [kg m-3]
 
-    case 1 % Density of Antarctica snow
-        dSnow = 350.0;
-        %dSnow = 360.0; %FirnMICE Lundin et al., 2017
+    case "350kgm2" % Density of Antarctica snow
+        density_new_snow = 350.0;
+        %density_new_snow = 360.0; %FirnMICE Lundin et al., 2017
 
-    case 2 % Density of Greenland snow, Fausto et al., 2018
-        dSnow = 315.0;
+    case "Fausto" % Density of Greenland snow, Fausto et al., 2018
+        density_new_snow = 315.0;
 
         %From Vionnet et al., 2012 (Crocus)
-        gdnNew = min(max(1.29 - 0.17*V,0.20),1.0);
-        gspNew = min(max(0.08*V + 0.38,0.5),0.9);
-        reNew  = max(1e-1*(gdnNew/.99+(1.0-1.0*gdnNew/.99).*(gspNew/.99*3.0+(1.0-gspNew/.99)*4.0))/2.0,gdn_tolerance );
+        gdn_new_snow = min(max(1.29 - 0.17*V,0.20),1.0);
+        gsp_new_snow = min(max(0.08*V + 0.38,0.5),0.9);
+        re_new_snow  = max(1e-1*(gdn_new_snow/.99+(1.0-1.0*gdn_new_snow/.99).*(gsp_new_snow/.99*3.0+(1.0-gsp_new_snow/.99)*4.0))/2.0,gdn_tolerance );
 
-    case 3 %Surface snow accumulation density from Kaspers et al., 2004, Antarctica
-        %dSnow = alpha1 + beta1*T + delta1*P_mean + epsilon1*W
+    case "Kaspers" %Surface snow accumulation density from Kaspers et al., 2004, Antarctica
+        %density_new_snow = alpha1 + beta1*T + delta1*P_mean + epsilon1*W
         %     7.36x10-2  1.06x10-3  6.69x10-2  4.77x10-3
-        dSnow=(7.36e-2 + 1.06e-3*min(T_mean,CtoK-T_tolerance ) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.;
+        density_new_snow=(7.36e-2 + 1.06e-3*min(T_mean,CtoK-T_tolerance ) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.;
 
-    case 4 % Kuipers Munneke and others (2015), Greenland
-        dSnow = 481.0 + 4.834*(T_mean-CtoK);
+    case "KuipersMunneke" % Kuipers Munneke and others (2015), Greenland
+        density_new_snow = 481.0 + 4.834*(T_mean-CtoK);
 end
 
 mInit = d .* dz;
 
-if P > 0+Ptol
+if P > 0+P_tolerance
     % determine initial mass
 
     % if snow
     if T_air <= CtoK+T_tolerance 
 
-        z_snow = P/dSnow;               % depth of snow
-        dfall  = gdnNew;
-        sfall  = gspNew;
-        refall = reNew;
+        z_snow = P/density_new_snow;               % depth of snow
+        dfall  = gdn_new_snow;
+        sfall  = gsp_new_snow;
+        refall = re_new_snow;
 
         % if snow depth is greater than specified min dz, new cell created
         if z_snow > column_dzmin+d_tolerance 
             T     = [ T_air;     T];    % new cell T
             dz    = [z_snow;    dz];    % new cell dz
-            d     = [ dSnow;     d];    % new cell d
+            d     = [ density_new_snow;     d];    % new cell d
             W     = [     0;     W];    % new cell W
             a     = [albedo_snow;     a];    % new cell a
             a_diffuse = [albedo_snow; a_diffuse];    % new cell a_diffuse
@@ -98,7 +98,7 @@ if P > 0+Ptol
             % if snow depth is less than specified minimum dz snow
         else
             mass  = mInit(1) + P;       % grid cell adjust mass
-            dz(1) = dz(1) + P/dSnow;    % adjust grid cell depth
+            dz(1) = dz(1) + P/density_new_snow;    % adjust grid cell depth
             d(1)  = mass / dz(1);       % adjust grid cell density
 
             % adjust variables as a linearly weighted function of mass
@@ -106,7 +106,7 @@ if P > 0+Ptol
             T(1) = (T_air * P + T(1) * mInit(1))/mass;
 
             % adjust a, re, gdn & gsp
-            if albedo_method>0
+            if albedo_method ~= "150kgm2"
                 a(1) = (albedo_snow * P + a(1) * mInit(1))/mass;
             end
 

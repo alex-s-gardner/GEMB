@@ -20,7 +20,7 @@ function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, dt, P, EC, ...
 %
 %
 %% Inputs
-% albedo_method             = albedo method to use
+% albedo_method             = albedo method to use ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"]
 %
 % Method 0
 %  albedo_fixed             = direct input value for albedo, override all changes to albedo
@@ -93,17 +93,17 @@ albedo_ice_min      = albedo_ice;  % minimum ice albedo
 albedo_snow_min     = 0.65;        % minimum snow albedo, from Alexander 2014
 
 %% Function
-if (albedo_method == 0) || ((albedo_desnity_threshold - d(1)) < d_tolerance)
+if (albedo_method == "None") || ((albedo_desnity_threshold - d(1)) < d_tolerance)
     a(1) = albedo_fixed;
 else
     switch albedo_method
-        case 1 % function of effective grain radius
+        case "GardnerSharp" % function of effective grain radius
 
             % black_carbon_snow, IssmDouble black_carbon_ice, IssmDouble solar_zenith_angle, IssmDouble cloud_optical_thickness, int m
             a(1)         = albedo_gardner(re, dz, d, black_carbon_snow, black_carbon_ice,  solar_zenith_angle, cloud_optical_thickness);
             a_diffuse(1) = albedo_gardner(re, dz, d, black_carbon_snow, black_carbon_ice, 50.0, cloud_optical_thickness);
 
-        case 2 % function of effective grain radius
+        case "BruneLeFebre" % function of effective grain radius
             % Spectral fractions  (Lefebre et al., 2003)
             % [0.3-0.8um 0.8-1.5um 1.5-2.8um]
             sF = [0.606 0.301 0.093];
@@ -122,13 +122,13 @@ else
             % broadband surface albedo
             a(1) = sF * [a1; a2; a3];
 
-        case 3 % a as a function of density
+        case "GreuellKonzelmann" % a as a function of density
 
             % calculate albedo
             a(1) = albedo_ice + (d(1) - density_ice)*(albedo_snow - albedo_ice) ...
                 / (density_fresh_snow - density_ice) + (0.05 * (cloud_fraction - 0.5));
 
-        case 4 % exponential time decay & wetness
+        case "BougamontBamber" % exponential time decay & wetness
 
             % change in albedo with time:
             %   (d_a) = (a - a_old)/(t0)
@@ -173,7 +173,7 @@ else
     end
 
     %If we do not have fresh snow
-    if (albedo_method < 3) && (albedo_method > 0) && ((albedo_desnity_threshold - d(1)) >= d_tolerance)
+    if ismember(albedo_method,["GreuellKonzelmann","BougamontBamber"]) && ismember(albedo_method,["BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"]) && ((albedo_desnity_threshold - d(1)) >= d_tolerance)
         % In a snow layer < 10cm, account for mix of ice and snow,
         % after P. Alexander et al., 2014
         lice = find([d; 999]>=density_phc-d_tolerance );

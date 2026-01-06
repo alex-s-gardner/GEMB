@@ -56,8 +56,8 @@ T_tolerance    = 1e-10;
 gdn_tolerance  = 1e-10;
 W_tolerance    = 1e-13;
 
-%only when albedo_method = 1 or 2 do we run grainGrowth: 
-if (albedo_method ~= 1) && (albedo_method ~=2)
+%only when albedo_method = "GardnerSharp" or "BruneLeFebre" do we run grainGrowth: 
+if ~ismember(albedo_method,["GardnerSharp","BruneLeFebre"])
 	%come out as we came in:
 	return;
 end

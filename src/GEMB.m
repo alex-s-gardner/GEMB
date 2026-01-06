@@ -37,7 +37,7 @@ function GEMB(daten, T_air0, V0, dlw0, dsw0, e_air0, p_air0, P0, S, is_restart, 
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 
-disp(['------------------ STARTING RUN # ' num2str(S.run_id) ' --------------------' ])
+disp(['------------------ STARTING RUN # ' num2str(S.run_prefix) ' --------------------' ])
 tic                                     % start timer
 dt = (daten(2)-daten(1)) * (60*60*24);  % input time step in seconds
 
@@ -190,7 +190,7 @@ for yIdx = 1:S.n_spinup_cycles + 1
 
     % Specify the time range over which the mass balance is to be calculated:
     for dIdx = 1:length(daten)
-
+tic
         % Extract daily data:
         dlw     =  dlw0(dIdx);     % downward longwave radiation flux [W m-2]
         dsw     =  dsw0(dIdx);     % downward shortwave radiation flux [W m-2]
@@ -329,6 +329,7 @@ for yIdx = 1:S.n_spinup_cycles + 1
                 OV.count = 0;
             end
         end
+toc
     end
 
     % display cycle completed and time to screen
@@ -336,6 +337,8 @@ for yIdx = 1:S.n_spinup_cycles + 1
         num2str(S.n_spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
         ' avg melt: ' num2str(round(M_cumulative/(daten(end)-daten(1))*365.25)) ...
         ' kg/m2/yr']);
+
+
 end
 
 %% Save model output and model run settings

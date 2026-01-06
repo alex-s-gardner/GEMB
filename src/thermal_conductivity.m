@@ -45,14 +45,16 @@ function K = thermal_conductivity(T, d, density_ice, thermal_conductivity_method
     
     %% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
     % Use empirical density-based regressions
-    if thermal_conductivity_method == 2
-        % Parameterization from Calonne et al. (2011)
-        % Often used for a wider range of snow microstructures
-        K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
-    else 
-        % Parameterization from Sturm et al. (1997) [Default]
-        % Standard regression for seasonal snow
-        K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
+    switch thermal_conductivity_method
+        case "Calonne"
+            % Parameterization from Calonne et al. (2011)
+            % Often used for a wider range of snow microstructures
+            K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
+            
+        case "Sturm"
+            % Parameterization from Sturm et al. (1997) [Default]
+            % Standard regression for seasonal snow
+            K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
     end
     
     %% CALCULATE CONDUCTIVITY FOR ICE

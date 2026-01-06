@@ -15,7 +15,7 @@ function swf = shortwave(dz, d, re, dsw, dsw_diffuse, a_surface, ...
 %% Inputs
 % 
 %   sw_absorption_method = shortwave allowed to penetrate surface (0 = No, 1 = Yes)
-%   albedo_method        = method for calculating albedo (1-4)
+%   albedo_method        = method for calculating albedo ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"]
 %   dsw                  = downward shortwave radiative flux [w m-2]
 %   dsw_diffuse          = downward shortwave diffuse radiative flux [w m-2]
 %   a_surface            = surface albedo
@@ -27,8 +27,8 @@ function swf = shortwave(dz, d, re, dsw, dsw_diffuse, a_surface, ...
 % sw_absorption_method   = 0 : all absorbed SW energy is assigned to the top grid cell
 %
 % sw_absorption_method   = 1 : absorbed SW is distributed with depth a_surface a function of:
-%   default            : snow density (taken from Bassford, 2002)
-%   if albedo_method=2 : grain size in 3 spectral bands (Brun et al., 1992)
+%   default                         : snow density (taken from Bassford, 2002)
+%   if albedo_method="BruneLeFebre" : grain size in 3 spectral bands (Brun et al., 1992)
 %
 %% Outputs
 % 
@@ -71,7 +71,7 @@ swf = zeros(m,1);
 if (sw_absorption_method == 0) || ((density_ice - d(1))<d_tolerance)  % all sw radation is absorbed by the top grid cell
 
     % calculate surface shortwave radiation fluxes [W m-2]
-    if (albedo_method == 1) % albedo_method = "gardner_2009"
+    if (albedo_method == "GardnerSharp") % albedo_method = "gardner_2009"
         swf(1) = (1.0 - a_surface) * max(0.0,(dsw - dsw_diffuse)) +  (1.0 - a_diffuse_surface) * dsw_diffuse;
     else
         swf(1) = (1 - a_surface) * dsw;
@@ -79,7 +79,7 @@ if (sw_absorption_method == 0) || ((density_ice - d(1))<d_tolerance)  % all sw r
     
 else % sw radation is absorbed at depth within the glacier
     
-    if albedo_method == 2    % albedo_method = "brun_1992" function of effective radius (3 spectral bands)
+    if albedo_method == "BruneLeFebre"    % albedo_method = "brun_1992" function of effective radius (3 spectral bands)
         
         % convert effective radius [mm] to grain size [m]
         gsz = (re * 2) / 1000;

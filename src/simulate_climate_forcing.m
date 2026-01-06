@@ -39,7 +39,7 @@ function [daten, P0, T_air0, V0, dlw0, dsw0, e_air0, p_air0, LP] = simulate_clim
     V0 = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
     V0(V0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
     V0(V0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
-    
+
     % precipitation [kg m⁻²]
     varname = "P";
     P0 = simulate_precipitation(dec_year, coeffs.(varname));
