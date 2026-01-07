@@ -15,7 +15,8 @@ function options = model_initialize_parameters(options)
         %   2-"BruneLeFebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with sw_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
         %   3-"GreuellKonzelmann": density and cloud amount (Greuell & Konzelmann, 1994)
         %   4-"BougamontBamber"  : exponential time decay & wetness (Bougamont & Bamber, 2005)
-        options.albedo_method (1,1) string {mustBeMember(options.albedo_method, ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"])} = "GardnerSharp";
+        options.albedo_method (1,1) string {mustBeMember(options.albedo_method, ...
+            ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"])} = "GardnerSharp";
         
         % Apply albedo_method method to all areas with densities below this value, or else apply direct input value from albedo_fixed, allowing albedo to be altered.
         % Default value is rho water (1023 kg m-3).
@@ -31,17 +32,34 @@ function options = model_initialize_parameters(options)
         %   3-"AnthernB"      : DO NOT USE: physical model from Appendix B of Anthern et al. (2010)
         %   4-"LiZwally"      : DO NOT USE: emperical model of Li and Zwally (2004)
         %   5-"Helsen"        : DO NOT USE: modified emperical model (4) by Helsen et al. (2008)
-        %   6-"Ligtenberg"    : Antarctica semi-emperical model of Ligtenberg et al. (2011)
-        %   7-"KuipersMunneke": Greenland semi-emperical model of Kuipers Munneke et al. (2015)
-        options.densification_method (1,1) string {mustBeMember(options.densification_method, ["HerronLangway", "Anthern", "Ligtenberg", "KuipersMunneke"])} = "Anthern";
+        %   6-"Ligtenberg"    : semi-emperical model of Ligtenberg et al. (2011)
+        options.densification_method (1,1) string {mustBeMember(options.densification_method, ...
+            ["HerronLangway", "Anthern", "Ligtenberg"])} = "Anthern";
         
+        % Specify densification coefficients for Ligtenberg model. These 
+        % coefficients have been calibrated to match observations (default is "Gre_RACMO_GS_SW0"):
+        % ------------------------ Antarctic -------------------------
+        %   "Ant_ERA5v4_Paolo23" : ERA5 v4 (Paolo et al., 2023)
+        %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BruneLeFebre", sw_absorption_method=1
+        %   "Ant_RACMO_GS_SW0"   : RACMO callibration, default (Gardner et al., 2023)
+        % ------------------------- Greenland ------------------------
+        %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0, firn & bare ice
+        %   "Gre_RACMO_GS_SW0"   : RACMO callibration, default (Gardner et al., 2023)
+        %   "Gre_RACMO_GB_SW1"   : ismember(albedo_method,["GreuellKonzelmann","BougamontBamber"]) && sw_absorption_method>0
+        %   "Gre_KuipersMunneke" : Kuipers Munneke and others (2015) [semi-emperical], Greenland
+
+        options.densification_coeffs_M01 (1,1) string {mustBeMember(options.densification_coeffs_M01, ...
+            ["Ant_ERA5v4_Paolo23", "Ant_ERA5_BF_SW1", "Ant_RACMO_GS_SW0", "Gre_ERA5_GS_SW0" ...
+            "Gre_RACMO_GS_SW0", "Gre_RACMO_GB_SW1", "Gre_KuipersMunneke"])} = "Gre_RACMO_GS_SW0";
+
         % select model for fresh snow accumulation density (default is 1):
         %   0-"150kgm2"       : Original GEMB value, 150 kg/m^3
         %   1-"350kgm2"       : Antarctica value of fresh snow density, 350 kg/m^3
         %   2-"Fausto"        : Greenland value of fresh snow density, 315 kg/m^3, Fausto et al. (2018)
         %   3-"Kaspers"       : Antarctica model of Kaspers et al. (2004)
         %   4-"KuipersMunneke": Greenland model of Kuipers Munneke et al. (2015)
-        options.new_snow_method (1,1) string {mustBeMember(options.new_snow_method, ["150kgm2", "350kgm2", "Fausto", "Kaspers", "KuipersMunneke"])} = "350kgm2";
+        options.new_snow_method (1,1) string {mustBeMember(options.new_snow_method, ...
+            ["150kgm2", "350kgm2", "Fausto", "Kaspers", "KuipersMunneke"])} = "350kgm2";
         
         % select method for calculating emissivity (default is 1)
         %   0: direct input from emissivity parameter, no use of emissivity_re_threshold
@@ -56,7 +74,8 @@ function options = model_initialize_parameters(options)
         % select method for calculating thermal conductivity (default is 1)
         % 1-"Sturm"  : after Sturm et al, 1997
         % 2-"Calonne": after Calonne et al., 2011
-        options.thermal_conductivity_method (1,1) string {mustBeMember(options.thermal_conductivity_method, ["Sturm", "Calonne"])} = "Sturm";
+        options.thermal_conductivity_method (1,1) string {mustBeMember(options.thermal_conductivity_method, ...
+            ["Sturm", "Calonne"])} = "Sturm";
         
         % GRID INITIALIZATION
         % set depth of top grid cell structure (constant grid length) [m]
@@ -81,8 +100,9 @@ function options = model_initialize_parameters(options)
         % specify frequency to output data (density, grid length, and temperature)
         %   - "monthly"
         %   - "daily"
-        %   - "3hourly
-        options.output_frequency (1,1) string {mustBeMember(options.output_frequency, ["3hourly", "monthly", "daily"])} = 'monthly';
+        %   - "all"
+        options.output_frequency (1,1) string {mustBeMember(options.output_frequency, ...
+            ["all", "monthly", "daily"])} = 'monthly';
         
         % FIXED ALBEDO VARIABLES
         % albedo tuning parameters 
@@ -113,5 +133,10 @@ function options = model_initialize_parameters(options)
         
         % Constants
         options.density_ice (1,1) double {mustBeInRange(options.density_ice, 800, 950)} = 910; % density of ice [kg m-3]
+
+        % number of addtional vertical levels in output initialization to accomodate changing grid size
+        options.output_padding  (1,1) double {mustBeInteger, mustBeInRange(options.output_padding, 0, 10000)} = 1000;   
+    
+
     end
 end

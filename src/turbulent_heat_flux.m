@@ -1,19 +1,21 @@
-function [shf, lhf, L] = turbulent_heat_flux(T_air, T_surface, p_air, ...
-    e_air, V, density_air, Vz, Tz, z0, zT, zQ)
+
+
+
+function [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep)
 
 % CALC_TURBULENT_HEAT_FLUX Calculates sensible and latent heat fluxes.
 %
 %   [shf, lhf, coefM, coefHT, coefHQ] = calc_turbulent_heat_flux(...)
 %
 %   Inputs:
-%       T_air       : Air Temperature [K] (at height Tz)
+%       ClimateForcingStep.T_air       : Air Temperature [K] (at height ClimateForcingStep.Tz)
 %       T_surface   : Surface Temperature [K]
-%       p_air       : Atmospheric Pressure [Pa]
-%       e_air       : Screen level vapor pressure [Pa]
-%       V           : Wind Speed [m s-1] (at height Vz)
+%       ClimateForcingStep.p_air       : Atmospheric Pressure [Pa]
+%       ClimateForcingStep.e_air       : Screen level vapor pressure [Pa]
+%       ClimateForcingStep.V           : Wind Speed [m s-1] (at height ClimateForcingStep.Vz)
 %       density_air : Air Density [kg m-3]
-%       Vz          : Measurement height for wind [m]
-%       Tz          : Measurement height for temperature [m]
+%       ClimateForcingStep.Vz          : Measurement height for wind [m]
+%       ClimateForcingStep.Tz          : Measurement height for temperature [m]
 %       z0          : Aerodynamic roughness length [m]
 %       zT          : Thermal roughness length [m]
 %       zQ          : Humidity roughness length [m]
@@ -37,14 +39,14 @@ function [shf, lhf, L] = turbulent_heat_flux(T_air, T_surface, p_air, ...
     
     % Bulk-transfer coefficient (Neutral)
     An = 0.4^2;         
-    C  = An * V;        
+    C  = An * ClimateForcingStep.V;        
 
     %% STABILITY CORRECTION (Monin-Obukhov)
     % Ohmura, A., 1982: Climate and Energy-Balance on the Arctic Tundra.
     
     % Bulk Richardson Number (Ri)
-    Ri = ((100000 / p_air)^0.286) * ...
-        (2.0 * g * (T_air - T_surface)) / (Tz*(T_air + T_surface)*(((V/Vz)^2.0)));
+    Ri = ((100000 / ClimateForcingStep.p_air)^0.286) * ...
+        (2.0 * g * (ClimateForcingStep.T_air - T_surface)) / (ClimateForcingStep.Tz*(ClimateForcingStep.T_air + T_surface)*(((ClimateForcingStep.V/ClimateForcingStep.Vz)^2.0)));
     
     % Constants for Beljaars and Holtslag (1991)
     a1 = 1.0; b1 = 2.0 / 3.0; c1 = 5.0; d1 = 0.35;
@@ -57,8 +59,8 @@ function [shf, lhf, L] = turbulent_heat_flux(T_air, T_surface, p_air, ...
             zL = Ri;
         end
         
-        zLM = max(zL / Vz * z0, 1e-3);
-        zLT = max(zL / Tz * zT, 1e-3);
+        zLM = max(zL / ClimateForcingStep.Vz * z0, 1e-3);
+        zLT = max(zL / ClimateForcingStep.Tz * zT, 1e-3);
         
         % Integrated Stability Functions (Psi)
         PhiMz  = -1*(a1*zL + b1*(zL-c1/d1)*exp(-1*d1*zL) + b1*c1/d1);
@@ -79,12 +81,12 @@ function [shf, lhf, L] = turbulent_heat_flux(T_air, T_surface, p_air, ...
     end
     
     % Final Transfer Coefficients
-    coefM  = log(Vz/z0) - PhiMz + PhiMz0; 
-    coefHT = log(Tz/zT) - PhiHz + PhiHzT; 
-    coefHQ = log(Tz/zQ) - PhiHz + PhiHzQ; 
+    coefM  = log(ClimateForcingStep.Vz/z0) - PhiMz + PhiMz0; 
+    coefHT = log(ClimateForcingStep.Tz/zT) - PhiHz + PhiHzT; 
+    coefHQ = log(ClimateForcingStep.Tz/zQ) - PhiHz + PhiHzQ; 
     
     %% SENSIBLE HEAT FLUX [W m-2]
-    shf = density_air * C * CA * (T_air - T_surface) * (100000/p_air)^0.286;
+    shf = density_air * C * CA * (ClimateForcingStep.T_air - T_surface) * (100000/ClimateForcingStep.p_air)^0.286;
     shf = shf/(coefM*coefHT);
 
     %% LATENT HEAT FLUX [W m-2]
@@ -104,7 +106,7 @@ function [shf, lhf, L] = turbulent_heat_flux(T_air, T_surface, p_air, ...
 
     % Calculate Latent Heat Flux
     % 461.9 is the specific gas constant for water vapor [J kg-1 K-1]
-    lhf = C * L * (e_air - eS) / (461.9 * (T_air + T_surface) / 2.0);
+    lhf = C * L * (ClimateForcingStep.e_air - eS) / (461.9 * (ClimateForcingStep.T_air + T_surface) / 2.0);
     
     % Adjust using Monin-Obukhov stability theory
     lhf = lhf / (coefM * coefHQ);

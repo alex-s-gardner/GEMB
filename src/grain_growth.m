@@ -1,4 +1,4 @@
-function [re, gdn, gsp]  = grain_growth(T, dz, d, W, re, gdn, gsp, dt, albedo_method)
+function [re, gdn, gsp]  = grain_growth(T, dz, d, W, re, gdn, gsp, ClimateForcingStep, ModelParam)
 % grainGrowth models the effective snow grain size. 
 % 
 %% Syntax 
@@ -18,7 +18,7 @@ function [re, gdn, gsp]  = grain_growth(T, dz, d, W, re, gdn, gsp, dt, albedo_me
 % * re: effective grain size [mm]
 % * gdn: grain dentricity
 % * gsp: grain sphericity
-% * dt: time step of input data [s]
+% * ClimateForcingStep.dt: time step of input data [s]
 % 
 %% Outputs 
 % 
@@ -56,8 +56,8 @@ T_tolerance    = 1e-10;
 gdn_tolerance  = 1e-10;
 W_tolerance    = 1e-13;
 
-%only when albedo_method = "GardnerSharp" or "BruneLeFebre" do we run grainGrowth: 
-if ~ismember(albedo_method,["GardnerSharp","BruneLeFebre"])
+%only when ModelParam.albedo_method = "GardnerSharp" or "BruneLeFebre" do we run grainGrowth: 
+if ~ismember(ModelParam.albedo_method,["GardnerSharp","BruneLeFebre"])
 	%come out as we came in:
 	return;
 end
@@ -65,8 +65,8 @@ end
 %% Function
 gsz = re * 2;
 
-% convert dt from seconds to days
-dt = dt/86400;
+% convert ClimateForcingStep.dt from seconds to days
+ClimateForcingStep.dt = ClimateForcingStep.dt/86400;
 
 % convert T from k to deg C
 
@@ -104,7 +104,7 @@ dT(2:end-1,1) = (T(3:end,1)-T(1:end-2,1))./z_center(:,1);
 dT = abs(dT);
 
 % index for dentricity > 0 & == 0
-G  = gdn > (0 + gdn_tolerance);
+G = gdn > (0 + gdn_tolerance);
 J = ~G;
 %% DENDRITIC SNOW METAMORPHISM
 % FOR SNOW DENTRICITY > 0
@@ -117,9 +117,9 @@ if sum(G) ~= 0
     I = (abs(dT)  > 5+T_tolerance)  & G & (W <= 0+W_tolerance);
     
     % determine coefficients
-    A = - 2E8 * exp(-6E3 ./ T(H)) * dt;
-    B =   1E9 * exp(-6E3 ./ T(H)) * dt;
-    C = (-2E8 * exp(-6E3 ./ T(I)) * dt) .* (abs(dT(I)) .^ 0.4);
+    A = - 2E8 * exp(-6E3 ./ T(H)) * ClimateForcingStep.dt;
+    B =   1E9 * exp(-6E3 ./ T(H)) * ClimateForcingStep.dt;
+    C = (-2E8 * exp(-6E3 ./ T(I)) * ClimateForcingStep.dt) .* (abs(dT(I)) .^ 0.4);
     
     % new dentricity and sphericity for dT < 5 degC m-1 
     gdn(H) = gdn(H) + A;
@@ -137,7 +137,7 @@ if sum(G) ~= 0
     % check if snowpack is wet
     if sum(L) ~= 0
         % determine coefficient
-        D = (1/16) * (lwc(L) .^ 3) * dt;
+        D = (1/16) * (lwc(L) .^ 3) * ClimateForcingStep.dt;
         
         % new dendricity and sphericity for wet snow
         gdn(L) = gdn(L) - D;
@@ -167,9 +167,9 @@ if sum(J) ~= 0
     P2 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & ((abs(dT) <= 5+T_tolerance)  & (W > 0+W_tolerance));
     P3 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & ~P1 & ~P2;
     
-    F1 = (-2e8 .* exp(-6e3 ./ T(P1)) .* dt) .* abs(dT(P1)).^(.4);
-    F2 = (1.0/16.0) * lwc(P2).^(3.0) * dt;
-    F3 = 1e9 * exp(-6e3 ./ T(P3)) * dt;
+    F1 = (-2e8 .* exp(-6e3 ./ T(P1)) .* ClimateForcingStep.dt) .* abs(dT(P1)).^(.4);
+    F2 = (1.0/16.0) * lwc(P2).^(3.0)  * ClimateForcingStep.dt;
+    F3 = 1e9 * exp(-6e3 ./ T(P3))     * ClimateForcingStep.dt;
     
     gsp(P1) = gsp(P1) + F1;
     gsp(P2) = gsp(P2) + F2;
@@ -181,12 +181,12 @@ if sum(J) ~= 0
     
     % DRY SNOW METAMORPHISM (Marbouty, 1980)
     % grouped model coefficinets from Marbouty, 1980: Figure 9
-    P   = J & (W <= 0+W_tolerance  | (gsp <= 0+gdn_tolerance  & abs(dT) > 5+T_tolerance )); 
+    P   = J & (W <= 0+W_tolerance  | (gsp <= 0+gdn_tolerance  & abs(dT) > 5+T_tolerance)); 
     dTi = dT;
     Q   = Marbouty(Ti(P), d(P), dTi(P));
     
     % calculate grain growth
-    gsz(P) = gsz(P) + Q * dt;
+    gsz(P) = gsz(P) + Q * ClimateForcingStep.dt;
     
     % WET SNOW METAMORPHISM (Brun, 1989)
     
@@ -197,7 +197,7 @@ if sum(J) ~= 0
     if sum(K) ~= 0
         %        disp('NONDENDRITIC WET SNOW METAMORPHISM')
         % wet rate of change coefficient
-        E = (1.28E-8 + 4.22E-10 * (lwc(K).^3))* (dt *86400);   % [mm^3 s^-1]
+        E = (1.28E-8 + 4.22E-10 * (lwc(K).^3))* (ClimateForcingStep.dt *86400);   % [mm^3 s^-1]
         
         % calculate change in grain volume and convert to grain size
         gsz(K) = 2 * (3/(pi * 4)*((4 / 3)*pi*(gsz(K)/2).^3 + E)).^(1/3);

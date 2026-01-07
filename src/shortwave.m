@@ -1,5 +1,5 @@
-function swf = shortwave(dz, d, re, dsw, dsw_diffuse, a_surface, ...
-    a_diffuse_surface, density_ice, albedo_method, sw_absorption_method)
+function swf = shortwave(dz, d, re, a_surface, a_diffuse_surface, ...
+    ClimateForcingStep, ModelParam)
 
 
 % shortwave distributes absorbed shortwave radiation vertically within snow/ice.
@@ -14,21 +14,21 @@ function swf = shortwave(dz, d, re, dsw, dsw_diffuse, a_surface, ...
 % 
 %% Inputs
 % 
-%   sw_absorption_method = shortwave allowed to penetrate surface (0 = No, 1 = Yes)
-%   albedo_method        = method for calculating albedo ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"]
-%   dsw                  = downward shortwave radiative flux [w m-2]
-%   dsw_diffuse          = downward shortwave diffuse radiative flux [w m-2]
+%   ModelParam.sw_absorption_method = shortwave allowed to penetrate surface (0 = No, 1 = Yes)
+%   ModelParam.albedo_method        = method for calculating albedo ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"]
+%   ClimateForcingStep.dsw                  = downward shortwave radiative flux [w m-2]
+%   ClimateForcingStep.dsw_diffuse          = downward shortwave diffuse radiative flux [w m-2]
 %   a_surface            = surface albedo
 %   a_diffuse_surface    = surface albedo for diffuse radiation
 %   d                    = grid cell density [kg m-3]
 %   dz                   = grid cell depth [m]
 %   re                   = grid cell effective grain radius [mm]
 % 
-% sw_absorption_method   = 0 : all absorbed SW energy is assigned to the top grid cell
+% ModelParam.sw_absorption_method   = 0 : all absorbed SW energy is assigned to the top grid cell
 %
-% sw_absorption_method   = 1 : absorbed SW is distributed with depth a_surface a function of:
-%   default                         : snow density (taken from Bassford, 2002)
-%   if albedo_method="BruneLeFebre" : grain size in 3 spectral bands (Brun et al., 1992)
+% ModelParam.sw_absorption_method   = 1        : absorbed SW is distributed with depth a_surface a function of:
+%   default                                    : snow density (taken from Bassford, 2002)
+%   if ModelParam.albedo_method="BruneLeFebre" : grain size in 3 spectral bands (Brun et al., 1992)
 %
 %% Outputs
 % 
@@ -68,18 +68,20 @@ d_tolerance  = 1e-11;
 m = length(d);
 swf = zeros(m,1);
 
-if (sw_absorption_method == 0) || ((density_ice - d(1))<d_tolerance)  % all sw radation is absorbed by the top grid cell
+if (ModelParam.sw_absorption_method == 0) || ...
+        ((ModelParam.density_ice - d(1))<d_tolerance)  % all sw radation is absorbed by the top grid cell
 
     % calculate surface shortwave radiation fluxes [W m-2]
-    if (albedo_method == "GardnerSharp") % albedo_method = "gardner_2009"
-        swf(1) = (1.0 - a_surface) * max(0.0,(dsw - dsw_diffuse)) +  (1.0 - a_diffuse_surface) * dsw_diffuse;
+    if (ModelParam.albedo_method == "GardnerSharp") % ModelParam.albedo_method = "gardner_2009"
+        swf(1) = (1.0 - a_surface) * max(0.0, (ClimateForcingStep.dsw - ClimateForcingStep.dsw_diffuse)) ...
+            +  (1.0 - a_diffuse_surface) * ClimateForcingStep.dsw_diffuse;
     else
-        swf(1) = (1 - a_surface) * dsw;
+        swf(1) = (1 - a_surface) * ClimateForcingStep.dsw;
     end
     
 else % sw radation is absorbed at depth within the glacier
     
-    if albedo_method == "BruneLeFebre"    % albedo_method = "brun_1992" function of effective radius (3 spectral bands)
+    if ModelParam.albedo_method == "BruneLeFebre"    % ModelParam.albedo_method = "brun_1992" function of effective radius (3 spectral bands)
         
         % convert effective radius [mm] to grain size [m]
         gsz = (re * 2) / 1000;
@@ -103,7 +105,7 @@ else % sw radation is absorbed at depth within the glacier
         a3 = max(0.127, 0.88 + 346.3 * gsz(1) - 32.31 * gsz(1)^0.5);
         
         % seperate net shortwave radiative flux into spectral ranges
-        swfS = (sF * dsw) .* (1 - [a1; a2; a3]);
+        swfS = (sF * ClimateForcingStep.dsw) .* (1 - [a1; a2; a3]);
         
         % absorption coefficient for spectral range:
         h = d ./(gsz.^0.5);
@@ -138,17 +140,17 @@ else % sw radation is absorbed at depth within the glacier
         % the albedo of wavelengths > 800 nm has a much lower albedo.
         
         % calculate surface shortwave radiation fluxes [W m-2]
-        swf_s = SWs * (1 - a_surface) * dsw;
+        swf_s = SWs * (1 - a_surface) * ClimateForcingStep.dsw;
         
         % calculate surface shortwave radiation fluxes [W m-2]
-        swf_ss = (1-SWs) * (1 - a_surface) * dsw;
+        swf_ss = (1-SWs) * (1 - a_surface) * ClimateForcingStep.dsw;
         
         % SW allowed to penetrate into snowpack
         Bs = 10;    % snow SW extinction coefficient [m-1] (Bassford,2006)
         Bi = 1.3;   % ice SW extinction coefficient [m-1] (Bassford,2006)
         
         % calculate extinction coefficient B [m-1] vector
-        B = Bs + (300 - d) .* ((Bs - Bi)/(density_ice - 300));
+        B = Bs + (300 - d) .* ((Bs - Bi)/(ModelParam.density_ice - 300));
         
         % cumulative extinction factor
         B_cum =  [1; cumprod(exp(-B.*dz))];

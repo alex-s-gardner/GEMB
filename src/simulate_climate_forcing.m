@@ -1,4 +1,4 @@
-function [daten, P0, T_air0, V0, dlw0, dsw0, e_air0, p_air0, LP] = simulate_climate_forcing(set_id)
+function [ClimateForcing] = simulate_climate_forcing(set_id)
 
     % load climate simulation parameter set
     [location_parameters, coeffs] = simulation_parameter_sets(set_id);
@@ -45,13 +45,24 @@ function [daten, P0, T_air0, V0, dlw0, dsw0, e_air0, p_air0, LP] = simulate_clim
     varname = "P";
     P0 = simulate_precipitation(dec_year, coeffs.(varname));
 
-    
-    LP.Vz = location_parameters.Vz;
-    LP.Tz = location_parameters.Tz;
-    LP.T_air_mean = location_parameters.T_air_mean;
-    LP.V_mean = mean(V0);
-    LP.P_mean = location_parameters.P_mean;
-    LP.elev = location_parameters.elev;
-    LP.lat = location_parameters.lat;
-    LP.lon = location_parameters.lon;
+    % populate structure
+    ClimateForcing.daten = daten;
+    ClimateForcing.dsw0 = dsw0;
+    ClimateForcing.T_air0 = T_air0;
+    ClimateForcing.p_air0 = p_air0;
+    ClimateForcing.rh0 = rh0;
+    ClimateForcing.e_air0 = e_air0;
+    ClimateForcing.dlw0 = dlw0;
+    ClimateForcing.V0 = V0;
+    ClimateForcing.P0 = P0;
+
+    % Location specifc parameters
+    ClimateForcing.Vz = location_parameters.Vz;
+    ClimateForcing.Tz = location_parameters.Tz;
+    ClimateForcing.T_air_mean = location_parameters.T_air_mean;
+    ClimateForcing.V_mean = mean(ClimateForcing.V0);
+    ClimateForcing.P_mean = location_parameters.P_mean;
+    ClimateForcing.elev = location_parameters.elev;
+    ClimateForcing.lat = location_parameters.lat;
+    ClimateForcing.lon = location_parameters.lon;
 end

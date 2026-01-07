@@ -1,22 +1,22 @@
-function K = thermal_conductivity(T, d, density_ice, thermal_conductivity_method)
+function K = thermal_conductivity(T, d, ModeParam)
 % thermal_conductivity computes the thermal conductivity profile for snow, 
 % firn, and ice based on density and temperature.
 %
 %% Syntax
-%   K = thermal_conductivity(d, T, density_ice, thermal_conductivity_method)
+%   K = thermal_conductivity(d, T, ModeParam.density_ice, ModeParam.thermal_conductivity_method)
 %
 %% Description
 %   Calculates thermal conductivity [W m-1 K-1] differentiating between 
-%   snow/firn (density < density_ice) and glacier ice (density >= density_ice).
+%   snow/firn (density < ModeParam.density_ice) and glacier ice (density >= ModeParam.density_ice).
 %   
 %   For snow/firn, it uses empirical relationships based on density.
 %   For ice, it uses a temperature-dependent relationship.
 %
 %% Inputs
-%   d     : vector of grid cell densities [kg m-3]
-%   T     : vector of grid cell temperatures [K]
-%   density_ice  : density threshold defining glacier ice (e.g., 910 or 917) [kg m-3]
-%   thermal_conductivity_method : integer flag for snow conductivity parameterization:
+%   d                                     : vector of grid cell densities [kg m-3]
+%   T                                     : vector of grid cell temperatures [K]
+%   ModeParam.density_ice                 : density threshold defining glacier ice (e.g., 910 or 917) [kg m-3]
+%   ModeParam.thermal_conductivity_method : integer flag for snow conductivity parameterization:
 %           1 = Sturm et al. (1997) [Default]
 %           2 = Calonne et al. (2011)
 %
@@ -41,11 +41,11 @@ function K = thermal_conductivity(T, d, density_ice, thermal_conductivity_method
     
     %% IDENTIFY SNOW VS ICE
     % Create logical mask: True for snow/firn, False for ice
-    sfIdx = d < density_ice - d_tolerance ;
+    sfIdx = d < ModeParam.density_ice - d_tolerance ;
     
     %% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
     % Use empirical density-based regressions
-    switch thermal_conductivity_method
+    switch ModeParam.thermal_conductivity_method
         case "Calonne"
             % Parameterization from Calonne et al. (2011)
             % Often used for a wider range of snow microstructures
@@ -58,7 +58,7 @@ function K = thermal_conductivity(T, d, density_ice, thermal_conductivity_method
     end
     
     %% CALCULATE CONDUCTIVITY FOR ICE
-    % For densities >= density_ice, conductivity is dominated by temperature dependence.
+    % For densities >= ModeParam.density_ice, conductivity is dominated by temperature dependence.
     % Formula typically attributed to Weller & Schwerdtfeger (1977) or similar
     % standard glaciological relations.
     % Note: ~sfIdx selects the inverse of the snow index (i.e., the ice cells)

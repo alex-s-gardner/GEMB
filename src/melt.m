@@ -108,11 +108,11 @@ if sum(W) > W_tolerance
     F_max = max(0, -((T - CtoK) .* M0 * CI) / LF);
 
     % freeze pore water and change snow/ice properties
-    W_delta  = min(F_max, W);                                                   % freeze mass [kg]
-    W   = W - W_delta;                                                          % pore water mass [kg]
-    M0  = M0 + W_delta;                                                         % new mass [kg]
-    d   = M0 ./ dz;                                                             % density [kg m-3]
-    T   = T + double(M0>W_tolerance ).*(W_delta.*(LF+(CtoK - T)*CI)./(M0.*CI)); % temperature [K]
+    W_delta  = min(F_max, W);                                                        % freeze mass [kg]
+    W        = W - W_delta;                                                          % pore water mass [kg]
+    M0       = M0 + W_delta;                                                         % new mass [kg]
+    d        = M0 ./ dz;                                                             % density [kg m-3]
+    T        = T + double(M0>W_tolerance ).*(W_delta.*(LF+(CtoK - T)*CI)./(M0.*CI)); % temperature [K]
 
     % if pore water froze in ice then adjust d and dz thickness
     d(d > density_ice-d_tolerance ) = density_ice;
@@ -128,7 +128,7 @@ W_excess      = max(0, W - W_irreducible);                      % water "squeeze
 F = zeros(m,1);
 
 % Add previous refreeze to F and reset W_delta
-F = F + W_delta;
+F          = F + W_delta;
 W_delta(:) = 0;
 
 % run melt algorithm if there is melt water or excess pore water
@@ -144,13 +144,13 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
 
         % calculate surplus energy
         E_surplus = T_surplus .* CI .* M0;
-        i = 1;
+        i         = 1;
 
         while (sum(E_surplus) > T_tolerance)  && (i < (m+1))
 
             if i<m
                 % use surplus energy to increase the temperature of lower cell
-                T(i+1) = E_surplus(i) / M0(i+1) / CI + T(i+1);
+                T(i+1)        = E_surplus(i) / M0(i+1) / CI + T(i+1);
 
                 T_excess(i+1) = max(0, T(i+1) - CtoK) + T_excess(i+1);
                 T(i+1)        = min(CtoK, T(i+1));
@@ -158,7 +158,7 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
                 T_surplus(i+1) = max(0, T_excess(i+1) - LF/CI);
                 E_surplus(i+1) = T_surplus(i+1) * CI * M0(i+1);
             else
-                E_surplus = E_surplus(i);
+                E_surplus      = E_surplus(i);
                 warning('surplus energy at the base of GEMB column' + newline)
             end
 
@@ -184,7 +184,7 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
     flux_dn = [R; 0];
 
     % determine the deepest grid cell where melt/pore water is generated
-    X = find((M > W_tolerance)  | (W_excess > W_tolerance), 1, 'last');
+    X             = find((M > W_tolerance)  | (W_excess > W_tolerance), 1, 'last');
     X(isempty(X)) = 1;
 
     Xi = 1;
@@ -262,8 +262,7 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
             end
             % -------------------------------------------------------------
 
-            F(i) = F(i) + F1 + F2;
-
+            F(i)         = F(i) + F1 + F2;
             flux_dn(i+1) = max(0.0, M_input - F1 - W_delta(i)); % meltwater out
 
             if M0(i) > W_tolerance 
@@ -321,8 +320,8 @@ F_total = sum(F);
 if verbose
     % Calculate final mass [kg] and energy [J]
     ER_total = R_total * (LF + CtoK * CI);
-    EI    = M0 .* T * CI;
-    EW    = W .* (LF + CtoK * CI);
+    EI       = M0 .* T * CI;
+    EW       = W .* (LF + CtoK * CI);
 
     M1_total = sum(W) + sum(M0) + R_total;
     E1_total = sum(EI) + sum(EW);
