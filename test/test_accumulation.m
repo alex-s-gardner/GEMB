@@ -219,7 +219,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             tcase.verifyEqual(d2(1), 315, 'Method 2 should be 315');
             
             % Method 3: Kaspers (Formula)
-            % dSnow=(7.36e-2 + 1.06e-3*min(T_mean,273.15) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.
+            % dSnow=(7.36e-2 + 1.06e-3*min(T_air_mean,273.15) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.
             expected_3 = (7.36e-2 + 1.06e-3*tcase.t_mean + 6.69e-2*tcase.p_mean/1000 + 4.77e-3*tcase.v_mean)*1000;
             [~, ~, d3, ~, ~, ~, ~, ~, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
@@ -229,7 +229,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             tcase.verifyEqual(d3(1), expected_3, 'AbsTol', 1e-5, 'Method 3 calculation incorrect');
             
             % Method 4: Kuipers Munneke
-            % dSnow = 481.0 + 4.834*(T_mean-273.15);
+            % dSnow = 481.0 + 4.834*(T_air_mean-273.15);
             expected_4 = 481.0 + 4.834*(tcase.t_mean - 273.15);
             [~, ~, d4, ~, ~, ~, ~, ~, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...

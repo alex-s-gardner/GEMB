@@ -85,7 +85,7 @@ classdef test_gemb_core < matlab.unittest.TestCase
             tcase.S.emissivity_re_threshold = 10;
             tcase.S.emissivity_method = 0;
             tcase.S.thermal_conductivity_method = 1;
-            tcase.S.T_mean = 260;
+            tcase.S.T_air_mean = 260;
             tcase.S.column_dzmin = 0.05;
             tcase.S.P_mean = 200;
             tcase.S.V_mean = 5;

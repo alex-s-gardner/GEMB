@@ -1,5 +1,5 @@
 function [dz, d] = densification(T, dz, d, re, dt, density_ice, ...
-    T_mean, P_mean, albedo_desnity_threshold, albedo_method, ...
+    T_air_mean, P_mean, albedo_desnity_threshold, albedo_method, ...
     sw_absorption_method, densification_method)
 
 % densification computes the densification of snow/firn using the emperical model of
@@ -30,7 +30,7 @@ function [dz, d] = densification(T, dz, d, re, dt, density_ice, ...
 % P_mean = 200;
 % dt = 60*60;
 % re = 0.7;
-% T_mean = 273.15-18;
+% T_air_mean= 273.15-18;
 %
 %% Syntax
 %
@@ -94,7 +94,7 @@ switch densification_method
     case "Anthern" % Arthern et al. (2010) [semi-emperical]
         % common variable
         % NOTE: Ec=60000, Eg=42400 (i.e. should be in J not kJ)
-        H = exp((-60000./(T * R)) + (42400./(T_mean .* R))) ...
+        H = exp((-60000./(T * R)) + (42400./(T_air_mean.* R))) ...
             .* (P_mean * 9.81);
 
         c0 = 0.07 * H(idx);
@@ -110,22 +110,22 @@ switch densification_method
         c1 = 3.7E-9 * H(~idx);
 
     case "LiZwally" % Li and Zwally (2004)
-        c0 = (P_mean./density_ice) .* max(139.21 - 0.542*T_mean,1) .* 8.36 .* max(CtoK - T,1.0).^-2.061;
+        c0 = (P_mean./density_ice) .* max(139.21 - 0.542*T_air_mean,1) .* 8.36 .* max(CtoK - T,1.0).^-2.061;
         c1 = c0;
         c0 = c0(idx);
         c1 = c1(~idx);
 
     case "Helsen" % Helsen et al. (2008)
         % common variable
-        c0 = (P_mean./density_ice) .* max(76.138 - 0.28965 * T_mean, 1) .* 8.36 .* max(CtoK - T,1.0).^-2.061;
+        c0 = (P_mean./density_ice) .* max(76.138 - 0.28965 * T_air_mean, 1) .* 8.36 .* max(CtoK - T,1.0).^-2.061;
         c1 = c0;
         c0 = c0(idx);
         c1 = c1(~idx);
 
     case "Ligtenberg" % Ligtenberg and others (2011) [semi-emperical], Antarctica
         % common variable
-        % From literature: H = exp((-60000.0/(T_mean * R)) + (42400.0/(T_mean * R))) * (P_mean * 9.81);
-        H      = exp((-60000.0 ./ (T * R)) + (42400.0 ./ (T_mean .* R))) .* (P_mean .* 9.81);
+        % From literature: H = exp((-60000.0/(T_air_mean* R)) + (42400.0/(T_air_mean* R))) * (P_mean * 9.81);
+        H      = exp((-60000.0 ./ (T * R)) + (42400.0 ./ (T_air_mean.* R))) .* (P_mean .* 9.81);
         c0arth = 0.07 * H;
         c1arth = 0.03 * H;
 
@@ -151,7 +151,7 @@ switch densification_method
             % ERA5 new albedo_method="BruneLeFebre", sw_absorption_method==0
             %elseif (albedo_method=="BruneLeFebre")
             %From Ligtenberg
-            %H = exp((-60000.0/(T_mean * R)) + (42400.0/(T_mean * R))) * (P_mean * 9.81);
+            %H = exp((-60000.0/(T_air_mean* R)) + (42400.0/(T_air_mean* R))) * (P_mean * 9.81);
             %M0 = max(1.435 - (0.151 * log(P_mean)),0.25);
             %M1 = max(2.366 - (0.293 * log(P_mean)),0.25);
             %RACMO callibration, default (Gardner et al., 2023)
@@ -165,7 +165,7 @@ switch densification_method
     case "KuipersMunneke" % Kuipers Munneke and others (2015) [semi-emperical], Greenland
         % common variable
         % From literature: H = exp((-60000.0/(T[i] * R)) + (42400.0/(T[i] * R))) * (P_mean * 9.81);
-        H = exp((-60000.0 ./ (T * R)) + (42400.0 ./ (T_mean .* R))) .* (P_mean .* 9.81);
+        H = exp((-60000.0 ./ (T * R)) + (42400.0 ./ (T_air_mean.* R))) .* (P_mean .* 9.81);
 
         c0arth = 0.07 * H;
         c1arth = 0.03 * H;

@@ -1,8 +1,6 @@
-function options = model_setup(options)
+function options = model_initialize_parameters(options)
     arguments
         %% GEMB INITIALIZATION
-        options.is_restart (1,1) logical = false;   % True if we want to restart from *ini parameters set in S struct
-
         % unique model run ID to save output as
         options.run_prefix (1,1) string = "default";
         
@@ -81,9 +79,10 @@ function options = model_setup(options)
 
         % OTHER
         % specify frequency to output data (density, grid length, and temperature)
-        %   - 'monthly'
-        %   - 'daily'
-        options.output_frequency (1,1) string {mustBeMember(options.output_frequency, ["monthly", "daily"])} = 'monthly';
+        %   - "monthly"
+        %   - "daily"
+        %   - "3hourly
+        options.output_frequency (1,1) string {mustBeMember(options.output_frequency, ["3hourly", "monthly", "daily"])} = 'monthly';
         
         % FIXED ALBEDO VARIABLES
         % albedo tuning parameters 

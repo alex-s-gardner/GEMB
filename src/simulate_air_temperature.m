@@ -46,7 +46,7 @@ function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
     phi = deg2rad(lat); 
     T_sea_level = 300 - 50 .* sin(phi).^2;
     LapseRate = 0.0065; 
-    T_mean = T_sea_level - (elev .* LapseRate) + mean_offset;
+    T_air_mean = T_sea_level - (elev .* LapseRate) + mean_offset;
 
     %% 3. Seasonal Cycle (Annual Wave)
     % Base amplitude is 3K minimum + 22K scaled by latitude
@@ -99,7 +99,7 @@ function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
     weather_signal = interp1(1:num_days, daily_noise, user_day_indices, 'linear', 'extrap');
 
     %% 6. Final Combination
-    T_air = T_mean ...
+    T_air = T_air_mean...
        + (T_amp_annual .* seasonal_signal) ... % Annual Season
        + (T_amp_daily  .* diurnal_signal) ...  % Daily Cycle
        + weather_signal;                       % Random Weather

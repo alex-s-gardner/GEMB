@@ -1,6 +1,6 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
     accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, T_air, P, ...
-    V, density_ice, T_mean, column_dzmin, P_mean, V_mean, albedo_snow, albedo_method, new_snow_method)
+    V, density_ice, T_air_mean, column_dzmin, P_mean, V_mean, albedo_snow, albedo_method, new_snow_method)
 
 % accumulation adds precipitation and deposition to the model grid.
 %
@@ -64,10 +64,10 @@ switch new_snow_method
     case "Kaspers" %Surface snow accumulation density from Kaspers et al., 2004, Antarctica
         %density_new_snow = alpha1 + beta1*T + delta1*P_mean + epsilon1*W
         %     7.36x10-2  1.06x10-3  6.69x10-2  4.77x10-3
-        density_new_snow=(7.36e-2 + 1.06e-3*min(T_mean,CtoK-T_tolerance ) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.;
+        density_new_snow=(7.36e-2 + 1.06e-3*min(T_air_mean,CtoK-T_tolerance ) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.;
 
     case "KuipersMunneke" % Kuipers Munneke and others (2015), Greenland
-        density_new_snow = 481.0 + 4.834*(T_mean-CtoK);
+        density_new_snow = 481.0 + 4.834*(T_air_mean-CtoK);
 end
 
 mInit = d .* dz;

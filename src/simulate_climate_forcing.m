@@ -39,14 +39,17 @@ function [daten, P0, T_air0, V0, dlw0, dsw0, e_air0, p_air0, LP] = simulate_clim
     V0 = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
     V0(V0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
     V0(V0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
+    
 
     % precipitation [kg m⁻²]
     varname = "P";
     P0 = simulate_precipitation(dec_year, coeffs.(varname));
 
+    
     LP.Vz = location_parameters.Vz;
     LP.Tz = location_parameters.Tz;
-    LP.T_mean = location_parameters.T_mean;
+    LP.T_air_mean = location_parameters.T_air_mean;
+    LP.V_mean = mean(V0);
     LP.P_mean = location_parameters.P_mean;
     LP.elev = location_parameters.elev;
     LP.lat = location_parameters.lat;
