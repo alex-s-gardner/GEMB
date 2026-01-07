@@ -88,60 +88,22 @@ for yIdx = 1:S.n_spinup_cycles + 1
 
     % Specify the time range over which the mass balance is to be calculated:
     for dIdx = 1:length(daten)
-tic
+
         % Extract daily data:
-        dlw     = dlw0(dIdx);     % downward longwave radiation flux [W m-2]
-        dsw     = dsw0(dIdx);     % downward shortwave radiation flux [W m-2]
-        T_air   = T_air0(dIdx);  % screen level air temperature [K]
-        P       = P0(dIdx);     % precipitation [kg m-2]
-        V       = V0(dIdx);     % wind speed [m s-1]
-        e_air   = e_air0(dIdx);    % screen level vapor pressure [Pa]
-        p_air   = p_air0(dIdx);    % screen level air pressure [Pa]
-
-        % if we are provided with cc and cot values, extract for the timestep
-        if numel(S.black_carbon_snow)>1
-            black_carbon_snow = S.black_carbon_snow(dIdx);
-        else
-            black_carbon_snow = S.black_carbon_snow;
-        end
-
-        if numel(S.black_carbon_ice)>1
-            black_carbon_ice = S.black_carbon_ice(dIdx);
-        else
-            black_carbon_ice = S.black_carbon_ice;
-        end
-
-        if numel(S.cloud_optical_thickness)>1
-            cloud_optical_thickness = S.cloud_optical_thickness(dIdx);
-        else
-            cloud_optical_thickness = S.cloud_optical_thickness;
-        end
-
-        if numel(S.solar_zenith_angle)>1
-            solar_zenith_angle = S.solar_zenith_angle(dIdx);
-        else
-            solar_zenith_angle = S.solar_zenith_angle;
-        end
-
-        if numel(S.dsw_diffuse)>1
-            dsw_diffuse = S.dsw_diffuse(dIdx);
-        else
-            dsw_diffuse = S.dsw_diffuse;
-        end
-
-        if numel(S.cloud_fraction)>1
-            cloud_fraction = S.cloud_fraction(dIdx);
-        else
-            cloud_fraction = S.cloud_fraction;
-        end
-
+        [T_air, V, dlw, dsw, e_air, p_air, P, black_carbon_snow, ...
+            black_carbon_ice, cloud_optical_thickness, ...
+            solar_zenith_angle, dsw_diffuse, cloud_fraction] = ...
+            model_inputs_single_timestep(dIdx, T_air0, V0, dlw0, dsw0, ...
+            e_air0, p_air0, P0, S);
+        
+        % run GEMB for a single time interval
         [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
             lhf, ulw, Ra, M, R, F, M_added, E_added, ...
             compaction_dens, compaction_melt] = ...
            gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, dt, P, EC, M_surf, ...
-    black_carbon_snow, black_carbon_ice, solar_zenith_angle, ...
-    cloud_optical_thickness, cloud_fraction, dsw, dsw_diffuse, dlw, T_air, ...
-    V, e_air, p_air, S, LP, verbose);
+            black_carbon_snow, black_carbon_ice, solar_zenith_angle, ...
+            cloud_optical_thickness, cloud_fraction, dsw, dsw_diffuse, dlw, T_air, ...
+            V, e_air, p_air, S, LP, verbose);
 
         % calculate net longwave [W m-2]
         lw_net = dlw - ulw;
@@ -172,6 +134,8 @@ tic
             error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
 
+
+        % !! This needs to be made into a function call !!!
         if yIdx == S.n_spinup_cycles + 1
             % initialize cumulative and average variables for output
             d1    = d(1);
