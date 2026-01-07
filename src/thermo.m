@@ -1,5 +1,5 @@
 function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
-    thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModeParam, verbose)
+    thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 
 % thermo computes new temperature profile accounting for energy absorption
 % and thermal diffusion.
@@ -78,9 +78,9 @@ end
 
 %% SURFACE ROUGHNESS (Bougamont, 2005)
 % wind/temperature surface roughness height [m]
-if (ds < (ModeParam.density_ice - d_tolerance)) && (W_surface < W_tolerance)
+if (ds < (ModelParam.density_ice - d_tolerance)) && (W_surface < W_tolerance)
     z0 = 0.00012;       % 0.12 mm for dry snow
-elseif ds >= (ModeParam.density_ice - d_tolerance)
+elseif ds >= (ModelParam.density_ice - d_tolerance)
     z0 = 0.0032;        % 3.2 mm for ice
 else
     z0 = 0.0013;        % 1.3 mm for wet snow
@@ -96,7 +96,7 @@ ClimateForcingStep.V(ClimateForcingStep.V < 0.01-d_tolerance) = 0.01;
 
 %% THERMAL CONDUCTIVITY (Sturm, 1997: J. Glaciology)
 % calculate new thermal conductivity (K) profile [W m-1 K-1]
-K = thermal_conductivity(T, d, ModeParam);
+K = thermal_conductivity(T, d, ModelParam);
 
 %% THERMAL DIFFUSION COEFFICIENTS
 
@@ -228,7 +228,7 @@ for i = 1:dt:ClimateForcingStep.dt
     T_surface = min(273.15, T_surface);    % don't allow T_surface to exceed 273.15 K (0 deg C)
 
     % TURBULENT HEAT FLUX
-    turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep)
+    [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
@@ -237,17 +237,17 @@ for i = 1:dt:ClimateForcingStep.dt
     thf = (shf + lhf) * dt;
     T_delta_thf = thf  / TCs;
 
-    % If user wants to directly set ModeParam.emissivity, or grain radius is larger than the
-    % threshold, or ModeParam.emissivity_method is 2 and we have wet snow or ice, use prescribed ModeParam.emissivity
-    if (ModeParam.emissivity_method == 0) || ((ModeParam.emissivity_re_threshold - re(1)) <= gdn_tolerance) ...
-           || ((ModeParam.emissivity_method == 2) && (z0 > (0.001 + gdn_tolerance)))
+    % If user wants to directly set ModelParam.emissivity, or grain radius is larger than the
+    % threshold, or ModelParam.emissivity_method is 2 and we have wet snow or ice, use prescribed ModelParam.emissivity
+    if (ModelParam.emissivity_method == 0) || ((ModelParam.emissivity_re_threshold - re(1)) <= gdn_tolerance) ...
+           || ((ModelParam.emissivity_method == 2) && (z0 > (0.001 + gdn_tolerance)))
         
-        ModeParam.emissivity = ModeParam.emissivity;
+        ModelParam.emissivity = ModelParam.emissivity;
     else
-        ModeParam.emissivity = 1.0;
+        ModelParam.emissivity = 1.0;
     end
 
-    ulw         = -(SB * T_surface.^4.0 * ModeParam.emissivity + ModeParam.ulw_delta) * dt;
+    ulw         = -(SB * T_surface.^4.0 * ModelParam.emissivity + ModelParam.ulw_delta) * dt;
     T_delta_ulw = ulw / TCs;
     ulwrf       = ulwrf - (ulw / ClimateForcingStep.dt); % accumulated for output
 

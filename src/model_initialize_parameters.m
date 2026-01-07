@@ -84,7 +84,8 @@ function options = model_initialize_parameters(options)
         % set initial top vertical and min allowable grid spacings [m]
         options.column_dztop (1,1) double {mustBeInRange(options.column_dztop, 0, 0.2)} = 0.05;
         options.column_dzmin (1,1) double {mustBeInRange(options.column_dzmin, 0, 0.2)} = 0.05 / 2;
-        
+        options.column_dzmax (1,1) double {mustBeInRange(options.column_dzmax, 0, 0.2)} = 0.05 + (0.05 / 2);
+
         % set initial/max and min model depth [m]
         options.column_zmax (1,1) double {mustBeInRange(options.column_zmax, 0, 1000)} = 250;
         options.column_zmin (1,1) double {mustBeInRange(options.column_zmin, 0, 1000)} = ceil(250/2 /10)*10;

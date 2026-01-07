@@ -1,4 +1,4 @@
-function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModeParam, verbose)
+function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, verbose)
 % GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
 %
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed
@@ -37,7 +37,7 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 
-disp(['------------------ STARTING RUN # ' num2str(ModeParam.run_prefix) ' --------------------' ])
+disp(['------------------ STARTING RUN # ' num2str(ModelParam.run_prefix) ' --------------------' ])
 tic                                        % start timer
 daten = ClimateForcing.daten;              % extract daten for convenience
 dt    = (daten(2)-daten(1)) * (60*60*24);  % input time step in seconds
@@ -59,7 +59,7 @@ column_length = length(dz);
 [output_index, OutData, OutCum] = model_output_initialize(column_length, ClimateForcing, ModelParam);
 
 %% Start spinup loop
-for simulation_iteration = 1:(ModeParam.n_spinup_cycles + 1)
+for simulation_iteration = 1:(ModelParam.n_spinup_cycles + 1)
 
     % Determine initial mass [kg]:
     M_initial = sum (dz .* d) + sum(W);
@@ -80,14 +80,14 @@ for simulation_iteration = 1:(ModeParam.n_spinup_cycles + 1)
     for date_ind = 1:length(daten)
 
         % Extract daily data:
-        [ClimateForcingStep] = model_inputs_single_timestep(date_ind, dt, ClimateForcing, ModeParam);
+        [ClimateForcingStep] = model_inputs_single_timestep(date_ind, dt, ClimateForcing, ModelParam);
         
         % run GEMB for a single time interval
         [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
             lhf, ulw, Ra, M, R, F, M_added, E_added, ...
             compaction_dens, compaction_melt] = ...
            gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, ...
-            ClimateForcingStep, ModeParam, verbose);
+            ClimateForcingStep, ModelParam, verbose);
 
         % calculate net longwave [W m-2]
         lw_net = ClimateForcingStep.dlw - ulw;
@@ -119,13 +119,13 @@ for simulation_iteration = 1:(ModeParam.n_spinup_cycles + 1)
         end
 
         % !! This needs to be made into a function call !!!
-        if simulation_iteration == ModeParam.n_spinup_cycles + 1
+        if simulation_iteration == ModelParam.n_spinup_cycles + 1
             % initialize cumulative and average variables for output
             d1      = d(1);
             a1      = a(1);
             re1     = re(1);
             Q_net   = sw_net + lw_net + shf + lhf;
-            FAC     = sum(dz.*(ModeParam.density_ice - min(d,ModeParam.density_ice)))/1000;
+            FAC     = sum(dz.*(ModelParam.density_ice - min(d,ModelParam.density_ice)))/1000;
             varname = fieldnames(OutCum);
             
             for v = 1:length(varname)
@@ -157,6 +157,10 @@ for simulation_iteration = 1:(ModeParam.n_spinup_cycles + 1)
 
                 % instantaneous level data
                 o = (size(d,1) - 1);
+                if (length(OutData.dz) - o) < 1
+                    error("the length of the simulation column [%0.0f] is larger than the lenght of the output array [%0.0f]\n    -> try increasing the value of ModelParam.output_padding", (o+1), size(OutData.re,1))
+                end
+
                 OutData.re(end-o:end,r)  = re;
                 OutData.d(end-o:end,r)   = d;
                 OutData.T(end-o:end,r)   = T;
@@ -164,7 +168,7 @@ for simulation_iteration = 1:(ModeParam.n_spinup_cycles + 1)
                 OutData.dz(end-o:end,r)  = dz;
                 OutData.gdn(end-o:end,r) = gdn;
                 OutData.gsp(end-o:end,r) = gsp;
-                OutData.ps(end-o:end,r)  = sum(dz) - M_total/ModeParam.density_ice;
+                OutData.ps(end-o:end,r)  = sum(dz) - M_total/ModelParam.density_ice;
                 OutData.m(r)             = o+1;
 
                 % set cumulative values back to zero
@@ -178,8 +182,8 @@ for simulation_iteration = 1:(ModeParam.n_spinup_cycles + 1)
     end
 
     % display cycle completed and time to screen
-    disp([num2str(ModeParam.run_prefix) ': cycle: ' num2str(simulation_iteration) ' of '  ...
-        num2str(ModeParam.n_spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
+    disp([num2str(ModelParam.run_prefix) ': cycle: ' num2str(simulation_iteration) ' of '  ...
+        num2str(ModelParam.n_spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
         ' avg melt: ' num2str(round(M_cumulative/(daten(end)-daten(1))*365.25)) ...
         ' kg/m2/yr']);
 end

@@ -25,11 +25,11 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
 %  EW                      : J m^-2       Initial energy of water.
 %  ModelParam.column_dzmin : m            Minimum allowable grid spacing.
 %  ModelParam.column_zmax  : m            Maximum depth of the total column.
-%  ModelParam.column_zmax  : m            Minimum depth of the total column.
+%  ModelParam.column_zmin  : m            Minimum depth of the total column.
 %  re                      : mm           Grain size
 %  gdn                     : unitless     Grain dendricity
 %  gsp                     : unitless     Grain sphericity
-%  ModelParam.column_zmax  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
+%  ModelParam.column_ztop  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
 %  ModelParam.column_zy    : unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
 %  CI                      : J kg^-1 K^-1 Specific heat capacity of snow/ice.
 %  LF                      : J kg^-1      Latent heat of fusion.
@@ -88,7 +88,7 @@ EW = W .* (LF + CtoK * CI);    % initial enegy of water
 Z_cumulative = cumsum(dz);
 
 % A logical "mask" that indicates which cells are in the top layers:
-top_layers = Z_cumulative <= (ModelParam.column_zmax + d_tolerance );
+top_layers = Z_cumulative <= (ModelParam.column_ztop + d_tolerance);
 
 % Define column_dzmin2 array using the top-layers' ModelParam.column_dzmin value for the entire column:
 column_dzmin2 = ModelParam.column_dzmin * ones(m,1);
@@ -96,11 +96,11 @@ column_dzmin2 = ModelParam.column_dzmin * ones(m,1);
 % Overwrite the bottom layers as the cumulative product times the stretching factor:
 column_dzmin2(~top_layers) = cumprod(ModelParam.column_zy * ones(sum(~top_layers),1)) * ModelParam.column_dzmin;
 
-% Define dzMax2 array using the top-layers' ModelParam.column_dzmin value for the entire column:
-dzMax2 = 2 * ModelParam.column_dzmin * ones(m,1);
+% Define column_dzmax2 array using the top-layers' ModelParam.column_dzmin value for the entire column:
+column_dzmax2 = ModelParam.column_dzmax * ones(m,1);
 
-% In the bottom layers, dzMax2 is the larger of (ModelParam.column_zy * column_dzmin2) or (2 * ModelParam.column_dzmin)
-dzMax2(~top_layers) = max(ModelParam.column_zy * column_dzmin2(~top_layers), 2 * ModelParam.column_dzmin);
+% Overwrite the bottom layers as the cumulative product times the stretching factor:
+column_dzmax2(~top_layers) = cumprod(ModelParam.column_zy * ones(sum(~top_layers),1)) * ModelParam.column_dzmax;
 
 % Preallocate a logical array that will be true for any cell to be deleted:
 delete_cell = false(m,1);
@@ -145,19 +145,19 @@ for i=1:m
 end
 
 % Delete combined cells:
-M(delete_cell)          = [];
-W(delete_cell)          = [];
-dz(delete_cell)         = [];
-d(delete_cell)          = [];
-T(delete_cell)          = [];
-a(delete_cell)          = [];
-re(delete_cell)         = [];
-gdn(delete_cell)        = [];
-gsp(delete_cell)        = [];
-a_diffuse(delete_cell)  = [];
-EI(delete_cell)         = [];
-EW(delete_cell)         = [];
-dzMax2(delete_cell)     = [];
+M(delete_cell)                 = [];
+W(delete_cell)                 = [];
+dz(delete_cell)                = [];
+d(delete_cell)                 = [];
+T(delete_cell)                 = [];
+a(delete_cell)                 = [];
+re(delete_cell)                = [];
+gdn(delete_cell)               = [];
+gsp(delete_cell)               = [];
+a_diffuse(delete_cell)         = [];
+EI(delete_cell)                = [];
+EW(delete_cell)                = [];
+column_dzmax2(delete_cell)     = [];
 
 % Calculate *new* length of cells:
 m = length(T);
@@ -166,7 +166,7 @@ m = length(T);
 % * An early implementation of this code used a loop which is included in comments at the bottom of this function for posterity.
 
 % Find the cells that exceed tolerances:
-f = find(dz > (dzMax2 + d_tolerance));
+f = find(dz > (column_dzmax2 + d_tolerance));
 
 % Conserve quantities among the cells that will be split:
 dz(f) = dz(f)/2;

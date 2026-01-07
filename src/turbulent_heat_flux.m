@@ -1,6 +1,3 @@
-
-
-
 function [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep)
 
 % CALC_TURBULENT_HEAT_FLUX Calculates sensible and latent heat fluxes.

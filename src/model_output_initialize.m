@@ -3,7 +3,7 @@ function [output_index, OutData, OutCum] = model_output_initialize(column_length
     % deteremine save time steps
     date_vector = datevec([ClimateForcing.daten; (ClimateForcing.daten(end) ...
         + ClimateForcing.daten(end)-ClimateForcing.daten(end-1))]);
-    switch ModeParam.output_frequency
+    switch ModelParam.output_frequency
         case "monthly"
             output_index = (date_vector(1:end-1,2) - date_vector(2:end,2)) ~= 0;
         case "daily"
