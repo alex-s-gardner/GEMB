@@ -6,32 +6,58 @@ function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
 %
 %% Syntax
 %
-%
+% [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
+%    thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 %
 %% Description
 %
+% This function solves the 1D heat transfer equation to update the vertical 
+% temperature profile of the snow/firn column. It accounts for:
 %
+% 1. Surface Energy Balance: Calculates the net energy flux at the surface 
+%    boundary, including:
+%    * Turbulent Fluxes: Sensible and latent heat fluxes derived from 
+%      bulk aerodynamic formulas, using roughness lengths from Bougamont (2005) 
+%      and Foken (2008).
+%    * Radiative Fluxes: Incoming/outgoing longwave radiation and surface 
+%      shortwave absorption.
+%      % 2. Subsurface Physics: 
+%    * Thermal Diffusion: Solves the discretized heat equation using a 
+%      finite-volume scheme (Patankar, 1980).
+%    * Shortwave Penetration: Adds absorbed shortwave energy (calculated 
+%      externally) as a source term at depth.
+%    * Thermal Conductivity: Updates conductivity based on density and 
+%      temperature (Sturm, 1997).
+%
+% The function iterates over sub-time steps determined by the stability 
+% criterion (Von Neumann stability analysis) to ensure numerical stability 
+% of the explicit diffusion scheme.
 %
 %% Inputs
 %
-% * T                        : grid cell temperature [k]
-% * dz                       : grid cell depth [m]
-% * d                        : grid cell density [kg m-3]
-% * swf                      : shortwave radiation fluxes [W m-2]
-% * ClimateForcingStep.dlw   : downward longwave radiation fluxes [W m-2]
-% * ClimateForcingStep.T_air : 2 m air temperature
-% * ClimateForcingStep.V     : wind velocity [m s-1]
-% * ClimateForcingStep.e_air : screen level vapor pressure [Pa]
-% * W_surface                : surface water content [kg]
-% * ClimateForcingStep.dt    : time step of input data [s]
-% * ClimateForcingStep.Vz    : air temperature height above surface [m]
-% * ClimateForcingStep.Tz    : wind height above surface [m]
+%  T                        : K            Grid cell temperature (vector).
+%  dz                       : m            Grid cell thickness (vector).
+%  d                        : kg m^-3      Grid cell density (vector).
+%  W_surface                : kg           Surface water content.
+%  re                       : mm           Grain radius (vector).
+%  swf                      : W m^-2       Absorbed shortwave radiation flux per layer.
+%  ClimateForcingStep       : struct       Forcing data for the current time step:
+%    .dlw                   : W m^-2       Downward longwave radiation flux.
+%    .T_air                 : K            2m air temperature.
+%    .V                     : m s^-1       Wind velocity.
+%    .e_air                 : Pa           Vapor pressure.
+%    .p_air                 : Pa           Air pressure.
+%    .dt                    : s            Time step duration.
+%  ModelParam               : struct       Model parameters (density_ice, emissivity, etc.).
+%  verbose                  : logical      Flag to enable energy conservation checks.
 %
 %% Outputs
 %
-% * T     : rid cell temperature [k]
-% * EC    : evaporation/condensation [kg]
-% * ulwrf : upward longwave radiation flux [W m-2]
+%  T                        : K            Updated grid cell temperature (vector).
+%  shf_cumulative           : W m^-2       Cumulative sensible heat flux.
+%  lhf_cumulative           : W m^-2       Cumulative latent heat flux.
+%  EC                       : kg           Cumulative evaporation/condensation mass.
+%  ulwrf                    : W m^-2       Upward longwave radiation flux.
 %
 %% Documentation
 %
@@ -43,6 +69,12 @@ function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
 % Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
 % Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+%
+% Physics implementations based on:
+% Bougamont, M., et al. (2005). (Surface roughness).
+% Foken, T. (2008). Micrometeorology. (Roughness lengths).
+% Patankar, S. V. (1980). Numerical Heat Transfer and Fluid Flow. (Discretization).
+% Sturm, M., et al. (1997). (Thermal conductivity).
 
 %% INITIALIZE
 CI = 2102;          % heat capacity of snow/ice (J kg-1 k-1)

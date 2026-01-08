@@ -1,4 +1,62 @@
 function options = model_initialize_parameters(options)
+% model_initialize_parameters initializes and validates the model configuration
+% options, setting default values for physics modules, grid geometry, and
+% output controls.
+%
+%% Syntax
+%
+% options = model_initialize_parameters(options)
+%
+%% Description
+%
+% This function utilizes MATLAB's argument validation framework to parse,
+% validate, and set defaults for the GEMB model parameters. It allows the user
+% to configure specific physical parameterizations and numerical settings,
+% including:
+%
+% 1. Densification Physics: Selects the empirical or semi-empirical model 
+%    used to calculate firn compaction rates (e.g., Herron-Langway, Arthern, 
+%    Ligtenberg).
+% 2. Grid Geometry: Defines the vertical discretization, including the 
+%    high-resolution surface capture zone (column_ztop) and the deep 
+%    stretching zone (column_zy).
+% 3. Energy Balance: Configures albedo schemes (e.g., Gardner & Sharp), 
+%    solar radiation penetration, and thermal conductivity models.
+% 4. Initialization & Spin-up: Sets spin-up cycles and fresh snow density 
+%    parameterizations to ensure physical consistency at the start of the run.
+%
+%% Inputs
+%
+%  options                          : struct       Structure containing model configuration fields (Name-Value pairs).
+%    .densification_method          : string       Model choice: "HerronLangway", "Anthern", "Ligtenberg".
+%    .densification_coeffs_M01      : string       Calibration coefficients for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").
+%    .new_snow_method               : string       Fresh snow density model (e.g., "350kgm2", "Fausto").
+%    .thermal_conductivity_method   : string       Conductivity model: "Sturm" or "Calonne".
+%    .albedo_method                 : string       Albedo scheme: "GardnerSharp", "GreuellKonzelmann", etc.
+%    .sw_absorption_method          : integer      0 (surface only) or 1 (subsurface penetration).
+%    .emissivity_method             : integer      Method for calculating emissivity (0, 1, or 2).
+%    .column_ztop                   : m            Depth of constant grid spacing at the surface.
+%    .column_dztop                  : m            Initial surface grid spacing.
+%    .column_zmax                   : m            Maximum total column depth.
+%    .column_zy                     : unitless     Grid stretching factor for lower layers.
+%    .n_spinup_cycles               : integer      Number of meteorological data cycles to run for spin-up.
+%    .output_frequency              : string       Output resolution: "daily", "monthly", or "all".
+%
+%% Outputs
+%
+%  options                          : struct       Validated structure with all necessary model parameters populated.
+%
+%% Documentation
+%
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
+%
+%% References
+% If you use GEMB, please cite the following:
+%
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+
     arguments
         %% GEMB INITIALIZATION
         % unique model run ID to save output as

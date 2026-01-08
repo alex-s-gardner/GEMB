@@ -3,31 +3,53 @@ function K = thermal_conductivity(T, d, ModelParam)
 % firn, and ice based on density and temperature.
 %
 %% Syntax
-%   K = thermal_conductivity(d, T, ModelParam.density_ice, ModelParam.thermal_conductivity_method)
+%
+% K = thermal_conductivity(T, d, ModelParam)
 %
 %% Description
-%   Calculates thermal conductivity [W m-1 K-1] differentiating between 
-%   snow/firn (density < ModelParam.density_ice) and glacier ice (density >= ModelParam.density_ice).
-%   
-%   For snow/firn, it uses empirical relationships based on density.
-%   For ice, it uses a temperature-dependent relationship.
+%
+% This function calculates the effective thermal conductivity of the model 
+% column . It differentiates between snow/firn and solid glacier ice 
+% based on a density threshold defined in ModelParam.density_ice.
+%
+% The calculation uses distinct parameterizations for each regime:
+% 1. Snow and Firn (density < density_ice): Thermal conductivity is calculated 
+%    as a function of density using empirical regressions. The user can select 
+%    between the formulations of:
+%    * Sturm et al. (1997): K = 0.138 - 1.01e-3*d + 3.233e-6*d^2.
+%    * Calonne et al. (2011): K = 0.024 - 1.23e-4*d + 2.5e-6*d^2.
+% 2. Glacier Ice (density >= density_ice): Thermal conductivity is dominated 
+%    by phonon transport and is calculated as a function of temperature:
+%    K = 9.828 * exp(-5.7e-3 * T).
 %
 %% Inputs
-%   d                                     : vector of grid cell densities [kg m-3]
-%   T                                     : vector of grid cell temperatures [K]
-%   ModelParam.density_ice                 : density threshold defining glacier ice (e.g., 910 or 917) [kg m-3]
-%   ModelParam.thermal_conductivity_method : integer flag for snow conductivity parameterization:
-%           1 = Sturm et al. (1997) [Default]
-%           2 = Calonne et al. (2011)
+%
+%  T                                      : K            Grid cell temperature (vector).
+%  d                                      : kg m^-3      Grid cell density (vector).
+%  ModelParam                             : struct       Model parameter structure:
+%    .density_ice                         : kg m^-3      Density threshold defining glacier ice.
+%    .thermal_conductivity_method         : string       Parameterization choice: "Sturm" or "Calonne".
 %
 %% Outputs
-%   K     : vector of thermal conductivities [W m-1 K-1]
+%
+%  K                                      : W m^-1 K^-1  Vector of thermal conductivities.
+%
+%% Documentation
+%
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
 %
 %% References
-%   Sturm, M., et al. (1997). The thermal conductivity of seasonal snow.
-%       Journal of Glaciology.
-%   Calonne, N., et al. (2011). Thermal conductivity of snow...
-%       Geophysical Research Letters.
+% If you use GEMB, please cite the following:
+%
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+%
+% Underlying physical parameterizations:
+% Sturm, M., et al. (1997). The thermal conductivity of seasonal snow.
+%   Journal of Glaciology.
+% Calonne, N., et al. (2011). Thermal conductivity of snow...
+%   Geophysical Research Letters.
 
     %% CONSTANTS & INITIALIZATION
     % Tolerance to prevent floating point errors at the density threshold

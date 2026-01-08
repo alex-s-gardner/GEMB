@@ -1,56 +1,68 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
     layer_management(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
-% managelayers adjusts the depth and number of vertical layers in the model
+% layer_management adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
 % set for the minimum and maximum allowable layer thickness.
 %
 %% Syntax
 %
-%
+% [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
+%    layer_management(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
 %
 %% Description
 %
+% This function manages the vertical grid discretization of the firn column. 
+% It performs three main operations to maintain numerical stability and 
+% physical realism:
 %
+% 1. Merging: Scans the column for grid cells thinner than the minimum 
+%    threshold (ModelParam.column_dzmin). These cells are merged with 
+%    neighbors, conserving mass and energy via weighted averaging.
+% 2. Splitting: Scans for grid cells thicker than the maximum threshold 
+%    (ModelParam.column_dzmax). These cells are split in half, duplicating 
+%    intensive properties and halving extensive properties.
+% 3. Depth Adjustment: Ensures the total column depth stays within defined 
+%    limits (ModelParam.column_zmax). It adds or removes layers at the 
+%    bottom boundary as necessary and enforces the Dirichlet temperature 
+%    boundary condition.
+%
+% The function tracks any mass (M_added) or energy (E_added) introduced or 
+% removed during the bottom boundary adjustment to ensure closure of the 
+% mass and energy balance budgets.
 %
 %% Inputs
 %
 %  T                       : K            Grid cell temperature.
-%  d                       : kg m^-3      Grid cell density.
 %  dz                      : m            Grid cell thickness.
+%  d                       : kg m^-3      Grid cell density.
 %  W                       : kg m^-2      Water content.
+%  re                      : mm           Grain size (effective radius).
+%  gdn                     : unitless     Grain dendricity.
+%  gsp                     : unitless     Grain sphericity.
 %  a                       : fraction     Albedo.
 %  a_diffuse               : fraction     Diffuse albedo.
-%  M                       : kg m^-2      Grid cell mass.
-%  EI                      : J m^-2       Initial energy of snow/ice.
-%  EW                      : J m^-2       Initial energy of water.
-%  ModelParam.column_dzmin : m            Minimum allowable grid spacing.
-%  ModelParam.column_dzmax : m            Maximum allowable grid spacing.
-%  ModelParam.column_zmax  : m            Maximum depth of the total column.
-%  ModelParam.column_zmin  : m            Minimum depth of the total column.
-%  re                      : mm           Grain size
-%  gdn                     : unitless     Grain dendricity
-%  gsp                     : unitless     Grain sphericity
-%  ModelParam.column_ztop  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  ModelParam.column_zy    : unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
-%  CI                      : J kg^-1 K^-1 Specific heat capacity of snow/ice.
-%  LF                      : J kg^-1      Latent heat of fusion.
-%  CtoK                    : K            273.15 conversion from C to K.
+%  ModelParam              : struct       Structure containing model parameters:
+%    .column_dzmin         : m            Minimum allowable grid spacing.
+%    .column_dzmax         : m            Maximum allowable grid spacing.
+%    .column_zmax          : m            Maximum depth of the total column.
+%    .column_zmin          : m            Minimum depth of the total column.
+%    .column_ztop          : m            Thickness of the upper portion of the grid with constant spacing.
+%    .column_zy            : unitless     Grid stretching parameter for the lower portion.
+%  verbose                 : logical      Flag to enable mass/energy conservation checks.
 %
 %% Outputs
 %
-%  d            : kg m^-3      Grid cell density.
-%  T            : K            Grid cell temperature.
-%  W            : kg m^-2      Water content.
-%  M_added      : kg m^-2      Mass added to the column.
-%  E_added      : J m^-2       Energy added to the column.
-%  a            : fraction     Albedo.
-%  a_diffuse    : fraction     Diffuse albedo.
-%  m            : kg m^-2      Grid cell mass.
-%  EI           : J m^-2       Initial energy of snow/ice.
-%  EW           : J m^-2       Initial energy of water.
-%  re           : mm           Grain size
-%  gdn          : unitless     Grain dendricity
-%  gsp          : unitless     Grain sphericity
+%  T            : K            Updated grid cell temperature.
+%  dz           : m            Updated grid cell thickness.
+%  d            : kg m^-3      Updated grid cell density.
+%  W            : kg m^-2      Updated water content.
+%  re           : mm           Updated grain size.
+%  gdn          : unitless     Updated grain dendricity.
+%  gsp          : unitless     Updated grain sphericity.
+%  a            : fraction     Updated albedo.
+%  a_diffuse    : fraction     Updated diffuse albedo.
+%  M_added      : kg m^-2      Mass added to (positive) or removed from (negative) the column bottom.
+%  E_added      : J m^-2       Energy added to (positive) or removed from (negative) the column bottom.
 %
 %% Documentation
 %

@@ -1,30 +1,46 @@
 function [re, gdn, gsp]  = grain_growth(T, dz, d, W, re, gdn, gsp, ClimateForcingStep, ModelParam)
-% grainGrowth models the effective snow grain size. 
+% grain_growth models the evolution of effective snow grain size, dendricity, and sphericity.
 % 
 %% Syntax 
 % 
-% 
+%  [re, gdn, gsp] = grain_growth(T, dz, d, W, re, gdn, gsp, ClimateForcingStep, ModelParam)
 %
 %% Description
 % 
-% 
+% [re, gdn, gsp] = grain_growth(...) calculates the metamorphism of snow grains
+% over a single time step. The model accounts for different physical processes
+% depending on the snow state:
+%
+% * Dendritic Snow (fresh): Evolves based on temperature gradients (destructive or constructive) and liquid water content.
+% * Nondendritic Dry Snow: Evolves primarily due to temperature gradient metamorphism (faceting/rounding) using the Marbouty (1980) formulation.
+% * Wet Snow: Evolves via rapid grain growth mechanisms due to the presence of liquid water using the Brun (1989) formulation.
+%
+% The function updates the effective grain radius (re), dendricity (gdn), and 
+% sphericity (gsp) for every grid cell in the column.
+%
+% Note: This function only executes if ModelParam.albedo_method is set to 
+% "GardnerSharp" or "BruneLeFebre". If strictly empirical albedo models are 
+% used (e.g., GreuellKonzelmann), the grain properties are returned unchanged.
 % 
 %% Inputs
 % 
-% * T: grid cell temperature [K]
-% * dz: grid cell depth [m]
-% * d: grid cell density [kg m-3]
-% * W: water content [kg]
-% * re: effective grain size [mm]
-% * gdn: grain dentricity
-% * gsp: grain sphericity
-% * ClimateForcingStep.dt: time step of input data [s]
+% * T                  : Grid cell temperature [K] (mx1 vector).
+% * dz                 : Grid cell thickness [m] (mx1 vector).
+% * d                  : Grid cell density [kg m^-3] (mx1 vector).
+% * W                  : Liquid water content [kg m^-2] (mx1 vector).
+% * re                 : Previous effective grain radius [mm] (mx1 vector).
+% * gdn                : Previous grain dendricity [0 to 1] (mx1 vector).
+% * gsp                : Previous grain sphericity [0 to 1] (mx1 vector).
+% * ClimateForcingStep : Structure containing forcing data for the current step:
+%                          .dt : Time step duration [s].
+% * ModelParam         : Structure containing model configuration:
+%                          .albedo_method : String specifying the albedo scheme.
 % 
 %% Outputs 
 % 
-% * re: effective grain size [mm]
-% * gdn: grain dentricity
-% * gsp: grain sphericity
+% * re  : Updated effective grain radius [mm] (mx1 vector).
+% * gdn : Updated grain dendricity [0 to 1] (mx1 vector).
+% * gsp : Updated grain sphericity [0 to 1] (mx1 vector).
 %
 %% Documentation
 % 
@@ -56,7 +72,7 @@ T_tolerance    = 1e-10;
 gdn_tolerance  = 1e-10;
 W_tolerance    = 1e-13;
 
-%only when ModelParam.albedo_method = "GardnerSharp" or "BruneLeFebre" do we run grainGrowth: 
+% only when ModelParam.albedo_method = "GardnerSharp" or "BruneLeFebre" do we run grainGrowth: 
 if ~ismember(ModelParam.albedo_method,["GardnerSharp","BruneLeFebre"])
 	%come out as we came in:
 	return;

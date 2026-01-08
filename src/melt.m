@@ -6,48 +6,63 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_total, M_surf, R_total, F_t
 %
 %% Syntax
 %
-%
+% [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_total, M_surf, R_total, F_total] = ...
+%    melt(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, density_ice, verbose)
 %
 %% Description
 %
+% This function calculates the thermodynamic and hydraulic evolution of the 
+% firn column during surface melt events . 
+% It employs a "tipping bucket" approach to simulate the percolation, refreezing, 
+% and retention of liquid water. The specific processes include:
 %
+% 1. Initial Refreeze: Existing pore water in layers with $T < 0^\circ C$ is 
+%    refrozen, releasing latent heat and warming the layer.
+% 2. Melt Generation: If layer temperatures exceed $0^\circ C$, the excess 
+%    energy is converted into liquid meltwater. If the energy excess is greater 
+%    than that required to melt the entire layer, the surplus energy is 
+%    transferred to the layer below.
+% 3. Percolation: Liquid water (melt + rain) percolates downward. It flows 
+%    through the snowpack until it either:
+%    * Refreezes: In cold underlying layers, increasing density and temperature.
+%    * Retains: As pore water, up to the irreducible water content saturation 
+%        ($S_{wi} = 0.07$).
+%    * Runs off: If it encounters an impermeable ice lens (density > 
+%        pore close-off) or reaches the bottom of the column.
+%
+% The function maintains strict conservation of mass and energy, checking budgets 
+% if the verbose flag is enabled.
 %
 %% Inputs
 %
 %  T            : K            Grid cell temperature.
-%  d            : kg m^-3      Grid cell density.
 %  dz           : m            Grid cell thickness.
+%  d            : kg m^-3      Grid cell density.
 %  W            : kg m^-2      Water content.
-%  Ra           : kg m^-2      Rain.
+%  re           : mm           Grain size (effective radius).
+%  gdn          : unitless     Grain dendricity.
+%  gsp          : unitless     Grain sphericity.
 %  a            : fraction     Albedo.
 %  a_diffuse    : fraction     Diffuse albedo.
-%  column_dzmin : m            Minimum allowable grid spacing.
-%  column_zmax  : m            Maximum depth of the total column.
-%  column_zmin  : m            Minimum depth of the total column.
-%  column_ztop  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  column_zy    : unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
-%  re           : mm           Grain size
-%  gdn          : unitless     Grain dendricity
-%  gsp          : unitless     Grain sphericity
-%  density_ice  : kg m^-3      Ice density
+%  Ra           : kg m^-2      Rainfall amount added to the column.
+%  density_ice  : kg m^-3      Density of ice (constant).
+%  verbose      : logical      Flag to enable mass/energy conservation checks.
 %
 %% Outputs
 %
-%  M_total    : kg m^-2      Total column melt.
-%  M_surf     : kg m^-2      Surface layer melt.
-%  R_total    : kg m^-2      Total column runoff.
-%  F_total    : kg m^-2      Total column refreeze.
-%  T          : K            Grid cell temperature.
-%  d          : kg m^-3      Grid cell density.
-%  dz         : m            Grid cell thickness.
-%  W          : kg m^-2      Water content.
-%  mass_added : kg m^-2      Mass added to the column.
-%  dz_add     : m            Thickness added to the column.
-%  a          : fraction     Albedo.
-%  a_diffuse  : fraction     Diffuse albedo.
-%  re         : mm           Grain size
-%  gdn        : unitless     Grain dendricity
-%  gsp        : unitless     Grain sphericity
+%  T            : K            Updated grid cell temperature.
+%  dz           : m            Updated grid cell thickness.
+%  d            : kg m^-3      Updated grid cell density.
+%  W            : kg m^-2      Updated water content.
+%  re           : mm           Updated grain size.
+%  gdn          : unitless     Updated grain dendricity.
+%  gsp          : unitless     Updated grain sphericity.
+%  a            : fraction     Updated albedo.
+%  a_diffuse    : fraction     Updated diffuse albedo.
+%  M_total      : kg m^-2      Total column melt mass.
+%  M_surf       : kg m^-2      Melt mass generated in the surface layer only.
+%  R_total      : kg m^-2      Total runoff leaving the column.
+%  F_total      : kg m^-2      Total mass refrozen within the column.
 %
 %% Documentation
 %

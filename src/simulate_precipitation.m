@@ -8,7 +8,6 @@ function precip = simulate_precipitation(dec_year, coeffs)
 %   OUTPUT:
 %       precip - N x 1 vector of simulated precipitation
 
-% --- FIX: Force input to be a column vector ---
     dec_year = dec_year(:);
     
     n = length(dec_year);
