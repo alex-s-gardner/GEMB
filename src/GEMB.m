@@ -56,7 +56,7 @@ T_bottom = T(end);
 
 %% initialize output structure
 column_length = length(dz);
-[output_index, OutData, OutCum] = model_output_initialize(column_length, ClimateForcing, ModelParam);
+[output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam);
 
 %% Start spinup loop
 for simulation_iteration = 1:(ModelParam.n_spinup_cycles + 1)
@@ -84,8 +84,7 @@ for simulation_iteration = 1:(ModelParam.n_spinup_cycles + 1)
         
         % run GEMB for a single time interval
         [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
-            lhf, ulw, Ra, M, R, F, M_added, E_added, ...
-            compaction_dens, compaction_melt] = ...
+            lhf, ulw, Ra, M, R, F, M_added, E_added, compaction_dens, compaction_melt] = ...
            gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, ...
             ClimateForcingStep, ModelParam, verbose);
 

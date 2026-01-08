@@ -1,5 +1,5 @@
 function [ClimateForcingStep] = ...
-   model_inputs_single_timestep(index, dt, ClimateForcing, LocationParam)
+   model_inputs_single_timestep(index, dt, ClimateForcing, ModelParam)
         
         ClimateForcingStep.dt      = dt;
         ClimateForcingStep.T_air   = ClimateForcing.T_air0(index);    % screen level air temperature [K]   
@@ -22,38 +22,38 @@ function [ClimateForcingStep] = ...
         ClimateForcingStep.lon = ClimateForcing.lon;
     
         % if we are provided with cc and cot values, extract for the timestep
-        if numel(LocationParam.black_carbon_snow)>1
-            ClimateForcingStep.black_carbon_snow = LocationParam.black_carbon_snow(index);
+        if numel(ModelParam.black_carbon_snow)>1
+            ClimateForcingStep.black_carbon_snow = ModelParam.black_carbon_snow(index);
         else
-            ClimateForcingStep.black_carbon_snow = LocationParam.black_carbon_snow;
+            ClimateForcingStep.black_carbon_snow = ModelParam.black_carbon_snow;
         end
 
-        if numel(LocationParam.black_carbon_ice)>1
-            ClimateForcingStep.black_carbon_ice = LocationParam.black_carbon_ice(index);
+        if numel(ModelParam.black_carbon_ice)>1
+            ClimateForcingStep.black_carbon_ice = ModelParam.black_carbon_ice(index);
         else
-            ClimateForcingStep.black_carbon_ice = LocationParam.black_carbon_ice;
+            ClimateForcingStep.black_carbon_ice = ModelParam.black_carbon_ice;
         end
 
-        if numel(LocationParam.cloud_optical_thickness)>1
-            ClimateForcingStep.cloud_optical_thickness = LocationParam.cloud_optical_thickness(index);
+        if numel(ModelParam.cloud_optical_thickness)>1
+            ClimateForcingStep.cloud_optical_thickness = ModelParam.cloud_optical_thickness(index);
         else
-            ClimateForcingStep.cloud_optical_thickness = LocationParam.cloud_optical_thickness;
+            ClimateForcingStep.cloud_optical_thickness = ModelParam.cloud_optical_thickness;
         end
 
-        if numel(LocationParam.solar_zenith_angle)>1
-            ClimateForcingStep.solar_zenith_angle = LocationParam.solar_zenith_angle(index);
+        if numel(ModelParam.solar_zenith_angle)>1
+            ClimateForcingStep.solar_zenith_angle = ModelParam.solar_zenith_angle(index);
         else
-            ClimateForcingStep.solar_zenith_angle = LocationParam.solar_zenith_angle;
+            ClimateForcingStep.solar_zenith_angle = ModelParam.solar_zenith_angle;
         end
 
-        if numel(LocationParam.dsw_diffuse)>1
-            ClimateForcingStep.dsw_diffuse = LocationParam.dsw_diffuse(index);
+        if numel(ModelParam.dsw_diffuse)>1
+            ClimateForcingStep.dsw_diffuse = ModelParam.dsw_diffuse(index);
         else
-            ClimateForcingStep.dsw_diffuse = LocationParam.dsw_diffuse;
+            ClimateForcingStep.dsw_diffuse = ModelParam.dsw_diffuse;
         end
 
-        if numel(LocationParam.cloud_fraction)>1
-            ClimateForcingStep.cloud_fraction = LocationParam.cloud_fraction(index);
+        if numel(ModelParam.cloud_fraction)>1
+            ClimateForcingStep.cloud_fraction = ModelParam.cloud_fraction(index);
         else
-            ClimateForcingStep.cloud_fraction = LocationParam.cloud_fraction;
+            ClimateForcingStep.cloud_fraction = ModelParam.cloud_fraction;
         end

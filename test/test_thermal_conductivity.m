@@ -1,11 +1,17 @@
 classdef test_thermal_conductivity < matlab.unittest.TestCase
     
     properties
-        rho_ice = 917;
+        % Structures
+        MP
     end
     
     methods (TestMethodSetup)
-        function add_source_path(tcase)
+        function setup_structs(tcase)
+            % Initialize default ModelParam
+            tcase.MP.density_ice = 917;
+            tcase.MP.thermal_conductivity_method = "Sturm"; % Default
+            
+            % Add source path
             import matlab.unittest.fixtures.PathFixture
             try
                 tcase.applyFixture(PathFixture('../src'));
@@ -18,35 +24,35 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
     methods (Test)
         
         function test_sturm_method_snow(tcase)
-            % Test Method 1 (Sturm et al., 1997) for snow densities
+            % Test Method "Sturm" (Sturm et al., 1997) for snow densities
             % Formula: 0.138 - 1.01E-3*d + 3.233E-6*d^2
             
+            tcase.MP.thermal_conductivity_method = "Sturm";
             d_snow = 300;
             t_in = 260; % Temperature shouldn't affect snow formula in this model
-            method = 1;
             
-            k_out = thermal_conductivity(t_in, d_snow, tcase.rho_ice, method);
+            k_out = thermal_conductivity(t_in, d_snow, tcase.MP);
             
             expected = 0.138 - 1.01e-3 * d_snow + 3.233e-6 * d_snow^2;
             
             tcase.verifyEqual(k_out, expected, 'AbsTol', 1e-8, ...
-                'Method 1 should follow Sturm parameterization for snow');
+                'Method "Sturm" should follow Sturm parameterization for snow');
         end
         
         function test_calonne_method_snow(tcase)
-            % Test Method 2 (Calonne et al., 2011) for snow densities
+            % Test Method "Calonne" (Calonne et al., 2011) for snow densities
             % Formula: 0.024 - 1.23E-4*d + 2.5e-6*d^2
             
+            tcase.MP.thermal_conductivity_method = "Calonne";
             d_snow = 300;
             t_in = 260;
-            method = 2;
             
-            k_out = thermal_conductivity(t_in, d_snow, tcase.rho_ice, method);
+            k_out = thermal_conductivity(t_in, d_snow, tcase.MP);
             
             expected = 0.024 - 1.23e-4 * d_snow + 2.5e-6 * d_snow^2;
             
             tcase.verifyEqual(k_out, expected, 'AbsTol', 1e-8, ...
-                'Method 2 should follow Calonne parameterization for snow');
+                'Method "Calonne" should follow Calonne parameterization for snow');
         end
         
         function test_ice_conductivity(tcase)
@@ -54,18 +60,18 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
             % Formula: 9.828 * exp(-5.7E-3 * T)
             % Should depend on T, not density (as long as d >= threshold)
             
+            tcase.MP.thermal_conductivity_method = "Sturm"; % Method flag shouldn't change ice physics
             d_ice = 917;
             t_cold = 240;
             t_warm = 270;
-            method = 1; % Method flag shouldn't change ice physics
             
             % Test Cold Ice
-            k_cold = thermal_conductivity(t_cold, d_ice, tcase.rho_ice, method);
+            k_cold = thermal_conductivity(t_cold, d_ice, tcase.MP);
             expected_cold = 9.828 * exp(-5.7e-3 * t_cold);
             tcase.verifyEqual(k_cold, expected_cold, 'AbsTol', 1e-8);
             
             % Test Warm Ice
-            k_warm = thermal_conductivity(t_warm, d_ice, tcase.rho_ice, method);
+            k_warm = thermal_conductivity(t_warm, d_ice, tcase.MP);
             expected_warm = 9.828 * exp(-5.7e-3 * t_warm);
             tcase.verifyEqual(k_warm, expected_warm, 'AbsTol', 1e-8);
             
@@ -75,11 +81,12 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
         
         function test_mixed_profile(tcase)
             % Test a vector containing both snow and ice
+            tcase.MP.thermal_conductivity_method = "Sturm";
+            
             t_vec = [260; 250];
             d_vec = [400; 920]; % 400=Snow, 920=Ice
-            method = 1;
             
-            k_vec = thermal_conductivity(t_vec, d_vec, tcase.rho_ice, method);
+            k_vec = thermal_conductivity(t_vec, d_vec, tcase.MP);
             
             % Expected Snow (Sturm)
             exp_snow = 0.138 - 1.01e-3 * d_vec(1) + 3.233e-6 * d_vec(1)^2;
@@ -95,10 +102,11 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
             % Test the exact boundary of density_ice
             % Code uses: sfIdx = d < density_ice - 1e-11
             
-            d_vals = [tcase.rho_ice - 1e-10; tcase.rho_ice];
+            tcase.MP.thermal_conductivity_method = "Sturm";
+            d_vals = [tcase.MP.density_ice - 1e-10; tcase.MP.density_ice];
             t_val = 260;
             
-            k_out = thermal_conductivity([t_val; t_val], d_vals, tcase.rho_ice, 1);
+            k_out = thermal_conductivity([t_val; t_val], d_vals, tcase.MP);
             
             % 1. d = rho - 1e-10. This is practically rho, but mathematically < rho.
             % However, the tolerance is 1e-11.

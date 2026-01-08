@@ -19,7 +19,7 @@ classdef test_accumulation < matlab.unittest.TestCase
         p_mean = 200;
         v_mean = 5;
         alb_snow = 0.85;
-        alb_method = 1;
+        alb_method = "GardnerSharp"; % Updated to string
         dz_min = 0.05; % Minimum thickness to create new layer
     end
     
@@ -50,16 +50,25 @@ classdef test_accumulation < matlab.unittest.TestCase
         
         function test_no_precipitation(tcase)
             % Verify that zero precipitation results in no changes
-            p = 0;
-            t_air = 270;
-            v = 5;
-            method = 0;
             
-            [t_out, dz_out, d_out, w_out, ~, ~, ~, ~, ~, ra_out] = accumulation(...
+            % Setup Structures
+            CF.P = 0;
+            CF.T_air = 270;
+            CF.V = 5;
+            CF.P_mean = tcase.p_mean;
+            CF.T_air_mean = tcase.t_mean;
+            CF.V_mean = tcase.v_mean;
+            
+            MP.new_snow_method = "150kgm2";
+            MP.column_dzmin = tcase.dz_min;
+            MP.density_ice = tcase.rho_ice;
+            MP.albedo_snow = tcase.alb_snow;
+            MP.albedo_method = tcase.alb_method;
+            
+            [t_out, dz_out, d_out, ~, ~, ~, ~, ~, ~, ra_out] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, method);
+                CF, MP);
             
             tcase.verifyEqual(dz_out, tcase.dz);
             tcase.verifyEqual(d_out, tcase.d);
@@ -69,26 +78,35 @@ classdef test_accumulation < matlab.unittest.TestCase
         
         function test_large_snow_event_new_layer(tcase)
             % Large snowfall (> dz_min) should create a new layer on top
-            p = 50; % kg m-2 (roughly 15-30cm of snow depending on density)
-            t_air = 260; % Cold air -> Snow
-            v = 5;
-            method = 0; % Default density = 150
             rho_snow = 150;
+            
+            % Setup Structures
+            CF.P = 50; % kg m-2
+            CF.T_air = 260; % Cold air -> Snow
+            CF.V = 5;
+            CF.P_mean = tcase.p_mean;
+            CF.T_air_mean = tcase.t_mean;
+            CF.V_mean = tcase.v_mean;
+            
+            MP.new_snow_method = "150kgm2";
+            MP.column_dzmin = tcase.dz_min;
+            MP.density_ice = tcase.rho_ice;
+            MP.albedo_snow = tcase.alb_snow;
+            MP.albedo_method = tcase.alb_method;
             
             [t_out, dz_out, d_out, ~, ~, gdn_out, gsp_out, a_out, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, method);
+                CF, MP);
             
             % Check vector growth
             tcase.verifyEqual(length(dz_out), tcase.n + 1, 'Large snow should add a layer');
             
             % Check top layer properties
             tcase.verifyEqual(d_out(1), rho_snow, 'Top layer should have fresh snow density');
-            expected_dz = p / rho_snow;
+            expected_dz = CF.P / rho_snow;
             tcase.verifyEqual(dz_out(1), expected_dz, 'AbsTol', 1e-10);
-            tcase.verifyEqual(t_out(1), t_air);
+            tcase.verifyEqual(t_out(1), CF.T_air);
             tcase.verifyEqual(a_out(1), tcase.alb_snow);
             
             % Check default microstructure for new snow
@@ -98,48 +116,65 @@ classdef test_accumulation < matlab.unittest.TestCase
         
         function test_small_snow_event_merge(tcase)
             % Small snowfall (< dz_min) should merge with top layer
-            % dz_min is 0.05. Snow density 150.
-            % Limit is 0.05 * 150 = 7.5 kg.
-            p = 2; % 2 kg m-2
-            t_air = 260;
-            v = 5;
-            method = 0;
             rho_snow = 150;
+            
+            % Setup Structures
+            CF.P = 2; % 2 kg m-2
+            CF.T_air = 260;
+            CF.V = 5;
+            CF.P_mean = tcase.p_mean;
+            CF.T_air_mean = tcase.t_mean;
+            CF.V_mean = tcase.v_mean;
+            
+            MP.new_snow_method = "150kgm2";
+            MP.column_dzmin = tcase.dz_min;
+            MP.density_ice = tcase.rho_ice;
+            MP.albedo_snow = tcase.alb_snow;
+            MP.albedo_method = tcase.alb_method;
             
             old_mass = tcase.d(1) * tcase.dz(1);
             
             [t_out, dz_out, d_out, ~, ~, ~, ~, a_out, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, method);
+                CF, MP);
             
             % Verify no new layer
             tcase.verifyEqual(length(dz_out), tcase.n, 'Small snow should merge');
             
             % Verify mass conservation and mixing
-            new_mass = old_mass + p;
-            expected_dz = tcase.dz(1) + p/rho_snow;
+            new_mass = old_mass + CF.P;
+            expected_dz = tcase.dz(1) + CF.P/rho_snow;
             expected_d = new_mass / expected_dz;
             
             tcase.verifyEqual(dz_out(1), expected_dz, 'AbsTol', 1e-10, 'Depth should increase');
             tcase.verifyEqual(d_out(1), expected_d, 'AbsTol', 1e-10, 'Density should decrease (mix with light snow)');
             
             % Verify Temperature weighting
-            expected_t = (t_air * p + tcase.t_vec(1) * old_mass) / new_mass;
+            expected_t = (CF.T_air * CF.P + tcase.t_vec(1) * old_mass) / new_mass;
             tcase.verifyEqual(t_out(1), expected_t, 'AbsTol', 1e-10, 'Temperature should be weighted average');
             
             % Verify Albedo update
-            expected_a = (tcase.alb_snow * p + tcase.a_in(1) * old_mass) / new_mass;
+            expected_a = (tcase.alb_snow * CF.P + tcase.a_in(1) * old_mass) / new_mass;
             tcase.verifyEqual(a_out(1), expected_a, 'AbsTol', 1e-10, 'Albedo should be weighted average');
         end
         
         function test_rain_event(tcase)
             % Rain (T_air > 0C) should add mass and heat to top layer, not thickness
-            p = 10;
-            t_air = 275; % > 273.15 -> Rain
-            v = 0;
-            method = 0;
+            
+            % Setup Structures
+            CF.P = 10;
+            CF.T_air = 275; % > 273.15 -> Rain
+            CF.V = 0;
+            CF.P_mean = tcase.p_mean;
+            CF.T_air_mean = tcase.t_mean;
+            CF.V_mean = tcase.v_mean;
+            
+            MP.new_snow_method = "150kgm2";
+            MP.column_dzmin = tcase.dz_min;
+            MP.density_ice = tcase.rho_ice;
+            MP.albedo_snow = tcase.alb_snow;
+            MP.albedo_method = tcase.alb_method;
             
             % Constants from function
             lf = 0.3345e6;
@@ -150,21 +185,20 @@ classdef test_accumulation < matlab.unittest.TestCase
             [t_out, dz_out, d_out, ~, ~, ~, ~, ~, ~, ra_out] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, method);
+                CF, MP);
             
             % Rain Output flag
-            tcase.verifyEqual(ra_out, p);
+            tcase.verifyEqual(ra_out, CF.P);
             
             % Mass update (thickness stays same, density increases for rain in this model)
             % The code: dz(1) stays same, d(1) = mass/dz(1)
-            new_mass = old_mass + p;
+            new_mass = old_mass + CF.P;
             tcase.verifyEqual(d_out(1), new_mass/tcase.dz(1), 'AbsTol', 1e-10);
             tcase.verifyEqual(dz_out(1), tcase.dz(1), 'Thickness unchanged for rain unless ice density hit');
             
             % Temperature update (includes Latent Heat logic)
             % T(1) = (P *(T_air + LF/CI) + T(1) * mInit(1)) / mass;
-            term_rain = p * (t_air + lf/ci);
+            term_rain = CF.P * (CF.T_air + lf/ci);
             term_snow = tcase.t_vec(1) * old_mass;
             expected_t = (term_rain + term_snow) / new_mass;
             
@@ -173,8 +207,20 @@ classdef test_accumulation < matlab.unittest.TestCase
         
         function test_rain_density_cap(tcase)
             % If rain causes density to exceed ice density, it should clamp density and increase thickness
-            p = 500; % Huge rain event
-            t_air = 275;
+            
+            % Setup Structures
+            CF.P = 500; % Huge rain event
+            CF.T_air = 275;
+            CF.V = 0;
+            CF.P_mean = tcase.p_mean;
+            CF.T_air_mean = tcase.t_mean;
+            CF.V_mean = tcase.v_mean;
+            
+            MP.new_snow_method = "150kgm2";
+            MP.column_dzmin = tcase.dz_min;
+            MP.density_ice = tcase.rho_ice;
+            MP.albedo_snow = tcase.alb_snow;
+            MP.albedo_method = tcase.alb_method;
             
             % Start with density near ice
             tcase.d(1) = 900; 
@@ -186,8 +232,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             [~, dz_out, d_out, ~, ~, ~, ~, ~, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, 0, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, 0);
+                CF, MP);
             
             tcase.verifyEqual(d_out(1), tcase.rho_ice, 'AbsTol', 1e-10, 'Density should be capped at ice density');
             
@@ -198,45 +243,55 @@ classdef test_accumulation < matlab.unittest.TestCase
         
         function test_density_methods(tcase)
             % Test the different switches for new snow density
-            p = 50; % Ensure new layer
-            t_air = 250;
-            v = 5;
             
-            % Method 1: Antarctica (350)
+            % Common setup
+            CF.P = 50; % Ensure new layer
+            CF.T_air = 250;
+            CF.V = 5;
+            CF.P_mean = tcase.p_mean;
+            CF.T_air_mean = tcase.t_mean;
+            CF.V_mean = tcase.v_mean;
+            
+            MP.column_dzmin = tcase.dz_min;
+            MP.density_ice = tcase.rho_ice;
+            MP.albedo_snow = tcase.alb_snow;
+            MP.albedo_method = tcase.alb_method;
+            
+            % Method 1: Antarctica (350) -> "350kgm2"
+            MP.new_snow_method = "350kgm2";
             [~, ~, d1, ~, ~, ~, ~, ~, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, 1);
-            tcase.verifyEqual(d1(1), 350, 'Method 1 should be 350');
+                CF, MP);
+            tcase.verifyEqual(d1(1), 350, 'Method "350kgm2" should be 350');
             
-            % Method 2: Greenland (315)
+            % Method 2: Greenland -> "Fausto"
+            MP.new_snow_method = "Fausto";
             [~, ~, d2, ~, ~, ~, ~, ~, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, 2);
-            tcase.verifyEqual(d2(1), 315, 'Method 2 should be 315');
+                CF, MP);
+            tcase.verifyEqual(d2(1), 315, 'Method "Fausto" should be 315');
             
-            % Method 3: Kaspers (Formula)
+            % Method 3: Kaspers -> "Kaspers"
             % dSnow=(7.36e-2 + 1.06e-3*min(T_air_mean,273.15) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.
+            MP.new_snow_method = "Kaspers";
             expected_3 = (7.36e-2 + 1.06e-3*tcase.t_mean + 6.69e-2*tcase.p_mean/1000 + 4.77e-3*tcase.v_mean)*1000;
             [~, ~, d3, ~, ~, ~, ~, ~, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, 3);
-            tcase.verifyEqual(d3(1), expected_3, 'AbsTol', 1e-5, 'Method 3 calculation incorrect');
+                CF, MP);
+            tcase.verifyEqual(d3(1), expected_3, 'AbsTol', 1e-5, 'Method "Kaspers" calculation incorrect');
             
-            % Method 4: Kuipers Munneke
+            % Method 4: Kuipers Munneke -> "KuipersMunneke"
             % dSnow = 481.0 + 4.834*(T_air_mean-273.15);
+            MP.new_snow_method = "KuipersMunneke";
             expected_4 = 481.0 + 4.834*(tcase.t_mean - 273.15);
             [~, ~, d4, ~, ~, ~, ~, ~, ~, ~] = accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                t_air, p, v, tcase.rho_ice, tcase.t_mean, tcase.dz_min, ...
-                tcase.p_mean, tcase.v_mean, tcase.alb_snow, tcase.alb_method, 4);
-            tcase.verifyEqual(d4(1), expected_4, 'AbsTol', 1e-5, 'Method 4 calculation incorrect');
+                CF, MP);
+            tcase.verifyEqual(d4(1), expected_4, 'AbsTol', 1e-5, 'Method "KuipersMunneke" calculation incorrect');
         end
     end
 end

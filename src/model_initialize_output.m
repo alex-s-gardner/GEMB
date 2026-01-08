@@ -1,4 +1,4 @@
-function [output_index, OutData, OutCum] = model_output_initialize(column_length, ClimateForcing, ModelParam)
+function [output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam)
 
     % deteremine save time steps
     date_vector = datevec([ClimateForcing.daten; (ClimateForcing.daten(end) ...
@@ -13,7 +13,7 @@ function [output_index, OutData, OutCum] = model_output_initialize(column_length
     end
 
     % single level time series
-    varname.monolevel = {'time', 'T_air', 'P', 'M', 'R', 'F', 'EC', 'sw_net', ...
+    varname.monolevel = {'time', 'M', 'R', 'F', 'EC', 'sw_net', ...
         'lw_net', 'shf', 'lhf', 'a1', 'Q_net', 're1', 'd1', 'm', ...
         'compaction_dens', 'compaction_melt', 'ps'};
     

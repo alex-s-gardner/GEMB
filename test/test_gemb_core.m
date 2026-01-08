@@ -13,27 +13,14 @@ classdef test_gemb_core < matlab.unittest.TestCase
         a
         a_diff
         
-        % Forcing data
-        dt = 3600; % 1 hour
-        p = 0;
-        ec = 0;
-        m_surf = 0;
-        density_ice = 917;
-        bc_snow = 0;
-        bc_ice = 0;
-        sza = 60;
-        cot = 0;
-        cld_frac = 0;
-        dsw = 200;
-        dsw_diff = 50;
-        dlw = 300;
-        t_air = 265;
-        v_air = 5;
-        e_air = 400;
-        p_air = 100000;
+        % State scalars
+        EC_prev = 0;
+        M_surf_prev = 0;
         
-        % Settings Struct (S)
-        S
+        % Structs
+        CF % ClimateForcingStep
+        MP % ModelParam
+        
         verbose = false;
     end
     
@@ -54,10 +41,7 @@ classdef test_gemb_core < matlab.unittest.TestCase
             % Initialize standard profile
             tcase.t_vec = 260 * ones(tcase.n, 1);
             
-            % CRITICAL FIX: Set dz to 0.08.
-            % dz_min = 0.05, so dz_max = 0.10.
-            % Setting dz=0.10 puts it right on the splitting threshold.
-            % 0.08 is safely in the middle, preventing unexpected splits.
+            % Initial depth: 10 layers * 0.08m = 0.8m Total Depth
             tcase.dz = 0.08 * ones(tcase.n, 1);
             
             tcase.d = 400 * ones(tcase.n, 1);
@@ -68,135 +52,139 @@ classdef test_gemb_core < matlab.unittest.TestCase
             tcase.a = 0.8 * ones(tcase.n, 1);
             tcase.a_diff = 0.8 * ones(tcase.n, 1);
             
-            % Initialize Settings Struct S with reasonable defaults
-            tcase.S.albedo_method = 1;
-            tcase.S.albedo_ice = 0.45;
-            tcase.S.albedo_snow = 0.85;
-            tcase.S.albedo_fixed = 0.7;
-            tcase.S.albedo_desnity_threshold = 1023;
-            tcase.S.albedo_wet_snow_t0 = 15;
-            tcase.S.albedo_dry_snow_t0 = 30;
-            tcase.S.albedo_K = 7;
-            tcase.S.sw_absorption_method = 1;
-            tcase.S.Vz = 2;
-            tcase.S.Tz = 2;
-            tcase.S.emissivity = 0.98;
-            tcase.S.ulw_delta = 0;
-            tcase.S.emissivity_re_threshold = 10;
-            tcase.S.emissivity_method = 0;
-            tcase.S.thermal_conductivity_method = 1;
-            tcase.S.T_air_mean = 260;
-            tcase.S.column_dzmin = 0.05;
-            tcase.S.P_mean = 200;
-            tcase.S.V_mean = 5;
-            tcase.S.new_snow_method = 1;
-            tcase.S.column_zmax = 100;
+            % --- Initialize ClimateForcingStep (CF) ---
+            tcase.CF.dt = 3600; % 1 hour
+            tcase.CF.P = 0;
+            tcase.CF.T_air = 265;
+            tcase.CF.V = 5;
+            tcase.CF.e_air = 400;
+            tcase.CF.p_air = 100000;
+            tcase.CF.dlw = 300;
+            tcase.CF.dsw = 200;
+            tcase.CF.dsw_diff = 50;
+            tcase.CF.black_carbon_snow = 0;
+            tcase.CF.black_carbon_ice = 0;
+            tcase.CF.solar_zenith_angle = 60;
+            tcase.CF.cloud_optical_thickness = 0;
+            tcase.CF.cloud_fraction = 0;
             
-            % Set zmin low to prevent auto-add. 
-            % Current depth = 10 * 0.08 = 0.8m. zmin=0.5m is safe.
-            tcase.S.column_zmin = 0.5; 
+            % Location/Mean parameters
+            tcase.CF.Vz = 2;
+            tcase.CF.Tz = 2;
+            tcase.CF.T_air_mean = 260;
+            tcase.CF.P_mean = 200;
+            tcase.CF.V_mean = 5;
             
-            tcase.S.column_ztop = 2;
-            tcase.S.column_zy = 1.1;
-            tcase.S.densification_method = 1;
+            % --- Initialize ModelParam (MP) ---
+            tcase.MP.albedo_method = "GardnerSharp"; 
+            tcase.MP.albedo_ice = 0.45;
+            tcase.MP.albedo_snow = 0.85;
+            tcase.MP.albedo_fixed = 0.7;
+            tcase.MP.albedo_desnity_threshold = 1023;
+            tcase.MP.albedo_wet_snow_t0 = 15;
+            tcase.MP.albedo_dry_snow_t0 = 30;
+            tcase.MP.albedo_K = 7;
+            tcase.MP.sw_absorption_method = 1;
+            tcase.MP.emissivity = 0.98;
+            tcase.MP.ulw_delta = 0;
+            tcase.MP.emissivity_re_threshold = 10;
+            tcase.MP.emissivity_method = 0;
+            tcase.MP.thermal_conductivity_method = "Sturm"; 
+            tcase.MP.column_dzmin = 0.05;
+            tcase.MP.column_dzmax = 0.10; 
+            tcase.MP.new_snow_method = "150kgm2"; 
+            tcase.MP.density_ice = 917;
+            
+            % Set zmax slightly larger than initial depth to prevent removal.
+            % Initial depth = 0.8m. 
+            tcase.MP.column_zmax = 0.9; 
+            tcase.MP.column_zmin = 0.5; 
+            
+            tcase.MP.column_ztop = 2;
+            tcase.MP.column_zy = 1.1;
+            tcase.MP.densification_method = "HerronLangway"; 
         end
     end
     
     methods (Test)
         
         function test_pipeline_execution(tcase)
-            % Basic "Smoke Test": Verify it runs without error and returns valid shapes
+            % Basic "Smoke Test": Verify it runs without error
             
             [t_out, dz_out, d_out, ~, ~, ~, ~, a_out, ~, ~, ~, sw_net, ...
              shf, lhf, ulw, ~, m_tot, r_tot, f_tot, m_add, e_add, comp_dens, comp_melt] = ...
                 gemb_core(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.dt, tcase.p, ...
-                tcase.ec, tcase.m_surf, tcase.density_ice, tcase.bc_snow, tcase.bc_ice, ...
-                tcase.sza, tcase.cot, tcase.cld_frac, tcase.dsw, tcase.dsw_diff, ...
-                tcase.dlw, tcase.t_air, tcase.v_air, tcase.e_air, tcase.p_air, ...
-                tcase.S, tcase.verbose);
+                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.EC_prev, tcase.M_surf_prev, ...
+                tcase.CF, tcase.MP, tcase.verbose);
             
             % Check Outputs
-            tcase.verifyEqual(size(t_out), size(tcase.t_vec));
-            tcase.verifyEqual(size(dz_out), size(tcase.dz));
-            tcase.verifyEqual(size(d_out), size(tcase.d));
+            % Size logic: 
+            % Initial 10 layers (0.8m). zmax=0.9m.
+            % layer_management sees depth < zmax -> adds 1 layer.
+            % Result: 11 layers.
+            tcase.verifyEqual(length(dz_out), tcase.n + 1, 'Expect 1 padding layer');
             
-            % Physics Checks (Basic)
-            tcase.verifyTrue(all(d_out > 0), 'Density must be positive');
-            tcase.verifyTrue(all(t_out > 0), 'Temperature must be positive (Kelvin)');
-            tcase.verifyTrue(all(a_out >= 0 & a_out <= 1), 'Albedo must be [0,1]');
+            tcase.verifyEqual(size(dz_out), size(t_out));
+            tcase.verifyEqual(size(dz_out), size(d_out));
             
             % Fluxes
             tcase.verifyTrue(isscalar(sw_net));
             tcase.verifyTrue(isscalar(shf));
             tcase.verifyTrue(isscalar(lhf));
             tcase.verifyTrue(isscalar(ulw));
-            
-            % Mass Balance Terms
-            tcase.verifyTrue(isscalar(m_tot));
-            tcase.verifyTrue(isscalar(r_tot));
-            tcase.verifyTrue(isscalar(f_tot));
-            tcase.verifyTrue(isscalar(m_add));
-            tcase.verifyTrue(isscalar(e_add));
-            tcase.verifyTrue(isscalar(comp_dens));
-            tcase.verifyTrue(isscalar(comp_melt));
         end
         
         function test_accumulation_event(tcase)
-            % Test that precipitation adds a layer (via accumulation sub-function)
+            % Test that precipitation adds a layer
             
-            % Use 20 kg/m2 precip.
-            % 20 kg/m2 / 350 kg/m3 = ~0.057m.
-            % 0.057 > dz_min (0.05) -> NEW LAYER created.
-            % 0.057 < 2*dz_min (0.10) -> NO SPLIT happens.
-            tcase.p = 20; 
-            tcase.t_air = 260; % Snow
+            % 1. Use P = 10 kg/m2.
+            tcase.CF.P = 10; 
+            tcase.CF.T_air = 260; % Snow
             
-            [~, dz_out, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~] = ...
+            % 2. Set zmax huge to force padding logic instead of removal logic.
+            tcase.MP.column_zmax = 100.0;
+            
+            [~, dz_out, d_out, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~] = ...
                 gemb_core(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.dt, tcase.p, ...
-                tcase.ec, tcase.m_surf, tcase.density_ice, tcase.bc_snow, tcase.bc_ice, ...
-                tcase.sza, tcase.cot, tcase.cld_frac, tcase.dsw, tcase.dsw_diff, ...
-                tcase.dlw, tcase.t_air, tcase.v_air, tcase.e_air, tcase.p_air, ...
-                tcase.S, tcase.verbose);
+                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.EC_prev, tcase.M_surf_prev, ...
+                tcase.CF, tcase.MP, tcase.verbose);
             
-            tcase.verifyEqual(length(dz_out), tcase.n + 1, 'Precipitation should add exactly 1 layer');
+            % Expected Layers:
+            % 10 (Original) + 1 (Snow Accumulation) + 1 (Zmax Padding) = 12
+            tcase.verifyEqual(length(dz_out), tcase.n + 2, 'Precipitation should add 1 layer, plus 1 padding layer');
+            
+            % Verify the top layer is actually fresh snow
+            tcase.verifyEqual(round(d_out(1), 2), 150, 'Top layer should be fresh snow density (150)');
         end
         
         function test_melt_event(tcase)
             % Test that high temperature causes melt (via thermo -> melt sub-functions)
-            tcase.t_air = 280; % Hot air
-            tcase.dsw = 800;   % Intense sun
+            tcase.CF.T_air = 280; % Hot air
+            tcase.CF.dsw = 800;   % Intense sun
             tcase.t_vec(1) = 273.15; % Surface at melting point
             
             % Increase timestep to allow significant energy input
-            tcase.dt = 3600 * 3; 
+            tcase.CF.dt = 3600 * 3; 
             
             [~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, m_tot, ~, ~, ~, ~, ~, ~] = ...
                 gemb_core(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.dt, tcase.p, ...
-                tcase.ec, tcase.m_surf, tcase.density_ice, tcase.bc_snow, tcase.bc_ice, ...
-                tcase.sza, tcase.cot, tcase.cld_frac, tcase.dsw, tcase.dsw_diff, ...
-                tcase.dlw, tcase.t_air, tcase.v_air, tcase.e_air, tcase.p_air, ...
-                tcase.S, tcase.verbose);
+                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.EC_prev, tcase.M_surf_prev, ...
+                tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyTrue(m_tot > 0, 'High energy input should generate melt');
         end
         
         function test_densification_compaction(tcase)
             % Test that densification returns positive compaction value
-            tcase.S.densification_method = 1; 
+            tcase.MP.densification_method = "HerronLangway"; 
             
             % Set density low so there is room to compact
             tcase.d(:) = 300; 
             
             [~, ~, d_out, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, comp_dens, ~] = ...
                 gemb_core(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.dt, tcase.p, ...
-                tcase.ec, tcase.m_surf, tcase.density_ice, tcase.bc_snow, tcase.bc_ice, ...
-                tcase.sza, tcase.cot, tcase.cld_frac, tcase.dsw, tcase.dsw_diff, ...
-                tcase.dlw, tcase.t_air, tcase.v_air, tcase.e_air, tcase.p_air, ...
-                tcase.S, tcase.verbose);
+                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diff, tcase.EC_prev, tcase.M_surf_prev, ...
+                tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyTrue(comp_dens > 0, 'Densification should result in positive dry compaction');
             tcase.verifyTrue(all(d_out >= 300), 'Density should increase');

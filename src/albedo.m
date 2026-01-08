@@ -176,8 +176,7 @@ else
     end
 
     %If we do not have fresh snow
-    if ismember(ModelParam.albedo_method,["GreuellKonzelmann","BougamontBamber"]) && ...
-            ismember(ModelParam.albedo_method,["BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"]) && ...
+    if ismember(ModelParam.albedo_method,["GardnerSharp","BruneLeFebre"]) && ...
             ((ModelParam.albedo_desnity_threshold - d(1)) >= d_tolerance)
 
         % In a snow layer < 10cm, account for mix of ice and snow,

@@ -130,7 +130,7 @@ switch ModelParam.densification_method
         c0arth = 0.07 * H;
         c1arth = 0.03 * H;
 
-        M01 = densification_M01(ModelParam.densification_coeffs_M01);
+        M01 = densification_lookup_M01(ModelParam.densification_coeffs_M01);
 
         if numel(M01) == 4
             M0 = max(M01(1) - (M01(2) * log(ClimateForcingStep.P_mean)),0.25);
