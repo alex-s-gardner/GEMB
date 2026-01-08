@@ -1,23 +1,59 @@
 function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
-% SIMULATION_PARAMETER_SETS Returns site-specific location and coefficients for simulations.
+% simulation_parameter_sets Retrieves predefined parameter sets for climate
+% forcing simulations.
 %
-%   [location_parameters, coeffs] = SIMULATION_PARAMETER_SETS(set_id)
-%   returns structured data containing geographic parameters and regression
-%   coefficients used for generating synthetic environmental time series.
+%% Syntax
 %
-%   INPUT:
-%       set_id - String or char array identifying the parameter set (e.g., "test_1").
+% [location_parameters, coeffs] = simulation_parameter_sets(set_id)
 %
-%   OUTPUT:
-%       location_parameters - Struct containing lat, elev, start_date, end_date, 
-%                             time_step, and rand_seed.
-%       coeffs - Struct containing sub-structs (T_air, rh, dlw, V) for temperature, 
-%                humidity, longwave radiation, and wind speed coefficients.
+%% Description
 %
-%   EXAMPLE:
-%       [loc, cf] = simulation_parameter_sets("test_1");
+% This function acts as a library of calibrated parameter sets for the GEMB 
+% climate forcing generator. Based on the requested identification string 
+% (set_id), it returns site-specific geographic constants and statistical 
+% coefficients required to simulate synthetic weather data.
 %
-%   See also: simulation_parameters_estimate_from_data
+% The function defines:
+% 1. Location Parameters: Geographic metadata (latitude, longitude, elevation), 
+%    temporal bounds (start/end dates), and long-term climatological means 
+%    (temperature, accumulation).
+% 2. Statistical Coefficients: Empirical coefficients used to generate stochastic 
+%    time series for specific climate variables:
+%    * Air Temperature (T_air): Mean offsets and scaling factors.
+%    * Relative Humidity (rh): Beta coefficients and noise characteristics.
+%    * Longwave Radiation (dlw): Gaussian mixture model parameters.
+%    * Wind Speed (V): Regression coefficients and noise terms.
+%    * Precipitation (P): Harmonic coefficients for occurrence and magnitude.
+%
+%% Inputs
+%
+%  set_id              : string       Identifier for the desired parameter set (e.g., "test_1").
+%
+%% Outputs
+%
+%  location_parameters : struct       Structure containing site metadata:
+%    .lat, .lon, .elev : double       Coordinates and elevation.
+%    .start_date       : double       Simulation start year (decimal).
+%    .end_date         : double       Simulation end year (decimal).
+%    .T_air_mean       : K            Mean annual temperature.
+%    .P_mean           : kg m^-2      Mean annual accumulation.
+%  coeffs              : struct       Structure containing statistical generation coefficients:
+%    .T_air            : struct       Temperature coefficients.
+%    .rh               : struct       Relative humidity coefficients.
+%    .dlw              : struct       Longwave radiation coefficients.
+%    .V                : struct       Wind speed coefficients.
+%    .P                : struct       Precipitation coefficients.
+%
+%% Documentation
+%
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
+%
+%% References
+% If you use GEMB, please cite the following:
+%
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
     % list valid sets to give user a hint
     valid_sets = ["test_1", ];
@@ -32,7 +68,7 @@ function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
         location_parameters.end_date = 2025.00 ; % [decimal year]
         location_parameters.Vz = 10.0 ; % wind observation height above surface [m]
         location_parameters.Tz = 2.0 ; % temperature observation height above surface [m]
-        location_parameters.T_mean = 259.4 ; % average annual temerature [K]
+        location_parameters.T_air_mean = 259.4 ; % average annual temerature [K]
         location_parameters.P_mean = 1177.3 ; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
         location_parameters.time_step = 0.0001 ; % [fraction of a year]
         location_parameters.rand_seed = 42 ; % [seed for random number generator]

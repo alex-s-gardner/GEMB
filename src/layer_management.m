@@ -1,56 +1,68 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-    layer_management(T, dz, d, W, re, gdn, gsp, a, a_diffuse, column_dzmin, ...
-    column_zmax, column_zmin, column_ztop, column_zy, verbose)
-% managelayers adjusts the depth and number of vertical layers in the model
+    layer_management(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
+% layer_management adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
 % set for the minimum and maximum allowable layer thickness.
 %
 %% Syntax
 %
-%
+% [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
+%    layer_management(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
 %
 %% Description
 %
+% This function manages the vertical grid discretization of the firn column. 
+% It performs three main operations to maintain numerical stability and 
+% physical realism:
 %
+% 1. Merging: Scans the column for grid cells thinner than the minimum 
+%    threshold (ModelParam.column_dzmin). These cells are merged with 
+%    neighbors, conserving mass and energy via weighted averaging.
+% 2. Splitting: Scans for grid cells thicker than the maximum threshold 
+%    (ModelParam.column_dzmax). These cells are split in half, duplicating 
+%    intensive properties and halving extensive properties.
+% 3. Depth Adjustment: Ensures the total column depth stays within defined 
+%    limits (ModelParam.column_zmax). It adds or removes layers at the 
+%    bottom boundary as necessary and enforces the Dirichlet temperature 
+%    boundary condition.
+%
+% The function tracks any mass (M_added) or energy (E_added) introduced or 
+% removed during the bottom boundary adjustment to ensure closure of the 
+% mass and energy balance budgets.
 %
 %% Inputs
 %
-%  T            : K            Grid cell temperature.
-%  d            : kg m^-3      Grid cell density.
-%  dz           : m            Grid cell thickness.
-%  W            : kg m^-2      Water content.
-%  a            : fraction     Albedo.
-%  a_diffuse    : fraction     Diffuse albedo.
-%  M            : kg m^-2      Grid cell mass.
-%  EI           : J m^-2       Initial energy of snow/ice.
-%  EW           : J m^-2       Initial energy of water.
-%  column_dzmin : m            Minimum allowable grid spacing.
-%  column_zmax  : m            Maximum depth of the total column.
-%  column_zmin  : m            Minimum depth of the total column.
-%  re           : mm           Grain size
-%  gdn          : unitless     Grain dendricity
-%  gsp          : unitless     Grain sphericity
-%  column_ztop  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  column_zy    : unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
-%  CI           : J kg^-1 K^-1 Specific heat capacity of snow/ice.
-%  LF           : J kg^-1      Latent heat of fusion.
-%  CtoK         : K            273.15 conversion from C to K.
+%  T                       : K            Grid cell temperature.
+%  dz                      : m            Grid cell thickness.
+%  d                       : kg m^-3      Grid cell density.
+%  W                       : kg m^-2      Water content.
+%  re                      : mm           Grain size (effective radius).
+%  gdn                     : unitless     Grain dendricity.
+%  gsp                     : unitless     Grain sphericity.
+%  a                       : fraction     Albedo.
+%  a_diffuse               : fraction     Diffuse albedo.
+%  ModelParam              : struct       Structure containing model parameters:
+%    .column_dzmin         : m            Minimum allowable grid spacing.
+%    .column_dzmax         : m            Maximum allowable grid spacing.
+%    .column_zmax          : m            Maximum depth of the total column.
+%    .column_zmin          : m            Minimum depth of the total column.
+%    .column_ztop          : m            Thickness of the upper portion of the grid with constant spacing.
+%    .column_zy            : unitless     Grid stretching parameter for the lower portion.
+%  verbose                 : logical      Flag to enable mass/energy conservation checks.
 %
 %% Outputs
 %
-%  d            : kg m^-3      Grid cell density.
-%  T            : K            Grid cell temperature.
-%  W            : kg m^-2      Water content.
-%  M_added      : kg m^-2      Mass added to the column.
-%  E_added      : J m^-2       Energy added to the column.
-%  a            : fraction     Albedo.
-%  a_diffuse    : fraction     Diffuse albedo.
-%  m            : kg m^-2      Grid cell mass.
-%  EI           : J m^-2       Initial energy of snow/ice.
-%  EW           : J m^-2       Initial energy of water.
-%  re           : mm           Grain size
-%  gdn          : unitless     Grain dendricity
-%  gsp          : unitless     Grain sphericity
+%  T            : K            Updated grid cell temperature.
+%  dz           : m            Updated grid cell thickness.
+%  d            : kg m^-3      Updated grid cell density.
+%  W            : kg m^-2      Updated water content.
+%  re           : mm           Updated grain size.
+%  gdn          : unitless     Updated grain dendricity.
+%  gsp          : unitless     Updated grain sphericity.
+%  a            : fraction     Updated albedo.
+%  a_diffuse    : fraction     Updated diffuse albedo.
+%  M_added      : kg m^-2      Mass added to (positive) or removed from (negative) the column bottom.
+%  E_added      : J m^-2       Energy added to (positive) or removed from (negative) the column bottom.
 %
 %% Documentation
 %
@@ -89,21 +101,19 @@ EW = W .* (LF + CtoK * CI);    % initial enegy of water
 Z_cumulative = cumsum(dz);
 
 % A logical "mask" that indicates which cells are in the top layers:
-top_layers = Z_cumulative <= (column_ztop + d_tolerance );
+top_layers = Z_cumulative <= (ModelParam.column_ztop + d_tolerance);
 
-% Define column_dzmin2 array using the top-layers' column_dzmin value for the entire column:
-column_dzmin2 = column_dzmin * ones(m,1);
+% Define column_dzmin2 array using the top-layers' ModelParam.column_dzmin value for the entire column:
+column_dzmin2 = ModelParam.column_dzmin * ones(m,1);
 
 % Overwrite the bottom layers as the cumulative product times the stretching factor:
-column_dzmin2(~top_layers) = cumprod(column_zy * ones(sum(~top_layers),1)) * column_dzmin;
+column_dzmin2(~top_layers) = cumprod(ModelParam.column_zy * ones(sum(~top_layers),1)) * ModelParam.column_dzmin;
 
-% Define dzMax2 array using the top-layers' column_dzmin value for the entire column:
-dzMax2 = 2 * column_dzmin * ones(m,1);
+% Define column_dzmax2 array using the top-layers' ModelParam.column_dzmin value for the entire column:
+column_dzmax2 = ModelParam.column_dzmax * ones(m,1);
 
-% In the bottom layers, dzMax2 is the larger of (column_zy * column_dzmin2) or (2 * column_dzmin)
-dzMax2(~top_layers) = max(column_zy * column_dzmin2(~top_layers), 2 * column_dzmin);
-
-%%
+% Overwrite the bottom layers as the cumulative product times the stretching factor:
+column_dzmax2(~top_layers) = cumprod(ModelParam.column_zy * ones(sum(~top_layers),1)) * ModelParam.column_dzmax;
 
 % Preallocate a logical array that will be true for any cell to be deleted:
 delete_cell = false(m,1);
@@ -148,19 +158,19 @@ for i=1:m
 end
 
 % Delete combined cells:
-M(delete_cell)          = [];
-W(delete_cell)          = [];
-dz(delete_cell)         = [];
-d(delete_cell)          = [];
-T(delete_cell)          = [];
-a(delete_cell)          = [];
-re(delete_cell)         = [];
-gdn(delete_cell)        = [];
-gsp(delete_cell)        = [];
-a_diffuse(delete_cell)  = [];
-EI(delete_cell)         = [];
-EW(delete_cell)         = [];
-dzMax2(delete_cell)     = [];
+M(delete_cell)                 = [];
+W(delete_cell)                 = [];
+dz(delete_cell)                = [];
+d(delete_cell)                 = [];
+T(delete_cell)                 = [];
+a(delete_cell)                 = [];
+re(delete_cell)                = [];
+gdn(delete_cell)               = [];
+gsp(delete_cell)               = [];
+a_diffuse(delete_cell)         = [];
+EI(delete_cell)                = [];
+EW(delete_cell)                = [];
+column_dzmax2(delete_cell)     = [];
 
 % Calculate *new* length of cells:
 m = length(T);
@@ -169,7 +179,7 @@ m = length(T);
 % * An early implementation of this code used a loop which is included in comments at the bottom of this function for posterity.
 
 % Find the cells that exceed tolerances:
-f = find(dz > (dzMax2 + d_tolerance));
+f = find(dz > (column_dzmax2 + d_tolerance));
 
 % Conserve quantities among the cells that will be split:
 dz(f) = dz(f)/2;
@@ -202,7 +212,7 @@ gsp       = gsp(fs);
 % Calculate total model depth:
 Z_total = sum(dz);
 
-if Z_total < (column_zmin - d_tolerance)
+if Z_total < (ModelParam.column_zmax - d_tolerance)
 
     % Mass and energy to be added:
     M_added   = M(end) + W(end);
@@ -220,7 +230,7 @@ if Z_total < (column_zmin - d_tolerance)
     gdn       = [  gdn;   gdn(end)];
     gsp       = [  gsp;   gsp(end)];
 
-elseif Z_total > column_zmax+d_tolerance 
+elseif Z_total > ModelParam.column_zmax+d_tolerance 
 
     % Mass and energy loss:
     M_added   = -(M(end) + W(end));

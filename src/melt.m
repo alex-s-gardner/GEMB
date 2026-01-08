@@ -6,48 +6,63 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_total, M_surf, R_total, F_t
 %
 %% Syntax
 %
-%
+% [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_total, M_surf, R_total, F_total] = ...
+%    melt(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, density_ice, verbose)
 %
 %% Description
 %
+% This function calculates the thermodynamic and hydraulic evolution of the 
+% firn column during surface melt events . 
+% It employs a "tipping bucket" approach to simulate the percolation, refreezing, 
+% and retention of liquid water. The specific processes include:
 %
+% 1. Initial Refreeze: Existing pore water in layers with $T < 0^\circ C$ is 
+%    refrozen, releasing latent heat and warming the layer.
+% 2. Melt Generation: If layer temperatures exceed $0^\circ C$, the excess 
+%    energy is converted into liquid meltwater. If the energy excess is greater 
+%    than that required to melt the entire layer, the surplus energy is 
+%    transferred to the layer below.
+% 3. Percolation: Liquid water (melt + rain) percolates downward. It flows 
+%    through the snowpack until it either:
+%    * Refreezes: In cold underlying layers, increasing density and temperature.
+%    * Retains: As pore water, up to the irreducible water content saturation 
+%        ($S_{wi} = 0.07$).
+%    * Runs off: If it encounters an impermeable ice lens (density > 
+%        pore close-off) or reaches the bottom of the column.
+%
+% The function maintains strict conservation of mass and energy, checking budgets 
+% if the verbose flag is enabled.
 %
 %% Inputs
 %
 %  T            : K            Grid cell temperature.
-%  d            : kg m^-3      Grid cell density.
 %  dz           : m            Grid cell thickness.
+%  d            : kg m^-3      Grid cell density.
 %  W            : kg m^-2      Water content.
-%  Ra           : kg m^-2      Rain.
+%  re           : mm           Grain size (effective radius).
+%  gdn          : unitless     Grain dendricity.
+%  gsp          : unitless     Grain sphericity.
 %  a            : fraction     Albedo.
 %  a_diffuse    : fraction     Diffuse albedo.
-%  column_dzmin : m            Minimum allowable grid spacing.
-%  column_zmax  : m            Maximum depth of the total column.
-%  column_zmin  : m            Minimum depth of the total column.
-%  column_ztop  : m            Thickness of the upper portion of the model grid, in which grid spacing is constant.
-%  column_zy    : unitless     Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth.
-%  re           : mm           Grain size
-%  gdn          : unitless     Grain dendricity
-%  gsp          : unitless     Grain sphericity
-%  density_ice  : kg m^-3      Ice density
+%  Ra           : kg m^-2      Rainfall amount added to the column.
+%  density_ice  : kg m^-3      Density of ice (constant).
+%  verbose      : logical      Flag to enable mass/energy conservation checks.
 %
 %% Outputs
 %
-%  M_total    : kg m^-2      Total column melt.
-%  M_surf     : kg m^-2      Surface layer melt.
-%  R_total    : kg m^-2      Total column runoff.
-%  F_total    : kg m^-2      Total column refreeze.
-%  T          : K            Grid cell temperature.
-%  d          : kg m^-3      Grid cell density.
-%  dz         : m            Grid cell thickness.
-%  W          : kg m^-2      Water content.
-%  mass_added : kg m^-2      Mass added to the column.
-%  dz_add     : m            Thickness added to the column.
-%  a          : fraction     Albedo.
-%  a_diffuse  : fraction     Diffuse albedo.
-%  re         : mm           Grain size
-%  gdn        : unitless     Grain dendricity
-%  gsp        : unitless     Grain sphericity
+%  T            : K            Updated grid cell temperature.
+%  dz           : m            Updated grid cell thickness.
+%  d            : kg m^-3      Updated grid cell density.
+%  W            : kg m^-2      Updated water content.
+%  re           : mm           Updated grain size.
+%  gdn          : unitless     Updated grain dendricity.
+%  gsp          : unitless     Updated grain sphericity.
+%  a            : fraction     Updated albedo.
+%  a_diffuse    : fraction     Updated diffuse albedo.
+%  M_total      : kg m^-2      Total column melt mass.
+%  M_surf       : kg m^-2      Melt mass generated in the surface layer only.
+%  R_total      : kg m^-2      Total runoff leaving the column.
+%  F_total      : kg m^-2      Total mass refrozen within the column.
 %
 %% Documentation
 %
@@ -108,11 +123,11 @@ if sum(W) > W_tolerance
     F_max = max(0, -((T - CtoK) .* M0 * CI) / LF);
 
     % freeze pore water and change snow/ice properties
-    W_delta  = min(F_max, W);                                                   % freeze mass [kg]
-    W   = W - W_delta;                                                          % pore water mass [kg]
-    M0  = M0 + W_delta;                                                         % new mass [kg]
-    d   = M0 ./ dz;                                                             % density [kg m-3]
-    T   = T + double(M0>W_tolerance ).*(W_delta.*(LF+(CtoK - T)*CI)./(M0.*CI)); % temperature [K]
+    W_delta  = min(F_max, W);                                                        % freeze mass [kg]
+    W        = W - W_delta;                                                          % pore water mass [kg]
+    M0       = M0 + W_delta;                                                         % new mass [kg]
+    d        = M0 ./ dz;                                                             % density [kg m-3]
+    T        = T + double(M0>W_tolerance ).*(W_delta.*(LF+(CtoK - T)*CI)./(M0.*CI)); % temperature [K]
 
     % if pore water froze in ice then adjust d and dz thickness
     d(d > density_ice-d_tolerance ) = density_ice;
@@ -128,7 +143,7 @@ W_excess      = max(0, W - W_irreducible);                      % water "squeeze
 F = zeros(m,1);
 
 % Add previous refreeze to F and reset W_delta
-F = F + W_delta;
+F          = F + W_delta;
 W_delta(:) = 0;
 
 % run melt algorithm if there is melt water or excess pore water
@@ -144,13 +159,13 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
 
         % calculate surplus energy
         E_surplus = T_surplus .* CI .* M0;
-        i = 1;
+        i         = 1;
 
         while (sum(E_surplus) > T_tolerance)  && (i < (m+1))
 
             if i<m
                 % use surplus energy to increase the temperature of lower cell
-                T(i+1) = E_surplus(i) / M0(i+1) / CI + T(i+1);
+                T(i+1)        = E_surplus(i) / M0(i+1) / CI + T(i+1);
 
                 T_excess(i+1) = max(0, T(i+1) - CtoK) + T_excess(i+1);
                 T(i+1)        = min(CtoK, T(i+1));
@@ -158,7 +173,7 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
                 T_surplus(i+1) = max(0, T_excess(i+1) - LF/CI);
                 E_surplus(i+1) = T_surplus(i+1) * CI * M0(i+1);
             else
-                E_surplus = E_surplus(i);
+                E_surplus      = E_surplus(i);
                 warning('surplus energy at the base of GEMB column' + newline)
             end
 
@@ -184,7 +199,7 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
     flux_dn = [R; 0];
 
     % determine the deepest grid cell where melt/pore water is generated
-    X = find((M > W_tolerance)  | (W_excess > W_tolerance), 1, 'last');
+    X             = find((M > W_tolerance)  | (W_excess > W_tolerance), 1, 'last');
     X(isempty(X)) = 1;
 
     Xi = 1;
@@ -262,8 +277,7 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
             end
             % -------------------------------------------------------------
 
-            F(i) = F(i) + F1 + F2;
-
+            F(i)         = F(i) + F1 + F2;
             flux_dn(i+1) = max(0.0, M_input - F1 - W_delta(i)); % meltwater out
 
             if M0(i) > W_tolerance 
@@ -321,8 +335,8 @@ F_total = sum(F);
 if verbose
     % Calculate final mass [kg] and energy [J]
     ER_total = R_total * (LF + CtoK * CI);
-    EI    = M0 .* T * CI;
-    EW    = W .* (LF + CtoK * CI);
+    EI       = M0 .* T * CI;
+    EW       = W .* (LF + CtoK * CI);
 
     M1_total = sum(W) + sum(M0) + R_total;
     E1_total = sum(EI) + sum(EW);

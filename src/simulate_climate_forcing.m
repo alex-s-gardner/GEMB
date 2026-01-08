@@ -1,4 +1,58 @@
-function [daten, P0, T_air0, V0, dlw0, dsw0, e_air0, p_air0, LP] = simulate_climate_forcing(set_id)
+function [ClimateForcing] = simulate_climate_forcing(set_id)
+%
+% simulate_climate_forcing Generates synthetic climate forcing data for GEMB
+% simulations based on predefined parameter sets.
+%
+%% Syntax
+%
+% [ClimateForcing] = simulate_climate_forcing(set_id)
+%
+%% Description
+%
+% This function orchestrates the generation of synthetic meteorological forcing 
+% time series required to drive the GEMB model. It uses a specified parameter 
+% set ID to load location-specific constants and coefficients, then calls a 
+% suite of sub-functions to simulate individual climate variables. 
+%
+% The simulation process includes:
+% 1. Initialization: Sets up the time vector and initializes the random number 
+%    generator for reproducibility.
+% 2. Radiation: Simulates downward shortwave irradiance based on solar geometry 
+%    and downward longwave irradiance based on air temperature and vapor pressure.
+% 3. Thermodynamics: Generates time series for air temperature, air pressure, 
+%    relative humidity, and vapor pressure.
+% 4. Dynamics & Mass: Simulates wind speed and precipitation events.
+% 5. Structuring: Aggregates all generated variables into a standardized 
+%    ClimateForcing structure.
+%
+%% Inputs
+%
+%  set_id              : integer      Identifier for the simulation parameter set to use (defined in simulation_parameter_sets.m).
+%
+%% Outputs
+%
+%  ClimateForcing      : struct       Structure containing generated climate data:
+%    .daten            : datenum      Time vector.
+%    .dsw0             : W m^-2       Downward shortwave radiation.
+%    .dlw0             : W m^-2       Downward longwave radiation.
+%    .T_air0           : K            Air temperature.
+%    .p_air0           : Pa           Air pressure.
+%    .rh0              : %            Relative humidity.
+%    .e_air0           : Pa           Vapor pressure.
+%    .V0               : m s^-1       Wind speed.
+%    .P0               : kg m^-2      Precipitation.
+%    .lat, .lon, .elev : double       Location metadata (latitude, longitude, elevation).
+%
+%% Documentation
+%
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
+%
+%% References
+% If you use GEMB, please cite the following:
+%
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
+% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
+% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
     % load climate simulation parameter set
     [location_parameters, coeffs] = simulation_parameter_sets(set_id);
@@ -40,15 +94,29 @@ function [daten, P0, T_air0, V0, dlw0, dsw0, e_air0, p_air0, LP] = simulate_clim
     V0(V0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
     V0(V0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
     
+
     % precipitation [kg m⁻²]
     varname = "P";
     P0 = simulate_precipitation(dec_year, coeffs.(varname));
 
-    LP.Vz = location_parameters.Vz;
-    LP.Tz = location_parameters.Tz;
-    LP.T_mean = location_parameters.T_mean;
-    LP.P_mean = location_parameters.P_mean;
-    LP.elev = location_parameters.elev;
-    LP.lat = location_parameters.lat;
-    LP.lon = location_parameters.lon;
+    % populate structure
+    ClimateForcing.daten = daten;
+    ClimateForcing.dsw0 = dsw0;
+    ClimateForcing.T_air0 = T_air0;
+    ClimateForcing.p_air0 = p_air0;
+    ClimateForcing.rh0 = rh0;
+    ClimateForcing.e_air0 = e_air0;
+    ClimateForcing.dlw0 = dlw0;
+    ClimateForcing.V0 = V0;
+    ClimateForcing.P0 = P0;
+
+    % Location specifc parameters
+    ClimateForcing.Vz = location_parameters.Vz;
+    ClimateForcing.Tz = location_parameters.Tz;
+    ClimateForcing.T_air_mean = location_parameters.T_air_mean;
+    ClimateForcing.V_mean = mean(ClimateForcing.V0);
+    ClimateForcing.P_mean = location_parameters.P_mean;
+    ClimateForcing.elev = location_parameters.elev;
+    ClimateForcing.lat = location_parameters.lat;
+    ClimateForcing.lon = location_parameters.lon;
 end

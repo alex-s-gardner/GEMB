@@ -7,17 +7,10 @@ classdef test_densification < matlab.unittest.TestCase
         dz
         d
         re
-        dt = 86400 * 30; % 30 days in seconds
         
-        % Constants
-        rho_ice = 917;
-        t_mean = 250;
-        p_mean = 200; % kg m-2 yr-1
-        
-        % Calibration flags (Defaults)
-        alb_dens_thresh = 1023;
-        alb_method = 1;
-        sw_method = 0;
+        % Structs
+        CF % ClimateForcingStep
+        MP % ModelParam
     end
     
     methods (TestMethodSetup)
@@ -32,6 +25,16 @@ classdef test_densification < matlab.unittest.TestCase
             tcase.d = linspace(300, 700, tcase.n)';
             
             tcase.re = 0.5 * ones(tcase.n, 1);
+            
+            % Initialize ClimateForcingStep (CF)
+            tcase.CF.dt = 86400 * 30; % 30 days in seconds
+            tcase.CF.P_mean = 200;    % kg m-2 yr-1
+            tcase.CF.T_air_mean = 250; % Kelvin
+            
+            % Initialize ModelParam (MP)
+            tcase.MP.density_ice = 917;
+            tcase.MP.densification_method = "HerronLangway"; % Default
+            tcase.MP.densification_coeffs_M01 = "Ant_RACMO_GS_SW0"; % Default
             
             % Add source path
             import matlab.unittest.fixtures.PathFixture
@@ -51,11 +54,10 @@ classdef test_densification < matlab.unittest.TestCase
             
             mass_initial = tcase.d .* tcase.dz;
             
-            method = 1; % Herron and Langway
+            tcase.MP.densification_method = "HerronLangway";
             
             [dz_out, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
             mass_final = d_out .* dz_out;
             
@@ -72,55 +74,50 @@ classdef test_densification < matlab.unittest.TestCase
             
             % Set density very close to ice density
             d_near_ice = tcase.d;
-            d_near_ice(:) = tcase.rho_ice - 0.1; 
+            d_near_ice(:) = tcase.MP.density_ice - 0.1; 
             
             % Long timestep to force overshoot
-            dt_long = 86400 * 365 * 100; 
+            tcase.CF.dt = 86400 * 365 * 100; 
             
-            method = 1;
+            tcase.MP.densification_method = "HerronLangway";
             
             [~, d_out] = densification(tcase.t_vec, tcase.dz, d_near_ice, tcase.re, ...
-                dt_long, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
-            tcase.verifyTrue(all(d_out <= tcase.rho_ice + 1e-10), ...
+            tcase.verifyTrue(all(d_out <= tcase.MP.density_ice + 1e-10), ...
                 'Density must be clamped at density_ice');
         end
         
-        function test_herron_langway_method_1(tcase)
-            % Test Method 1 logic
-            method = 1;
+        function test_herron_langway(tcase)
+            % Test "HerronLangway" logic
+            tcase.MP.densification_method = "HerronLangway";
             [~, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
-            tcase.verifyTrue(all(d_out > tcase.d), 'Method 1 should densify layers');
+            tcase.verifyTrue(all(d_out > tcase.d), 'HerronLangway should densify layers');
         end
         
-        function test_arthern_method_2(tcase)
-            % Test Method 2 (Semi-empirical Arthern)
-            method = 2;
+        function test_arthern(tcase)
+            % Test "Anthern" (Semi-empirical Arthern)
+            tcase.MP.densification_method = "Anthern";
             [~, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
-            tcase.verifyTrue(all(d_out > tcase.d), 'Method 2 should densify layers');
+            tcase.verifyTrue(all(d_out > tcase.d), 'Anthern should densify layers');
         end
         
-        function test_arthern_physical_method_3(tcase)
-            % Method 3 uses grain radius (re) and overburden pressure
-            method = 3;
+        function test_arthern_b_physical(tcase)
+            % "AnthernB" uses grain radius (re) and overburden pressure
+            tcase.MP.densification_method = "AnthernB";
             
             % Run standard
             [~, d_std] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
             % Run with larger grain size
             re_large = tcase.re * 2;
             [~, d_large] = densification(tcase.t_vec, tcase.dz, tcase.d, re_large, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
             % Formula B1 in Arthern: rate is proportional to 1/r^2. 
             % Larger grains -> Slower densification -> Lower final density
@@ -128,11 +125,8 @@ classdef test_densification < matlab.unittest.TestCase
             
             diff = d_std - d_large;
             
-            % Filter out clamped values
-            % CRITICAL FIX: Also exclude the top layer (index 1).
-            % Method 3 depends on overburden pressure, which is 0 for the top layer.
-            % Therefore, densification is 0 for the top layer regardless of grain size.
-            valid_mask = (d_std < tcase.rho_ice - 1);
+            % Exclude top layer (overburden = 0) and clamped values
+            valid_mask = (d_std < tcase.MP.density_ice - 1);
             
             % Create an index list to check, strictly excluding index 1
             check_indices = find(valid_mask);
@@ -140,81 +134,80 @@ classdef test_densification < matlab.unittest.TestCase
             
             if ~isempty(check_indices)
                 tcase.verifyTrue(all(diff(check_indices) > 0), ...
-                    'Method 3: Larger grains should densify slower (excluding surface layer)');
+                    'AnthernB: Larger grains should densify slower (excluding surface layer)');
             end
         end
         
-        function test_ligtenberg_calibration_method_6(tcase)
-            % Method 6 has specific branches for ERA5 calibration
-            method = 6;
+        function test_ligtenberg_coeffs(tcase)
+            % Test "Ligtenberg" method with different coefficients
+            tcase.MP.densification_method = "Ligtenberg";
             
-            % Branch 1: albedo=1, sw=0 (Standard)
+            % Test Case 1: Standard RACMO
+            tcase.MP.densification_coeffs_M01 = "Ant_RACMO_GS_SW0";
             [~, d1] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, 1, 0, method);
+                tcase.CF, tcase.MP);
             
-            % Branch 2: albedo=2, sw=1
+            % Test Case 2: ERA5 variant (should have different M coeffs)
+            tcase.MP.densification_coeffs_M01 = "Ant_ERA5_BF_SW1";
             [~, d2] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, 2, 1, method);
+                tcase.CF, tcase.MP);
             
-            % Branch 3: Default (RACMO)
-            [~, d3] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, 2, 0, method);
-            
-            % Ensure all branches produced valid densification different from input
+            % Ensure densification occurred
             tcase.verifyTrue(all(d1 > tcase.d));
             tcase.verifyTrue(all(d2 > tcase.d));
-            tcase.verifyTrue(all(d3 > tcase.d));
             
-            % Verify branches produce distinct results (coefficients differ)
-            tcase.verifyFalse(isequal(d1, d2), 'Different calibration branches should yield different results');
+            % Verify different coeffs produce different results
+            % (Assuming the M lookup values differ for these keys)
+            tcase.verifyFalse(isequal(d1, d2), 'Different Ligtenberg M01 coeffs should yield different results');
         end
         
-        function test_kuipers_munneke_method_7(tcase)
-            % Method 7 (Greenland)
-            method = 7;
+        function test_kuipers_munneke_coeffs(tcase)
+            % Test Greenland logic via Ligtenberg method with specific coeffs
+            tcase.MP.densification_method = "Ligtenberg";
+            tcase.MP.densification_coeffs_M01 = "Gre_KuipersMunneke";
             
             [~, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
-            tcase.verifyTrue(all(d_out > tcase.d), 'Method 7 should densify layers');
+            tcase.verifyTrue(all(d_out > tcase.d), 'Gre_KuipersMunneke coeffs should densify layers');
         end
         
         function test_zero_time_step(tcase)
             % If dt = 0, no change should occur
-            dt_zero = 0;
-            method = 1;
+            tcase.CF.dt = 0;
+            tcase.MP.densification_method = "HerronLangway";
             
             [dz_out, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                dt_zero, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                tcase.alb_dens_thresh, tcase.alb_method, tcase.sw_method, method);
+                tcase.CF, tcase.MP);
             
             tcase.verifyEqual(d_out, tcase.d);
             tcase.verifyEqual(dz_out, tcase.dz);
         end
         
-        function test_bare_ice_calibration_branch(tcase)
-            % Test the specific sub-branch in Method 6 for "bare ice" calibration
-            % Triggered when abs(albedo_desnity_threshold - 820.0) >= tolerance
-            method = 6;
+        function test_ligtenberg_bare_ice_logic(tcase)
+            % Test the specific logic branch in "Ligtenberg" for 820 vs 917 density_ice
+            tcase.MP.densification_method = "Ligtenberg";
+            tcase.MP.densification_coeffs_M01 = "Gre_RACMO_GS_SW0"; % Requires 2-row M01 matrix
             
-            % Case A: Near 820 (Standard)
-            alb_thresh_std = 820;
-            [~, d_std] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                alb_thresh_std, 1, 0, method);
+            % Case A: density_ice ~ 820 (Trigger specialized branch)
+            tcase.MP.density_ice = 820;
+            [~, d_820] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+                tcase.CF, tcase.MP);
             
-            % Case B: Far from 820 (Bare Ice Logic)
-            alb_thresh_ice = 1023;
-            [~, d_ice] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
-                tcase.dt, tcase.rho_ice, tcase.t_mean, tcase.p_mean, ...
-                alb_thresh_ice, 1, 0, method);
+            % Case B: density_ice ~ 917 (Trigger standard branch)
+            tcase.MP.density_ice = 917;
+            [~, d_917] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+                tcase.CF, tcase.MP);
             
-            % Coefficients differ, so results should differ
-            tcase.verifyFalse(isequal(d_std, d_ice), 'Bare ice calibration branch should differ from standard');
+            % The code uses M01(1,:) for 820 and M01(2,:) for others.
+            % Assuming Gre_RACMO_GS_SW0 returns a 2x4 matrix where rows differ.
+            
+            % Normalize result for comparison (since d_max clamping differs)
+            % Check only values well below 820
+            check_idx = tcase.d < 700;
+            
+            tcase.verifyFalse(isequal(d_820(check_idx), d_917(check_idx)), ...
+                'Density_ice=820 logic branch should produce different rates than standard');
         end
     end
 end

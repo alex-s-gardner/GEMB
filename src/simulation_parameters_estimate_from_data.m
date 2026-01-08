@@ -1,3 +1,44 @@
+%% estimate simulation parameters from real data 
+% simulation_parameters_estimate_from_data Calculates statistical coefficients for synthetic climate generation.
+%
+%% Syntax
+%
+% simulation_parameters_estimate_from_data
+%
+%% Description
+%
+% This script analyzes real-world meteorological data to derive the statistical 
+% coefficients required by the GEMB synthetic climate generator. It performs the 
+% following operations:
+%
+% 1. Data Ingestion: Loads a reference dataset (e.g., TEST_INPUT_1.mat) 
+%    containing observed time series for temperature, radiation, wind, etc..
+% 2. Parameter Fitting: Fits statistical models to the observed data to 
+%    extract key generative parameters [Image of statistical parameter estimation]:
+%    * Temperature: Fits mean, seasonal amplitude, and daily noise characteristics.
+%    * Humidity & Wind: Fits autoregressive noise models to residuals after 
+%      removing seasonal trends.
+%    * Precipitation: Fits harmonic functions to occurrence probabilities 
+%      and magnitude distributions.
+%    * Longwave Radiation: Fits a Gaussian mixture model to the residuals 
+%      between observed longwave and clear-sky estimates (representing cloud effects).
+% 3. Validation: Simulates synthetic data using the derived coefficients and 
+%    plots it alongside the original observations for visual verification.
+% 4. Output Generation: Prints the derived coefficients to the console in 
+%    executable MATLAB format, ready to be pasted into simulation_parameter_sets.m.
+%
+%% Inputs
+%
+%  fn (hardcoded) : string       Path to the input .mat file containing observed climate data structure inputs.
+%
+%% Outputs
+%
+%  Console Output : text         Formatted MATLAB code block defining location_parameters and coeffs.
+%  Figures        : plots        Comparison plots of Observed vs. Simulated time series for each variable.
+%
+%% Documentation
+%
+% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
 
 %% estimate simulation parameters from real data 
 fn = '/Users/gardnera/Code/GEMB/GEMB_0.21/TEST/TEST_INPUT_1.mat'; % path to input data 
@@ -17,7 +58,7 @@ location_parameters.rand_seed = 42; % Sets the seed to a fixed number
 
 location_parameters.Vz = inputs.LP.Vz; % wind observation height above surface [m]
 location_parameters.Tz = inputs.LP.Tz; % temperature observation height above surface [m]
-location_parameters.T_mean = inputs.LP.T_mean; % average annual temerature [K]
+location_parameters.T_air_mean = inputs.LP.T_air_mean; % average annual temerature [K]
 location_parameters.P_mean = inputs.LP.P_mean; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
 
 dec_year = location_parameters.start_date: location_parameters.time_step:location_parameters.end_date+1;
@@ -35,7 +76,7 @@ disp("location_parameters.end_date = " + sprintf('%0.2f ', location_parameters.e
 
 disp("location_parameters.Vz = " + sprintf('%0.1f ', location_parameters.Vz)+ "; % wind observation height above surface [m]")
 disp("location_parameters.Tz = " + sprintf('%0.1f ', location_parameters.Tz)+ "; % temperature observation height above surface [m]")
-disp("location_parameters.T_mean = " + sprintf('%0.1f ', location_parameters.T_mean)+ "; % average annual temerature [K]")
+disp("location_parameters.T_air_mean = " + sprintf('%0.1f ', location_parameters.T_air_mean)+ "; % average annual temerature [K]")
 disp("location_parameters.P_mean = " + sprintf('%0.1f ', location_parameters.P_mean)+ "; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]")
 
 disp("location_parameters.time_step = " + sprintf('%0.4f ', location_parameters.time_step) + "; % [fraction of a year]")

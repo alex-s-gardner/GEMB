@@ -19,10 +19,22 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
         % Physical constants
         lv = 2.495E6;
         ls = 2.8295e6;
+        
+        % Structs
+        CF % ClimateForcingStep
     end
     
     methods (TestMethodSetup)
-        function add_source_path(tcase)
+        function setup_structs(tcase)
+            % Initialize ClimateForcingStep (CF) with standard values
+            tcase.CF.T_air = tcase.t_air_std;
+            tcase.CF.p_air = tcase.p_air_std;
+            tcase.CF.e_air = tcase.e_air_std;
+            tcase.CF.V = tcase.v_std;
+            tcase.CF.Vz = tcase.vz;
+            tcase.CF.Tz = tcase.tz;
+            
+            % Add source path
             import matlab.unittest.fixtures.PathFixture
             try
                 tcase.applyFixture(PathFixture('../src'));
@@ -36,12 +48,11 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
         
         function test_stable_conditions(tcase)
             % Stable: T_air > T_surface (Ri > 0)
-            t_air = 275;
+            tcase.CF.T_air = 275;
             t_surf = 270; % Cold surface
             
-            [shf, lhf, ~] = turbulent_heat_flux(t_air, t_surf, tcase.p_air_std, ...
-                tcase.e_air_std, tcase.v_std, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [shf, lhf, ~] = turbulent_heat_flux(t_surf, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             % In stable conditions with T_air > T_surf, sensible heat flows INTO surface (+SHF)
             tcase.verifyTrue(shf > 0, 'SHF should be positive (downward) for warm air over cold surface');
@@ -53,12 +64,11 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
         
         function test_unstable_conditions(tcase)
             % Unstable: T_surface > T_air (Ri < 0)
-            t_air = 260;
+            tcase.CF.T_air = 260;
             t_surf = 270; % Hot surface
             
-            [shf, lhf, ~] = turbulent_heat_flux(t_air, t_surf, tcase.p_air_std, ...
-                tcase.e_air_std, tcase.v_std, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [shf, lhf, ~] = turbulent_heat_flux(t_surf, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             % In unstable conditions with T_surf > T_air, sensible heat flows AWAY from surface (-SHF)
             tcase.verifyTrue(shf < 0, 'SHF should be negative (upward) for cold air over warm surface');
@@ -68,9 +78,8 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
             % T_surface < 273.15 -> Ice -> Sublimation (L = LS)
             t_surf = 260; 
             
-            [~, ~, l_out] = turbulent_heat_flux(tcase.t_air_std, t_surf, tcase.p_air_std, ...
-                tcase.e_air_std, tcase.v_std, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [~, ~, l_out] = turbulent_heat_flux(t_surf, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             % Verify correct latent heat constant
             tcase.verifyEqual(l_out, tcase.ls, 'AbsTol', 1e-1, 'Should use Latent Heat of Sublimation for ice');
@@ -80,9 +89,8 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
             % T_surface >= 273.15 -> Water -> Vaporization (L = LV)
             t_surf = 275; 
             
-            [~, ~, l_out] = turbulent_heat_flux(tcase.t_air_std, t_surf, tcase.p_air_std, ...
-                tcase.e_air_std, tcase.v_std, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [~, ~, l_out] = turbulent_heat_flux(t_surf, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             % Verify correct latent heat constant
             tcase.verifyEqual(l_out, tcase.lv, 'AbsTol', 1e-1, 'Should use Latent Heat of Vaporization for water');
@@ -90,22 +98,20 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
         
         function test_latent_heat_direction(tcase)
             % Test dry air over wet surface -> Evaporation -> Negative LHF (Heat loss)
-            e_air_dry = 0; % Very dry air
+            tcase.CF.e_air = 0; % Very dry air
             t_surf = 273.15; % Saturation pressure ~611 Pa
             
-            [~, lhf, ~] = turbulent_heat_flux(tcase.t_air_std, t_surf, tcase.p_air_std, ...
-                e_air_dry, tcase.v_std, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [~, lhf, ~] = turbulent_heat_flux(t_surf, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             tcase.verifyTrue(lhf < 0, 'Evaporation should result in negative latent heat flux (surface cooling)');
             
             % Test humid air over dry/cold surface -> Condensation -> Positive LHF (Heat gain)
-            e_air_humid = 1000; 
+            tcase.CF.e_air = 1000; 
             t_surf_cold = 250; % Saturation pressure very low
             
-            [~, lhf, ~] = turbulent_heat_flux(tcase.t_air_std, t_surf_cold, tcase.p_air_std, ...
-                e_air_humid, tcase.v_std, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [~, lhf, ~] = turbulent_heat_flux(t_surf_cold, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             tcase.verifyTrue(lhf > 0, 'Condensation/Deposition should result in positive latent heat flux');
         end
@@ -113,13 +119,11 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
         function test_zero_wind_stability(tcase)
             % Wind speed 0 usually causes singularities in Monin-Obukhov. 
             % Verify the function handles small/zero wind without crashing (NaN/Inf).
-            % Note: Calling code usually clamps V, but if passed directly:
             
-            v_zero = 0.0001; % Close to zero
+            tcase.CF.V = 0.0001; % Close to zero
             
-            [shf, lhf, ~] = turbulent_heat_flux(tcase.t_air_std, tcase.t_surf_std, tcase.p_air_std, ...
-                tcase.e_air_std, v_zero, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [shf, lhf, ~] = turbulent_heat_flux(tcase.t_surf_std, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             tcase.verifyFalse(isnan(shf) || isinf(shf), 'Fluxes should not be NaN/Inf at near-zero wind');
             tcase.verifyTrue(abs(shf) < 1.0, 'Fluxes should be negligible at zero wind');
@@ -130,15 +134,10 @@ classdef test_turbulent_heat_flux < matlab.unittest.TestCase
             % In neutral conditions, coefM should approach log(z/z0).
             
             t_iso = 270;
+            tcase.CF.T_air = t_iso;
             
-            % We cannot check the internal variables (coefM) directly as they are not returned 
-            % in the standard output list of the provided function signature 
-            % [shf, lhf, L]. 
-            % However, we can verify SHF is 0 when T_air == T_surf.
-            
-            [shf, ~, ~] = turbulent_heat_flux(t_iso, t_iso, tcase.p_air_std, ...
-                tcase.e_air_std, tcase.v_std, tcase.rho_air_std, tcase.vz, tcase.tz, ...
-                tcase.z0, tcase.zt, tcase.zq);
+            [shf, ~, ~] = turbulent_heat_flux(t_iso, tcase.rho_air_std, ...
+                tcase.z0, tcase.zt, tcase.zq, tcase.CF);
             
             tcase.verifyEqual(shf, 0, 'AbsTol', 1e-10, 'Sensible heat flux must be 0 if dT is 0');
         end

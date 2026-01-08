@@ -1,6 +1,6 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
-    accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, T_air, P, ...
-    V, density_ice, T_mean, column_dzmin, P_mean, V_mean, albedo_snow, albedo_method, new_snow_method)
+    accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ...
+    ClimateForcingStep, ModelParam)
 
 % accumulation adds precipitation and deposition to the model grid.
 %
@@ -35,79 +35,79 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
 T_tolerance    = 1e-10;
 d_tolerance    = 1e-11;
 gdn_tolerance  = 1e-10;
-Ptol   = 1e-6;
+P_tolerance    = 1e-6;
 
 % Specify constants:
-CtoK   = 273.15; % Kelvin to Celsius conversion
-dSnow  = 150;    % density of snow [kg m-3]
-reNew  = 0.05;   % new snow grain size [mm]
-gdnNew = 1.0;    % new snow dendricity
-gspNew = 0.5;    % new snow sphericity
-Ra     = 0;      % rainfall [mm w.e. or kg m^-3]
+CtoK              = 273.15; % Kelvin to Celsius conversion
+re_new_snow       = 0.05;   % new snow grain size [mm]
+gdn_new_snow      = 1.0;    % new snow dendricity
+gsp_new_snow      = 0.5;    % new snow sphericity
+Ra                = 0;      % rainfall [mm w.e. or kg m^-3]
 
 % Density of fresh snow [kg m-3]
-switch (new_snow_method)
-    case 0 % Default value defined above
+switch ModelParam.new_snow_method
+    case "150kgm2" % Default value defined above
+        density_new_snow  = 150;    % density of snow [kg m-3]
 
-    case 1 % Density of Antarctica snow
-        dSnow = 350.0;
-        %dSnow = 360.0; %FirnMICE Lundin et al., 2017
+    case "350kgm2" % Density of Antarctica snow
+        density_new_snow = 350.0;
+        %density_new_snow = 360.0; %FirnMICE Lundin et al., 2017
 
-    case 2 % Density of Greenland snow, Fausto et al., 2018
-        dSnow = 315.0;
+    case "Fausto" % Density of Greenland snow, Fausto et al., 2018
+        density_new_snow = 315.0;
 
         %From Vionnet et al., 2012 (Crocus)
-        gdnNew = min(max(1.29 - 0.17*V,0.20),1.0);
-        gspNew = min(max(0.08*V + 0.38,0.5),0.9);
-        reNew  = max(1e-1*(gdnNew/.99+(1.0-1.0*gdnNew/.99).*(gspNew/.99*3.0+(1.0-gspNew/.99)*4.0))/2.0,gdn_tolerance );
+        gdn_new_snow = min(max(1.29 - 0.17*ClimateForcingStep.V,0.20),1.0);
+        gsp_new_snow = min(max(0.08*ClimateForcingStep.V + 0.38,0.5),0.9);
+        re_new_snow  = max(1e-1*(gdn_new_snow/.99+(1.0-1.0*gdn_new_snow/.99).*(gsp_new_snow/.99*3.0+(1.0-gsp_new_snow/.99)*4.0))/2.0,gdn_tolerance );
 
-    case 3 %Surface snow accumulation density from Kaspers et al., 2004, Antarctica
-        %dSnow = alpha1 + beta1*T + delta1*P_mean + epsilon1*W
+    case "Kaspers" %Surface snow accumulation density from Kaspers et al., 2004, Antarctica
+        %density_new_snow = alpha1 + beta1*T + delta1*ClimateForcingStep.P_mean + epsilon1*W
         %     7.36x10-2  1.06x10-3  6.69x10-2  4.77x10-3
-        dSnow=(7.36e-2 + 1.06e-3*min(T_mean,CtoK-T_tolerance ) + 6.69e-2*P_mean/1000. + 4.77e-3*V_mean)*1000.;
+        density_new_snow=(7.36e-2 + 1.06e-3*min(ClimateForcingStep.T_air_mean,CtoK-T_tolerance ) + 6.69e-2*ClimateForcingStep.P_mean/1000. + 4.77e-3*ClimateForcingStep.V_mean)*1000.;
 
-    case 4 % Kuipers Munneke and others (2015), Greenland
-        dSnow = 481.0 + 4.834*(T_mean-CtoK);
+    case "KuipersMunneke" % Kuipers Munneke and others (2015), Greenland
+        density_new_snow = 481.0 + 4.834*(ClimateForcingStep.T_air_mean-CtoK);
 end
 
 mInit = d .* dz;
 
-if P > 0+Ptol
+if ClimateForcingStep.P > 0+P_tolerance
     % determine initial mass
 
     % if snow
-    if T_air <= CtoK+T_tolerance 
+    if ClimateForcingStep.T_air <= CtoK+T_tolerance 
 
-        z_snow = P/dSnow;               % depth of snow
-        dfall  = gdnNew;
-        sfall  = gspNew;
-        refall = reNew;
+        z_snow = ClimateForcingStep.P/density_new_snow;               % depth of snow
+        dfall  = gdn_new_snow;
+        sfall  = gsp_new_snow;
+        refall = re_new_snow;
 
         % if snow depth is greater than specified min dz, new cell created
-        if z_snow > column_dzmin+d_tolerance 
-            T     = [ T_air;     T];    % new cell T
-            dz    = [z_snow;    dz];    % new cell dz
-            d     = [ dSnow;     d];    % new cell d
-            W     = [     0;     W];    % new cell W
-            a     = [albedo_snow;     a];    % new cell a
-            a_diffuse = [albedo_snow; a_diffuse];    % new cell a_diffuse
-            re    = [refall;    re];    % new cell grain size
-            gdn   = [ dfall;   gdn];    % new cell grain dendricity
-            gsp   = [ sfall;   gsp];    % new cell grain sphericity
+        if z_snow > ModelParam.column_dzmin+d_tolerance 
+            T         = [ ClimateForcingStep.T_air;     T];    % new cell T
+            dz        = [z_snow;    dz];    % new cell dz
+            d         = [ density_new_snow;     d];    % new cell d
+            W         = [     0;     W];    % new cell W
+            a         = [ModelParam.albedo_snow;     a];    % new cell a
+            a_diffuse = [ModelParam.albedo_snow; a_diffuse];    % new cell a_diffuse
+            re        = [refall;    re];    % new cell grain size
+            gdn       = [ dfall;   gdn];    % new cell grain dendricity
+            gsp       = [ sfall;   gsp];    % new cell grain sphericity
 
             % if snow depth is less than specified minimum dz snow
         else
-            mass  = mInit(1) + P;       % grid cell adjust mass
-            dz(1) = dz(1) + P/dSnow;    % adjust grid cell depth
+            mass  = mInit(1) + ClimateForcingStep.P;       % grid cell adjust mass
+            dz(1) = dz(1) + ClimateForcingStep.P/density_new_snow;    % adjust grid cell depth
             d(1)  = mass / dz(1);       % adjust grid cell density
 
             % adjust variables as a linearly weighted function of mass
-            % adjust temperature (assume P is same temp as air)
-            T(1) = (T_air * P + T(1) * mInit(1))/mass;
+            % adjust temperature (assume ClimateForcingStep.P is same temp as air)
+            T(1) = (ClimateForcingStep.T_air * ClimateForcingStep.P + T(1) * mInit(1))/mass;
 
             % adjust a, re, gdn & gsp
-            if albedo_method>0
-                a(1) = (albedo_snow * P + a(1) * mInit(1))/mass;
+            if ModelParam.albedo_method ~= "150kgm2"
+                a(1) = (ModelParam.albedo_snow * ClimateForcingStep.P + a(1) * mInit(1))/mass;
             end
 
             gdn(1) = dfall;
@@ -127,28 +127,28 @@ if P > 0+Ptol
         CI = 2102;      % specific heat capacity of snow/ice (J kg-1 k-1)
 
         % grid cell adjust mass
-        mass = mInit(1) + P;
+        mass = mInit(1) + ClimateForcingStep.P;
 
         % adjust temperature
         % liquid: must account for latent heat of fusion
-        T(1) = (P *(T_air + LF/CI) + T(1) * mInit(1)) / mass;
+        T(1) = (ClimateForcingStep.P *(ClimateForcingStep.T_air + LF/CI) + T(1) * mInit(1)) / mass;
 
         % adjust grid cell density
         d(1) = mass / dz(1);
 
-        % if d > the density of ice, d = density_ice
-        if d(1) > density_ice-d_tolerance 
-            d(1)  = density_ice;          % adjust d
-            dz(1) = mass / d(1);   % dz is adjusted to conserve mass
+        % if d > the density of ice, d = ModelParam.density_ice
+        if d(1) > ModelParam.density_ice-d_tolerance 
+           d(1)  = ModelParam.density_ice;          % adjust d
+           dz(1) = mass / d(1);   % dz is adjusted to conserve mass
         end
 
-        Ra = P;
+        Ra = ClimateForcingStep.P;
     end
 
     %% check for conservation of mass
 
-    mass = sum(d .* dz);
-    mass_diff = mass - sum(mInit) - P;
+    mass      = sum(d .* dz);
+    mass_diff = mass - sum(mInit) - ClimateForcingStep.P;
     mass_diff = round(mass_diff * 100)/100;
 
     if mass_diff > 0
