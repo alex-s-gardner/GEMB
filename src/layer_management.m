@@ -24,6 +24,7 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
 %  EI                      : J m^-2       Initial energy of snow/ice.
 %  EW                      : J m^-2       Initial energy of water.
 %  ModelParam.column_dzmin : m            Minimum allowable grid spacing.
+%  ModelParam.column_dzmax : m            Maximum allowable grid spacing.
 %  ModelParam.column_zmax  : m            Maximum depth of the total column.
 %  ModelParam.column_zmin  : m            Minimum depth of the total column.
 %  re                      : mm           Grain size
