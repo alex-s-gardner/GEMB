@@ -5,7 +5,7 @@
 %  Version: 2.0
 %  Author : Alex S. Gardner, NASA Jet Propulsion Laboratory
 %  Author : Nicole Schlegel, NOAA
-%  Author : Chad A. Greene, NASA Jet Propulsion Laboratory
+%  Author : Chad A. Greene , NASA Jet Propulsion Laboratory
 %  Date   : 2026
 %
 %--------------------------------------------------------------------------
