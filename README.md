@@ -6,8 +6,7 @@
 
 The Glacier Energy and Mass Balance (GEMB, the "B" is silent) model is a comprehensive one-dimensional physical model designed to simulate the surface energy balance and vertical firn evolution of glaciers and ice sheets. It couples atmospheric forcing with subsurface thermodynamics and densification physics to resolve the evolution of temperature, density, water content, and grain properties over time.
 
-GEMB is a column model (no horizontal communication) of intermediate complexity, prioritizing computational efficiency to accommodate the multi-millennial spin-ups required for initializing deep firn columns. It is widely used for uncertainty quantification and model exploration in cryosphere research.
-
+GEMB is a column model (no horizontal communication) of intermediate complexity, prioritizing computational efficiency to accommodate the multi-millennial spin-ups required for initializing deep firn columns. It is widely used for uncertainty quantification and model exploration in cryosphere research. A complete description of GEMB can be found in [*Gardner et al*., 2023](https://doi.org/10.5194/gmd-16-2277-2023).
 
 ## Key Capabilities
 
@@ -21,13 +20,12 @@ GEMB simulates a wide range of physical processes critical to glacier health:
 * **Grid Management:** Utilizes a dynamic Lagrangian-style vertical grid that evolves with accumulation and ablation, automatically merging and splitting layers to maintain numerical stability.
 
 
-
 ## Model Configuration
 
 The model is highly configurable via the `model_initialize_parameters` function. Key configuration categories include:
 
 1.  **Densification Physics:**
-    * Options include **"HerronLangway"** (empirical), **"Anthern"** (semi-empirical), and **"Ligtenberg"** (semi-empirical).
+    * Options include **"HerronLangway"** (empirical), **"Arthern"** (semi-empirical), and **"Ligtenberg"** (semi-empirical).
     * Calibration coefficients for the Ligtenberg model can be specified for Antarctica or Greenland (e.g., `"Gre_RACMO_GS_SW0"`).
 
 2.  **Grid Geometry:**
@@ -90,8 +88,8 @@ verbose = true;
 OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ...
                ClimateForcing, ModelParam, verbose);
 ```
-Visualizing Results
-Once the model run is complete, the results are stored in the OutData structure. You can visualize the evolution of the firn column using standard MATLAB plotting commands.
+### Visualizing Results
+Once the model run is complete, the results are stored in the `OutData` structure. You can visualize the evolution of the firn column using standard MATLAB plotting commands.
 
 ```matlab
 % Example: Plotting Surface Mass Balance Components
@@ -115,11 +113,11 @@ ylabel('Depth (m)');
 xlabel('Time');
 ```
 
-Citation
+## Citation
 If you use the GEMB software in your research, please cite the following paper:
 
-Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, [https://doi.org/10.5194/gmd-16-2277-2023](https://doi.org/10.5194/gmd-16-2277-2023), 2023.
 
 If you use GEMB model outputs, please cite:
 
-Schlegel, N.-J., & Gardner, A. (2024). Output from the Glacier Energy and Mass Balance (GEMB v1.0) forced with 3-hourly ERA5 fields and gridded to 10km, Greenland and Antarctica 1979-2023 (1.3-5day) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.10806250.
+Schlegel, N.-J., & Gardner, A. (2025). Output from the Glacier Energy and Mass Balance (GEMB v1.0) forced with 3-hourly ERA5 fields and gridded to 10km, Greenland and Antarctica 1979-2024 (1.4) [Data set]. Zenodo. [https://doi.org/10.5281/zenodo.14714746](https://doi.org/10.5281/zenodo.14714746)
