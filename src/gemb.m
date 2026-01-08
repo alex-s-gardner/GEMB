@@ -12,18 +12,49 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 %
 %% Syntax
 %
-%
+% OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, verbose)
 %
 %% Description
 %
+% GEMB is the primary driver function for the Glacier Energy and Mass Balance
+% model. It integrates a 1-D column of snow/firn/ice forward in time given
+% initial state vectors and meteorological forcing.
 %
+% The function performs the following steps:
+% 1. Initializes outputs and calculates time steps from the forcing data.
+% 2. Runs a spin-up loop (defined by ModelParam.n_spinup_cycles) to equate
+%    the model state with the climate forcing.
+% 3. Iterates through each time step in the climate forcing data.
+% 4. Calls the physics engine (gemb_core) to calculate energy fluxes,
+%    melt, percolation, and layer updates.
+% 5. Checks for mass conservation and boundary condition stability.
+% 6. Aggregates and returns the simulation results.
 %
 %% Inputs
 %
-%
+% T              : Vector of initial layer temperatures [K].
+% dz             : Vector of initial layer thicknesses [m].
+% d              : Vector of initial layer densities [kg m^-3].
+% W              : Vector of initial layer water content [kg m^-2].
+% re             : Vector of initial grain sizes (effective radius) [m].
+% gdn            : Vector of initial grain dendricity (0-1).
+% gsp            : Vector of initial grain sphericity (0-1).
+% a              : Initial surface albedo (0-1).
+% a_diffuse      : Initial diffuse albedo accumulator.
+% ClimateForcing : Structure containing time-series meteorological data.
+%                  Must include 'daten' (dates), 'dlw' (downward longwave),
+%                  'P' (precipitation), and other standard forcing fields.
+% ModelParam     : Structure containing model configuration parameters.
+%                  Must include 'run_prefix' and 'n_spinup_cycles'.
+% verbose        : Logical flag or integer to control console output detail.
 %
 %% Outputs
 %
+% OutData        : Structure containing the model results. The specific
+%                  fields are determined by 'model_initialize_output' and
+%                  populated by 'model_output_populate'. Typically includes
+%                  time series of mass balance, surface fluxes, and
+%                  subsurface profiles.
 %
 %% Documentation
 %
@@ -58,8 +89,21 @@ T_bottom = T(end);
 column_length = length(dz);
 [output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam);
 
+%% Initialize Progress Bar Variables
+total_cycles = ModelParam.n_spinup_cycles + 1;
+steps_per_cycle = length(daten);
+total_steps = total_cycles * steps_per_cycle;
+global_step_count = 0;
+
+% Create waitbar if running in a graphical environment
+if usejava('desktop')
+    h_bar = waitbar(0, 'Initializing GEMB Simulation...', 'Name', 'GEMB Progress');
+else
+    h_bar = [];
+end
+
 %% Start spinup loop
-for simulation_iteration = 1:(ModelParam.n_spinup_cycles + 1)
+for simulation_iteration = 1:total_cycles
 
     % Determine initial mass [kg]:
     M_initial = sum (dz .* d) + sum(W);
@@ -134,6 +178,22 @@ for simulation_iteration = 1:(ModelParam.n_spinup_cycles + 1)
     
             end
         end
+
+        % Update Progress Bar
+        global_step_count = global_step_count + 1;
+        if ~isempty(h_bar) && (mod(global_step_count, 5) == 0 || global_step_count == total_steps)
+             % Calculate percentage
+             pct_complete = global_step_count / total_steps;
+             
+             % Create message: Date | Cycle X of Y
+             msg = sprintf('Simulating: %s | Cycle: %d / %d', ...
+                 datestr(daten(date_ind), 'dd-mmm-yyyy'), ...
+                 simulation_iteration, ...
+                 total_cycles);
+             
+             % Update the bar
+             waitbar(pct_complete, h_bar, msg);
+        end
     end
 
     % display cycle completed and time to screen
@@ -142,4 +202,10 @@ for simulation_iteration = 1:(ModelParam.n_spinup_cycles + 1)
         ' avg melt: ' num2str(round(M_cumulative/(daten(end)-daten(1))*365.25)) ...
         ' kg/m2/yr']);
 end
+
+% Close the progress bar
+if ~isempty(h_bar) && ishandle(h_bar)
+    close(h_bar);
+end
+
 end
