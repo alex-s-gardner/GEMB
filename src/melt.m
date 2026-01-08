@@ -86,6 +86,7 @@ CtoK        = 273.15;   % Celsius to Kelvin conversion
 CI          = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
 LF          = 0.3345E6; % latent heat of fusion (J kg-1)
 density_phc = 830.0;    % pore hole close off density [kg m-3]
+ice_layer_dzmin = 0.1; % if the density is greater than density_phc and the layer thickness exceeds ice_layer_dzmin [m], then all meltwater percolating down is counted as runoff
 
 m         = length(T);
 W_delta   = zeros(m,1);
@@ -216,6 +217,9 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
             for l=i:m
                 if d(l)>=density_phc-d_tolerance 
                     ice_depth = ice_depth+dz(l);
+                    if ice_depth > ice_layer_dzmin + d_tolerance % OPTIMIZATION: Early break
+                        break;
+                    end
                 else
                     break
                 end
@@ -227,7 +231,7 @@ if (sum(T_excess) > T_tolerance) || (sum(W_excess) > W_tolerance)
             break
 
             % if reaches impermeable ice layer all liquid water runs off (R)
-        elseif (d(i) >= (density_ice-d_tolerance))  || ((d(i) >= density_phc-d_tolerance)  && ice_depth>0.1+d_tolerance)  % density_phc = pore hole close off [kg m-3]
+        elseif (d(i) >= (density_ice-d_tolerance))  || ((d(i) >= density_phc-d_tolerance)  && (ice_depth > ice_layer_dzmin+d_tolerance))  % density_phc = pore hole close off [kg m-3]
             % disp('ICE LAYER')
             % no water freezes in this cell
             % no water percolates to lower cell
