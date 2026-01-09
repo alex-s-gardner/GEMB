@@ -137,15 +137,15 @@ switch run_id
             model_initialize_parameters();
 
         % [2] Load in climate data 
-        %     CF = Climate Forcing
-        %     LP = Location Specifc Parameters
-        % [if data is not modified then it can be passed as an stucture]
+        %     CF              = Climate Forcing
+        %     time_step_hours = temporal resolution of simulated climate forcing [optional] 
+
+        time_step_hours = 3;
+
         ClimateForcing = ...
-            simulate_climate_forcing(run_id);
+            simulate_climate_forcing(run_id, time_step_hours);
 
         % [3] Initialize grid -or- load in data to restart a simulation
-        % [these variables are modified within the model and should not be
-        % bundled in a stucture]
         [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = ...
             model_initialize_column(ModelParam, ClimateForcing);
         

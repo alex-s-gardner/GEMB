@@ -70,7 +70,7 @@ function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
         location_parameters.Tz = 2.0 ; % temperature observation height above surface [m]
         location_parameters.T_air_mean = 259.4 ; % average annual temerature [K]
         location_parameters.P_mean = 1177.3 ; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
-        location_parameters.time_step = 0.0001 ; % [fraction of a year]
+        location_parameters.time_step = 1/(365.25*24) ; % [fraction of a year]
         location_parameters.rand_seed = 42 ; % [seed for random number generator]
          
         %% screen level air temperature [K]

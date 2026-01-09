@@ -1,4 +1,4 @@
-function [ClimateForcing] = simulate_climate_forcing(set_id)
+function [ClimateForcing] = simulate_climate_forcing(set_id, time_step_hours)
 %
 % simulate_climate_forcing Generates synthetic climate forcing data for GEMB
 % simulations based on predefined parameter sets.
@@ -6,6 +6,7 @@ function [ClimateForcing] = simulate_climate_forcing(set_id)
 %% Syntax
 %
 % [ClimateForcing] = simulate_climate_forcing(set_id)
+% [ClimateForcing] = simulate_climate_forcing(set_id, time_step_hours)
 %
 %% Description
 %
@@ -57,10 +58,16 @@ function [ClimateForcing] = simulate_climate_forcing(set_id)
     % load climate simulation parameter set
     [location_parameters, coeffs] = simulation_parameter_sets(set_id);
     
+    if nargin == 1
+        time_step = location_parameters.time_step;
+    else
+        time_step = time_step_hours / (365.25*24);
+    end
     % initialize times and random seed
-    dec_year = location_parameters.start_date:location_parameters.time_step:location_parameters.end_date+1;
+    dec_year = location_parameters.start_date:time_step:location_parameters.end_date+1;
     dec_year = dec_year(:);
     daten = decyear2datenum(dec_year);
+    %% 
     rng(location_parameters.rand_seed);
     
     % simulate downward shortave radiation
