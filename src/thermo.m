@@ -189,8 +189,6 @@ n = round(ClimateForcingStep.dt * 10000);
 f = 1:sqrt(n); f = f(rem(n, f) == 0); f = unique([f, n./f]) / 10000; f = sort(f); % Ensure ascending order
 dt = f(find(f <= dt_target, 1, 'last'));
 
-disp(dt)
-
 if isempty(dt)
     dt = f(1); % Fallback to smallest possible step
 end
