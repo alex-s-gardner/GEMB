@@ -94,6 +94,7 @@ total_cycles = ModelParam.n_spinup_cycles + 1;
 steps_per_cycle = length(daten);
 total_steps = total_cycles * steps_per_cycle;
 global_step_count = 0;
+waitbar_step_mod = max(round(total_steps/100),1);
 
 % Create waitbar if running in a graphical environment
 if usejava('desktop')
@@ -181,7 +182,7 @@ for simulation_iteration = 1:total_cycles
 
         % Update Progress Bar
         global_step_count = global_step_count + 1;
-        if ~isempty(h_bar) && (mod(global_step_count, 5) == 0 || global_step_count == total_steps)
+        if ~isempty(h_bar) && (mod(global_step_count, waitbar_step_mod) == 0 || global_step_count == total_steps)
              % Calculate percentage
              pct_complete = global_step_count / total_steps;
              
