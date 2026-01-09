@@ -184,8 +184,12 @@ if rem(ClimateForcingStep.dt,1) ~= 0
     ClimateForcingStep.dt = round(ClimateForcingStep.dt);
 end
 
-f = (divisors(ClimateForcingStep.dt * 10000)/10000); % ClimateForcingStep.dt is in seconds
+% find the maximum dt that is <= dt_target  that goes evenly into ClimateForcingStep.dt
+n = round(ClimateForcingStep.dt * 10000);
+f = 1:sqrt(n); f = f(rem(n, f) == 0); f = unique([f, n./f]) / 10000; f = sort(f); % Ensure ascending order
 dt = f(find(f <= dt_target, 1, 'last'));
+
+disp(dt)
 
 if isempty(dt)
     dt = f(1); % Fallback to smallest possible step
