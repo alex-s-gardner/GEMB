@@ -11,7 +11,7 @@ function [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
 %       4-"Li and Zwally": DO NOT USE: emperical model of Li and Zwally (2004)
 %       5-"Helsen": DO NOT USE: modified emperical model (4) by Helsen et al. (2008)
 %       6-"Ligtenberg": Antarctica semi-emperical model of Ligtenberg et al. (2011)
-%       7-"KuipersMunneke": Greenland semi-emperical model of Kuipers Munneke et al. (2015)
+%
 %   d                           = initial snow/firn density [kg m-3]
 %   T                           = temperature [K]
 %   dz                          = grid cell size [m]
