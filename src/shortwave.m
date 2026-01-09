@@ -50,10 +50,6 @@ function swf = shortwave(dz, d, re, a_surface, a_diffuse_surface, ...
 % % Example call assuming initialized variables:
 % sw_flux = shortwave(dz, density, grain_radius, 0.85, 0.85, forcing, params);
 % 
-%% Documentation
-% 
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
-% 
 %% References 
 % This function uses formulations from the following references: 
 % 
@@ -66,11 +62,14 @@ function swf = shortwave(dz, d, re, a_surface, a_diffuse_surface, ...
 % the ETH-Camp location (West Greenland, 1155 m a.s.l.), Global Planet. 
 % Change, 9, 91–114, 1994. 
 %
-% If you use GEMB, please cite the following: 
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
 % 
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
-% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 %% SHORTWAVE FUNCTION
 d_tolerance  = 1e-11;

@@ -64,16 +64,14 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
 %  M_added      : kg m^-2      Mass added to (positive) or removed from (negative) the column bottom.
 %  E_added      : J m^-2       Energy added to (positive) or removed from (negative) the column bottom.
 %
-%% Documentation
-%
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
-%
-%% References
-% If you use GEMB, please cite the following:
-%
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
-% Model Dev., 16, 2277-2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 d_tolerance  = 1e-11; % tolerance for numerical comparison.
 

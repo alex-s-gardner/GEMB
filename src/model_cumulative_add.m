@@ -46,55 +46,53 @@ function OutCum = model_cumulative_add(M, R, F, EC, Ra, M_added, ...
 %
 %  OutCum           : struct       Updated cumulative structure with incremented .count.
 %
-%% Documentation
-%
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
-%
-%% References
-% If you use GEMB, please cite the following:
-%
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
-% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-    % 1. Calculate derived variables for output
-    d1    = d(1);
-    a1    = a(1);
-    re1   = re(1);
-    Q_net = sw_net + lw_net + shf + lhf;
-    
-    % Firn Air Content (FAC) [m]
-    % Defined as the integrated column thickness of air equivalent.
-    % FAC = sum(dz * (rho_ice - rho) / rho_ice) for rho < rho_ice
-    % Note: The original implementation divided by 1000 instead of ModelParam.density_ice?
-    % Preserving original logic: sum(dz.*(ModelParam.density_ice - min(d,ModelParam.density_ice)))/1000;
-    FAC = sum(dz .* (ModelParam.density_ice - min(d, ModelParam.density_ice))) / 1000;
+% 1. Calculate derived variables for output
+d1    = d(1);
+a1    = a(1);
+re1   = re(1);
+Q_net = sw_net + lw_net + shf + lhf;
 
-    % 2. Explicitly accumulate values
-    % Using explicit assignment is significantly faster than dynamic field access
-    OutCum.R               = OutCum.R + R;
-    OutCum.M               = OutCum.M + M;
-    OutCum.F               = OutCum.F + F;
-    OutCum.EC              = OutCum.EC + EC;
-    OutCum.Ra              = OutCum.Ra + Ra;
-    OutCum.M_added         = OutCum.M_added + M_added;
-    
-    OutCum.sw_net          = OutCum.sw_net + sw_net;
-    OutCum.lw_net          = OutCum.lw_net + lw_net;
-    OutCum.shf             = OutCum.shf + shf;
-    OutCum.lhf             = OutCum.lhf + lhf;
-    OutCum.ulw             = OutCum.ulw + ulw;
-    OutCum.Q_net           = OutCum.Q_net + Q_net;
-    
-    OutCum.a1              = OutCum.a1 + a1;
-    OutCum.re1             = OutCum.re1 + re1;
-    OutCum.d1              = OutCum.d1 + d1;
-    
-    OutCum.compaction_dens = OutCum.compaction_dens + compaction_dens;
-    OutCum.compaction_melt = OutCum.compaction_melt + compaction_melt;
-    OutCum.FAC             = OutCum.FAC + FAC;
+% Firn Air Content (FAC) [m]
+% Defined as the integrated column thickness of air equivalent.
+% FAC = sum(dz * (rho_ice - rho) / rho_ice) for rho < rho_ice
+% Note: The original implementation divided by 1000 instead of ModelParam.density_ice?
+% Preserving original logic: sum(dz.*(ModelParam.density_ice - min(d,ModelParam.density_ice)))/1000;
+FAC = sum(dz .* (ModelParam.density_ice - min(d, ModelParam.density_ice))) / 1000;
 
-    % Increment the counter
-    OutCum.count = OutCum.count + 1;
+% 2. Explicitly accumulate values
+% Using explicit assignment is significantly faster than dynamic field access
+OutCum.R               = OutCum.R + R;
+OutCum.M               = OutCum.M + M;
+OutCum.F               = OutCum.F + F;
+OutCum.EC              = OutCum.EC + EC;
+OutCum.Ra              = OutCum.Ra + Ra;
+OutCum.M_added         = OutCum.M_added + M_added;
+
+OutCum.sw_net          = OutCum.sw_net + sw_net;
+OutCum.lw_net          = OutCum.lw_net + lw_net;
+OutCum.shf             = OutCum.shf + shf;
+OutCum.lhf             = OutCum.lhf + lhf;
+OutCum.ulw             = OutCum.ulw + ulw;
+OutCum.Q_net           = OutCum.Q_net + Q_net;
+
+OutCum.a1              = OutCum.a1 + a1;
+OutCum.re1             = OutCum.re1 + re1;
+OutCum.d1              = OutCum.d1 + d1;
+
+OutCum.compaction_dens = OutCum.compaction_dens + compaction_dens;
+OutCum.compaction_melt = OutCum.compaction_melt + compaction_melt;
+OutCum.FAC             = OutCum.FAC + FAC;
+
+% Increment the counter
+OutCum.count = OutCum.count + 1;
 
 end

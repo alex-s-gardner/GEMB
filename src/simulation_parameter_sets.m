@@ -44,16 +44,14 @@ function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
 %    .V                : struct       Wind speed coefficients.
 %    .P                : struct       Precipitation coefficients.
 %
-%% Documentation
-%
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
-%
-%% References
-% If you use GEMB, please cite the following:
-%
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
-% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
     % list valid sets to give user a hint
     valid_sets = ["test_1", ];

@@ -41,10 +41,6 @@ function [re, gdn, gsp]  = grain_growth(T, dz, d, W, re, gdn, gsp, ClimateForcin
 % * re  : Updated effective grain radius [mm] (mx1 vector).
 % * gdn : Updated grain dendricity [0 to 1] (mx1 vector).
 % * gsp : Updated grain sphericity [0 to 1] (mx1 vector).
-%
-%% Documentation
-% 
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
 % 
 %% References
 % Formulations in this function are from the following: 
@@ -62,11 +58,14 @@ function [re, gdn, gsp]  = grain_growth(T, dz, d, W, re, gdn, gsp, ClimateForcin
 % Brun, E., 1989: Investigation on wet-snow metamorphism in respect of
 % liquid-water content. Annals of Glaciology, 13, 22-26.
 %
-% If you use GEMB, please cite the following: 
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
 % 
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
-% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 T_tolerance    = 1e-10;
 gdn_tolerance  = 1e-10;

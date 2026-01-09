@@ -13,6 +13,15 @@ function coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
 %   coeffs   - Structure compatible with simulate_air_temperature.
 %              Contains: .mean_offset, .lat_scale, .daily_amp_scale,
 %                        .weather_sigma_scale, .weather_corr
+%
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
     %% 1. Input Sanitization
     dec_year = dec_year(:);
