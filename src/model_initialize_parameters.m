@@ -117,9 +117,11 @@ function options = model_initialize_parameters(options)
         % Specify densification coefficients for Ligtenberg model. These 
         % coefficients have been calibrated to match observations (default is "Gre_RACMO_GS_SW0"):
         % ------------------------ Antarctic -------------------------
+        %   "Ant_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0
         %   "Ant_ERA5v4_Paolo23" : ERA5 v4 (Paolo et al., 2023)
         %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BruneLeFebre", sw_absorption_method=1
-        %   "Ant_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
+        %   "Ant_RACMO_GS_SW0"   : RACMO callibration, default (Gardner et al., 2023)
+        %   "Ant_Ligtenberg"     : Ligtenberg and others (2011), Antarctica
         % ------------------------- Greenland ------------------------
         %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0, firn & bare ice
         %   "Gre_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
