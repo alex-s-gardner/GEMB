@@ -1,10 +1,12 @@
 function M01 = densification_lookup_M01(densification_coeffs_M01)
 switch densification_coeffs_M01
     % ------------------------ Antarctic -------------------------
-    % ERA5 v4 (Paolo et al., 2023)
-    case "Ant_ERA5v4_Paolo23"
+    % ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0
+    case "Ant_ERA5_GS_SW0"
         M01 = [[1.5131, 0.1317, 0.1317, 0.2158]; [1.8422, 0.1688, 2.4979, 0.3225]];
-
+    % ERA5 v4 (Paolo et al., 2023)
+    case "Ant_ERA5v4_Paolo23"    
+        M01 = [2.84, 0.32, 3.10, 0.37];
     % ERA5 new albedo_method="BruneLeFebre", sw_absorption_method=1
     case "Ant_ERA5_BF_SW1"
         M01 = [2.2191, 0.2301, 2.2917, 0.2710]; 
@@ -12,6 +14,10 @@ switch densification_coeffs_M01
     % RACMO callibration, default (Gardner et al., 2023)
     case "Ant_RACMO_GS_SW0"
         M01 = [1.6383, 0.1691, 1.9991, 0.2414];
+
+    %  Ligtenberg and others (2011), Antarctica
+    case "Ant_Ligtenberg"
+        M01 = [1.435, 0.151, 2.366, 0.293];
 
     % ------------------------- Greenland ------------------------
     % ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0, bare ice
