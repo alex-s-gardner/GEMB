@@ -73,7 +73,7 @@ gdn_tolerance  = 1e-10;
 W_tolerance    = 1e-13;
 
 % only when ModelParam.albedo_method = "GardnerSharp" or "BruneLeFebre" do we run grainGrowth: 
-if ~ismember(ModelParam.albedo_method,["GardnerSharp","BruneLeFebre"])
+if ~(strcmp(ModelParam.albedo_method, 'GardnerSharp') || strcmp(ModelParam.albedo_method, 'BruneLeFebre'))
 	%come out as we came in:
 	return;
 end
