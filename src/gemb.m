@@ -82,6 +82,9 @@ end
 EC     = 0;                        % surface evaporation (-) condensation (+) [kg m-2]    
 M_surf = 0;                        % initialize surface melt for albedo parameterization
 
+% pre calculate (this is a speed optimization for thermal)
+ModelParam.dt_divisors = fast_divisors(dt * 10000)/10000;
+
 % fixed lower temperature bounday condition - T is fixed
 T_bottom = T(end);
 
@@ -93,6 +96,7 @@ column_length = length(dz);
 total_cycles = ModelParam.n_spinup_cycles + 1;
 steps_per_cycle = length(daten);
 total_steps = total_cycles * steps_per_cycle;
+waitbar_step_mod = max(round(total_steps/100),1);
 global_step_count = 0;
 
 % Create waitbar if running in a graphical environment
@@ -182,7 +186,7 @@ for simulation_iteration = 1:total_cycles
 
         % Update Progress Bar
         global_step_count = global_step_count + 1;
-        if ~isempty(h_bar) && output_index(date_ind)
+        if ~isempty(h_bar) && (mod(global_step_count, waitbar_step_mod) == 0 || global_step_count == total_steps)
              % Calculate percentage
              pct_complete = global_step_count / total_steps;
              

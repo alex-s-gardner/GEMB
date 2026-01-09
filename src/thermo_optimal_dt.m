@@ -1,4 +1,4 @@
-function dt = thermo_optimal_dt(dz, d, CI, K, global_dt)
+function dt = thermo_optimal_dt(dz, d, CI, K, global_dt_or_dt_divisors)
     % determine minimum acceptable delta t (diffusion number > 1/2) [s]
     % 1. Calculate the theoretical limit for every single grid cell
     %    (Using 0.5 is the absolute limit; we usually aim lower for safety)
@@ -18,23 +18,16 @@ function dt = thermo_optimal_dt(dz, d, CI, K, global_dt)
     
     % 5. Fit this target into your input data frequency (global_dt)
     %    Find the largest divisor of global_dt that is <= dt_target  
+    if isscalar(global_dt_or_dt_divisors)
+        dt_divisors = fast_divisors(global_dt_or_dt_divisors * 10000)/10000; % ClimateForcingStep.dt is in seconds fastDivisors is a subfunction below. 
+    else
+        dt_divisors = global_dt_or_dt_divisors;
+    end
 
-    f = fast_divisors(global_dt * 10000)/10000; % ClimateForcingStep.dt is in seconds fastDivisors is a subfunction below. 
-    dt = f(find(f <= dt_target, 1, 'last'));
-
+    dt = dt_divisors(find(dt_divisors <= dt_target, 1, 'last'));
+    
     if isempty(dt)
         dt = f(1); % Fallback to smallest possible step
     end
 
-end
-
-
-function D = fast_divisors(N)
-
-    % Find divisors up to the square root
-    K = 1:ceil(sqrt(N));
-    D = K(rem(N,K)==0);
-
-    % Find corresponding divisors > sqrt(N) and combine
-    D = [D sort(N./D)];
 end

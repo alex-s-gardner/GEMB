@@ -158,7 +158,7 @@ dzU = [NaN    ; dz(1:m-1)];
 dzD = [dz(2:m); NaN];
 
 % find stable dt for thermodynamics loop 
-dt = thermo_optimal_dt(dz, d, CI, K, ClimateForcingStep.dt);
+dt = thermo_optimal_dt(dz, d, CI, K, ModelParam.dt_divisors);
 
 % determine mean (harmonic mean) of K/dz for u, d, & p
 Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
