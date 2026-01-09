@@ -27,7 +27,8 @@ function dt = thermo_optimal_dt(dz, d, CI, K, global_dt_or_dt_divisors)
     dt = dt_divisors(find(dt_divisors <= dt_target, 1, 'last'));
     
     if isempty(dt)
-        dt = f(1); % Fallback to smallest possible step
+        warning("thermo dt_target < all dt_divisors, setting thermo == to the smallest dt_divisors... this may make termo diffusion unstable")
+        dt = dt_divisors(1); % Fallback to smallest possible step
     end
 
 end
