@@ -87,7 +87,9 @@ C  = An * ClimateForcingStep.V;
 
 % Bulk Richardson Number (Ri)
 Ri = ((100000 / ClimateForcingStep.p_air)^0.286) * ...
-    (2.0 * g * (ClimateForcingStep.T_air - T_surface)) / (ClimateForcingStep.Tz*(ClimateForcingStep.T_air + T_surface)*(((ClimateForcingStep.V/ClimateForcingStep.Vz)^2.0)));
+    (2.0 * g * (ClimateForcingStep.T_air - T_surface)) / ...
+    (ClimateForcingStep.Tz * (ClimateForcingStep.T_air + T_surface) * ...
+    (((ClimateForcingStep.V/ClimateForcingStep.Vz)^2.0)));
 
 % Constants for Beljaars and Holtslag (1991)
 a1 = 1.0; b1 = 2.0 / 3.0; c1 = 5.0; d1 = 0.35;
@@ -95,7 +97,7 @@ PhiMz0 = 0.0; PhiHzT = 0.0; PhiHzQ = 0.0;
 
 if (Ri > 0.0 + T_tolerance ) % --- STABLE ---
     if (Ri < 0.2 - T_tolerance )
-        zL = Ri/(1.0 - 5.0*Ri);
+        zL = Ri / (1.0 - (5.0 * Ri));
     else
         zL = Ri;
     end

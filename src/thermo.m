@@ -180,10 +180,11 @@ end
 
 if rem(ClimateForcingStep.dt,1) ~= 0
     warning('rounding ClimateForcingStep.dt as it is not an exact integer: ClimateForcingStep.dt = %0.4f', ClimateForcingStep.dt)
+    %% 
     ClimateForcingStep.dt = round(ClimateForcingStep.dt);
 end
 
-f = divisors(ClimateForcingStep.dt * 10000) / 10000; % assuming ClimateForcingStep.dt is in seconds
+f = (divisors(ClimateForcingStep.dt * 10000)/10000); % ClimateForcingStep.dt is in seconds
 dt = f(find(f <= dt_target, 1, 'last'));
 
 if isempty(dt)

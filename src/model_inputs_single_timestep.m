@@ -1,7 +1,7 @@
 function [ClimateForcingStep] = ...
    model_inputs_single_timestep(index, dt, ClimateForcing, ModelParam)
         
-        ClimateForcingStep.dt      = dt;
+        ClimateForcingStep.dt      = dt;                              % time step in seconds
         ClimateForcingStep.T_air   = ClimateForcing.T_air0(index);    % screen level air temperature [K]   
         ClimateForcingStep.V       = ClimateForcing.V0(index);        % wind speed [m s-1]
         ClimateForcingStep.dlw     = ClimateForcing.dlw0(index);      % downward longwave radiation flux [W m-2]
