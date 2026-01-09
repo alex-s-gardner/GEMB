@@ -40,16 +40,6 @@ function y_sim = simulate_seasonal_daily_noise(dec_year, coeffs)
     % Generate white noise
     u = randn(n, 1) * white_noise_scale;
     
-    % Initialize autoregressive noise vector
-    noise = zeros(n, 1);
-    
-    % Stationary Initialization (First point from full distribution)
-    noise(1) = randn * sigma;
-    
-    % Apply AR(1) filter
-    % Filter: y(n) = u(n) + phi*y(n-1)
-    noise = filter(1, [1, -phi], u);
-    
     % Correct initialization transient if using 'filter' 
     % (Filter assumes 0 initial state, but we manually set noise(1))
     % Alternatively, simple loop for clarity (slower but robust for simulation):

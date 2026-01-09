@@ -44,9 +44,6 @@ function p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
     %    Correlation ~0.8 to 0.9 for daily data.
     alpha = 0.85; 
     
-    n = length(dec_year);
-    mslp_noise = zeros(n, 1);
-    
     % Interpolate noise to avoid "static" if user inputs sub-daily steps
     % (Similar logic to the temperature function)
     start_day = floor(min(dec_year) * 365.25);

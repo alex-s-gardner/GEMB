@@ -84,19 +84,16 @@ LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 
 % store initial mass [kg] and energy [J]
 M  = dz .* d;                  % grid cell mass [kg]
-EI = M .* T * CI;              % initial enegy of snow/ice
-EW = W .* (LF + CtoK * CI);    % initial enegy of water
 
-M0_total = sum(W) + sum(M);       % total mass [kg]
-E0_total = sum(EI) + sum(EW);     % total energy [J]
+if verbose
+    EI = M .* T * CI;              % initial enegy of snow/ice
+    EW = W .* (LF + CtoK * CI);    % initial enegy of water
+    M0_total = sum(W) + sum(M);       % total mass [kg]
+    E0_total = sum(EI) + sum(EW);     % total energy [J]
+end
 
 T_bottom = T(end);
 m        = length(T);
-
-% store initial mass [kg] and energy [J]
-M  = dz .* d;                  % grid cell mass [kg]
-EI = M .* T * CI;              % initial enegy of snow/ice
-EW = W .* (LF + CtoK * CI);    % initial enegy of water
 
 Z_cumulative = cumsum(dz);
 
@@ -168,8 +165,6 @@ re(delete_cell)                = [];
 gdn(delete_cell)               = [];
 gsp(delete_cell)               = [];
 a_diffuse(delete_cell)         = [];
-EI(delete_cell)                = [];
-EW(delete_cell)                = [];
 column_dzmax2(delete_cell)     = [];
 
 % Calculate *new* length of cells:
@@ -185,8 +180,6 @@ f = find(dz > (column_dzmax2 + d_tolerance));
 dz(f) = dz(f)/2;
 W(f)  = W(f)/2;
 M(f)  = M(f)/2;
-EI(f) = EI(f)/2;
-EW(f) = EW(f)/2;
 
 % Sort the indices of all the cells including the ones that will be duplicated:
 fs = sort([(1:m)';f]);
@@ -199,8 +192,6 @@ T         = T(fs);
 d         = d(fs);
 a         = a(fs);
 a_diffuse = a_diffuse(fs);
-EI        = EI(fs);
-EW        = EW(fs);
 re        = re(fs);
 gdn       = gdn(fs);
 gsp       = gsp(fs);
