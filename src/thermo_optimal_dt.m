@@ -19,11 +19,18 @@ function dt = thermo_optimal_dt(dz, d, CI, K, global_dt)
     % 5. Fit this target into your input data frequency (global_dt)
     %    Find the largest divisor of global_dt that is <= dt_target  
 
-    % find the maximum dt that is <= dt_target  that goes evenly into ClimateForcingStep.dt
-    n = round(global_dt * 10000);
-    f = 1:sqrt(n); 
-    f = f(rem(n, f) == 0); 
-    f = unique([f, n./f]) / 10000; 
-    f = sort(f); % Ensure ascending order
+    f = fast_divisors(global_dt * 10000)/10000; % ClimateForcingStep.dt is in seconds fastDivisors is a subfunction below. 
     dt = f(find(f <= dt_target, 1, 'last'));
+
+end
+
+
+function D = fast_divisors(N)
+
+    % Find divisors up to the square root
+    K = 1:ceil(sqrt(N));
+    D = K(rem(N,K)==0);
+
+    % Find corresponding divisors > sqrt(N) and combine
+    D = [D sort(N./D)];
 end
