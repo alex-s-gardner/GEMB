@@ -184,7 +184,9 @@ if rem(ClimateForcingStep.dt,1) ~= 0
     ClimateForcingStep.dt = round(ClimateForcingStep.dt);
 end
 
-f = (divisors(ClimateForcingStep.dt * 10000)/10000); % ClimateForcingStep.dt is in seconds
+%f = (divisors(ClimateForcingStep.dt * 10000)/10000); % ClimateForcingStep.dt is in seconds
+f = fastDivisors(ClimateForcingStep.dt * 10000)/10000; % ClimateForcingStep.dt is in seconds fastDivisors is a subfunction below. 
+
 dt = f(find(f <= dt_target, 1, 'last'));
 
 if isempty(dt)
@@ -343,4 +345,16 @@ for i = 1:dt:ClimateForcingStep.dt
             error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
     end
+end
+
+end
+
+function D = fastDivisors(N)
+
+    % Find divisors up to the square root
+    K = 1:ceil(sqrt(N));
+    D = K(rem(N,K)==0);
+
+    % Find corresponding divisors > sqrt(N) and combine
+    D = [D sort(N./D)];
 end
