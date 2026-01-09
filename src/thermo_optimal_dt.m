@@ -22,6 +22,10 @@ function dt = thermo_optimal_dt(dz, d, CI, K, global_dt)
     f = fast_divisors(global_dt * 10000)/10000; % ClimateForcingStep.dt is in seconds fastDivisors is a subfunction below. 
     dt = f(find(f <= dt_target, 1, 'last'));
 
+    if isempty(dt)
+        dt = f(1); % Fallback to smallest possible step
+    end
+
 end
 
 

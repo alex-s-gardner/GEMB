@@ -160,16 +160,10 @@ dzD = [dz(2:m); NaN];
 % find stable dt for thermodynamics loop 
 dt = thermo_optimal_dt(dz, d, CI, K, ClimateForcingStep.dt);
 
-
-if isempty(dt)
-    dt = f(1); % Fallback to smallest possible step
-end
-
 % determine mean (harmonic mean) of K/dz for u, d, & p
 Au = (dzU./(2*KU) + dz./(2*KP)).^(-1);
 Ad = (dzD./(2*KD) + dz./(2*KP)).^(-1);
 Ap = (d.*dz*CI)/dt;
-
 
 % Create neighbor arrays for diffusion calculations instead of a
 % tridiagonal matrix
@@ -211,6 +205,10 @@ dlw = ClimateForcingStep.dlw * dt;
 % temperature change due to dlw_surf
 T_delta_dlw = dlw / TCs;
 
+% only update turbulent head flux every thf_trigger_threshold
+thf_trigger_threshold = 1*60*60; % this will update thf every simulation hour
+thf_trigger = thf_trigger_threshold;
+
 %% PREALLOCATE ARRAYS BEFORE LOOP FOR IMPROVED PERFORMANCE
 Tu = zeros(m,1);
 Td = zeros(m,1);
@@ -235,7 +233,10 @@ for i = 1:dt:ClimateForcingStep.dt
     T_surface = min(273.15, T_surface);    % don't allow T_surface to exceed 273.15 K (0 deg C)
 
     % TURBULENT HEAT FLUX
-    [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
+    if thf_trigger >= thf_trigger_threshold
+        [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
+        thf_trigger = 0;
+    end
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
     EC_day = lhf * 86400 / L;
@@ -258,13 +259,11 @@ for i = 1:dt:ClimateForcingStep.dt
     T_delta_ulw = ulw / TCs;
     ulwrf       = ulwrf - (ulw / ClimateForcingStep.dt); % accumulated for output
 
-
     % new grid point temperature
 
     % SW penetrates surface
     T    = T    + T_delta_sw;
     T(1) = T(1) + T_delta_dlw + T_delta_ulw + T_delta_thf;
-
 
     % energy flux across lower boundary (energy supplied by underling ice)
     if verbose
@@ -317,4 +316,5 @@ for i = 1:dt:ClimateForcingStep.dt
             error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
     end
+    thf_trigger = thf_trigger+dt;
 end

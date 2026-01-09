@@ -102,6 +102,7 @@ else
     h_bar = [];
 end
 
+
 %% Start spinup loop
 for simulation_iteration = 1:total_cycles
 
@@ -181,7 +182,7 @@ for simulation_iteration = 1:total_cycles
 
         % Update Progress Bar
         global_step_count = global_step_count + 1;
-        if ~isempty(h_bar) && (mod(global_step_count, 5) == 0 || global_step_count == total_steps)
+        if ~isempty(h_bar) && output_index(date_ind)
              % Calculate percentage
              pct_complete = global_step_count / total_steps;
              
