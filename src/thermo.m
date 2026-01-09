@@ -157,37 +157,9 @@ KP = K;
 dzU = [NaN    ; dz(1:m-1)];
 dzD = [dz(2:m); NaN];
 
-% determine minimum acceptable delta t (diffusion number > 1/2) [s]
-% 1. Calculate the theoretical limit for every single grid cell
-%    (Using 0.5 is the absolute limit; we usually aim lower for safety)
-stability_limit_per_cell = 0.5 * (d .* CI .* dz.^2) ./ K;
+% find stable dt for thermodynamics loop 
+dt = thermo_optimal_dt(dz, d, CI, K, ClimateForcingStep.dt);
 
-% 2. Find the bottleneck: The smallest allowable dt in the entire column
-max_safe_dt = min(stability_limit_per_cell);
-
-% 3. Apply a Safety Factor (0.9 or 0.8 is standard)
-%    This accounts for floating point errors or slight non-linearities in K
-dt_target = max_safe_dt * 0.8;
-
-% 4. (Optional) Sanity check to prevent extremely small steps if bad data enters
-if dt_target < 1e-4
-    warning('Timestep is extremely small (%e). Check for near-zero dz layers.', dt_target);
-end
-
-% 5. Fit this target into your input data frequency (ClimateForcingStep.dt)
-%    Find the largest divisor of ClimateForcingStep.dt that is <= dt_target
-%    (Your existing divisor logic works well here)
-
-if rem(ClimateForcingStep.dt,1) ~= 0
-    warning('rounding ClimateForcingStep.dt as it is not an exact integer: ClimateForcingStep.dt = %0.4f', ClimateForcingStep.dt)
-    %% 
-    ClimateForcingStep.dt = round(ClimateForcingStep.dt);
-end
-
-% find the maximum dt that is <= dt_target  that goes evenly into ClimateForcingStep.dt
-n = round(ClimateForcingStep.dt * 10000);
-f = 1:sqrt(n); f = f(rem(n, f) == 0); f = unique([f, n./f]) / 10000; f = sort(f); % Ensure ascending order
-dt = f(find(f <= dt_target, 1, 'last'));
 
 if isempty(dt)
     dt = f(1); % Fallback to smallest possible step
