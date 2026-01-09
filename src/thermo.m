@@ -82,7 +82,7 @@ R  = 8.314;         % gas constant [mol-1 K-1]
 SB = 5.67E-8;       % Stefan-Boltzmann constant [W m-2 K-4]
 
 d_tolerance    = 1e-11;
-gdn_tolerance  = 1e-10;
+T_tolerance    = 1e-4;
 W_tolerance    = 1e-13;
 ds             = d(1);      % density of top grid cell
 
@@ -103,6 +103,8 @@ EC             = 0.0;
 ulwrf          = 0.0;
 lhf_cumulative = 0.0;
 shf_cumulative = 0.0;
+T_surface      = T(1);
+CtoK           = 273.15;
 
 if verbose
     T_bottom = T(end);
@@ -117,6 +119,11 @@ elseif ds >= (ModelParam.density_ice - d_tolerance)
 else
     z0 = 0.0013;        % 1.3 mm for wet snow
 end
+
+
+% determine emissivity
+[emissivity, emissivity_melt_switch] = emissivity_initialize(re(1), ModelParam);
+
 
 % zT and zQ are percentage of z0 (Foken 2008)
 zratio = 10.0;
@@ -220,7 +227,6 @@ for i = 1:dt:ClimateForcingStep.dt
     if verbose
         % total initial heat energy
         E_initial = sum(T .* (CI * d .* dz));
-
     end
 
     % calculate temperature of snow surface (T_surface)
@@ -245,17 +251,8 @@ for i = 1:dt:ClimateForcingStep.dt
     thf = (shf + lhf) * dt;
     T_delta_thf = thf  / TCs;
 
-    % If user wants to directly set ModelParam.emissivity, or grain radius is larger than the
-    % threshold, or ModelParam.emissivity_method is 2 and we have wet snow or ice, use prescribed ModelParam.emissivity
-    if (ModelParam.emissivity_method == 0) || ((ModelParam.emissivity_re_threshold - re(1)) <= gdn_tolerance) ...
-           || ((ModelParam.emissivity_method == 2) && (z0 > (0.001 + gdn_tolerance)))
-        
-        ModelParam.emissivity = ModelParam.emissivity;
-    else
-        ModelParam.emissivity = 1.0;
-    end
-
-    ulw         = -(SB * T_surface.^4.0 * ModelParam.emissivity + ModelParam.ulw_delta) * dt;
+    % upward longwave radiation
+    ulw         = -(SB * T_surface.^4.0 * emissivity) * dt;
     T_delta_ulw = ulw / TCs;
     ulwrf       = ulwrf - (ulw / ClimateForcingStep.dt); % accumulated for output
 
@@ -293,6 +290,15 @@ for i = 1:dt:ClimateForcingStep.dt
     lhf_cumulative = lhf_cumulative + lhf * dt / ClimateForcingStep.dt;
     shf_cumulative = shf_cumulative + shf * dt / ClimateForcingStep.dt;
 
+    % if emissivity_method == "re_w_threshold" then check if the surface is melting
+    if emissivity_melt_switch
+        if T(1) < (CtoK - T_tolerance)
+            emissivity = ModelParam.emissivity;
+        else
+            emissivity = ModelParam.emissivity_re_large;
+        end
+    end
+
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
         E_used     = sum(T .* (CI * d .* dz)) - E_initial;
@@ -317,4 +323,30 @@ for i = 1:dt:ClimateForcingStep.dt
         end
     end
     thf_trigger = thf_trigger+dt;
+end
+
+function [emissivity, emissivity_melt_switch] = emissivity_initialize(re_surface, ModelParam)
+    gdn_tolerance  = 1e-10;
+    switch options.emissivity_method
+        case "uniform"
+            emissivity = ModelParam.emissivity;
+            emissivity_melt_switch = false;
+        case "re_threshold"
+            if re_surface <= (ModelParam.emissivity_re_threshold + gdn_tolerance)
+                emissivity = ModelParam.emissivity;
+            else
+                emissivity = ModelParam.emissivity_re_large;
+            end
+            emissivity_melt_switch = false;
+        case "re_w_threshold"
+            
+            if re_surface <= (ModelParam.emissivity_re_threshold + gdn_tolerance) 
+                % populate emissivity for first thermo interation then update
+                emissivity = ModelParam.emissivity;
+                emissivity_melt_switch = true;
+            else
+                emissivity = ModelParam.emissivity_re_large;
+                emissivity_melt_switch = false; % no need to check further as re(1) > emissivity_re_threshold
+            end
+    end
 end
