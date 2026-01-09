@@ -154,8 +154,8 @@ function options = model_initialize_parameters(options)
         % Specify longwave emissivity (emissivity_re_large only used for
         % "emissivity_method" == "re_threshold" or "re_w_threshold"
         % Default updated to 0.98 to satisfy range check [0, 1]
-        options.emissivity (1,1) double {mustBeInRange(options.emissivity, 0, 1)} = 0.98;
-        options.emissivity_re_large (1,1) double {mustBeInRange(options.emissivity_re_large, 0, 1)} = 0.98;
+        options.emissivity (1,1) double {mustBeInRange(options.emissivity, 0, 1)} = 0.97;
+        options.emissivity_re_large (1,1) double {mustBeInRange(options.emissivity_re_large, 0, 1)} = 0.97;
         
         % Specify the effective grain radii (re) used when "emissivity_method" == "re_threshold" or "re_w_threshold"
         % Default value is a effective grain radius of 10 mm.
