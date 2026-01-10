@@ -79,7 +79,6 @@ P_msl = P_msl_std + weather_anomaly;
 % We need to estimate the temperature of the air column between sea level
 % and the station elevation.
 % Approximation: T_column_avg = T_surface + (0.5 * Lapse_Rate * Elevation)
-
 LapseRate = 0.0065; % K/m
 T_column_avg = T_air + (0.5 * LapseRate * elev);
 
