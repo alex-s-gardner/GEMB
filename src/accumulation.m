@@ -1,7 +1,6 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
     accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ...
     ClimateForcingStep, ModelParam)
-
 % accumulation adds precipitation and deposition to the model grid.
 %
 %% Syntax
@@ -30,6 +29,7 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
 
 %% MAIN FUNCTION
 
+% Define tolerances to allow for some numerical noise when testing equalities:  
 T_tolerance    = 1e-10;
 d_tolerance    = 1e-11;
 gdn_tolerance  = 1e-10;
@@ -71,7 +71,7 @@ end
 mInit = d .* dz;
 
 if ClimateForcingStep.P > 0+P_tolerance
-    % determine initial mass
+    % Determine initial mass
 
     % if snow
     if ClimateForcingStep.T_air <= CtoK+T_tolerance 
@@ -121,7 +121,7 @@ if ClimateForcingStep.P > 0+P_tolerance
         % directly adding liquid water to the the snow pack surface but
         % makes the numerics easier.
 
-        LF = 0.3345E6;  % latent heat of fusion(J kg-1)
+        LF = 0.3345E6;  % latent heat of fusion (J kg-1)
         CI = 2102;      % specific heat capacity of snow/ice (J kg-1 k-1)
 
         % grid cell adjust mass
@@ -143,13 +143,12 @@ if ClimateForcingStep.P > 0+P_tolerance
         Ra = ClimateForcingStep.P;
     end
 
-    %% check for conservation of mass
-
+    % Check for conservation of mass:
     mass      = sum(d .* dz);
     mass_diff = mass - sum(mInit) - ClimateForcingStep.P;
     mass_diff = round(mass_diff * 100)/100;
-
     if mass_diff > 0
-        error('mass not conserved in accumulation function')
+        error('Mass not conserved in accumulation function.')
     end
+
 end
