@@ -324,29 +324,31 @@ for i = 1:dt:ClimateForcingStep.dt
     end
     thf_trigger = thf_trigger+dt;
 end
+end
+
 
 function [emissivity, emissivity_melt_switch] = emissivity_initialize(re_surface, ModelParam)
-    gdn_tolerance  = 1e-10;
-    switch options.emissivity_method
-        case "uniform"
+gdn_tolerance  = 1e-10;
+switch ModelParam.emissivity_method
+    case "uniform"
+        emissivity = ModelParam.emissivity;
+        emissivity_melt_switch = false;
+    case "re_threshold"
+        if re_surface <= (ModelParam.emissivity_re_threshold + gdn_tolerance)
             emissivity = ModelParam.emissivity;
-            emissivity_melt_switch = false;
-        case "re_threshold"
-            if re_surface <= (ModelParam.emissivity_re_threshold + gdn_tolerance)
-                emissivity = ModelParam.emissivity;
-            else
-                emissivity = ModelParam.emissivity_re_large;
-            end
-            emissivity_melt_switch = false;
-        case "re_w_threshold"
-            
-            if re_surface <= (ModelParam.emissivity_re_threshold + gdn_tolerance) 
-                % populate emissivity for first thermo interation then update
-                emissivity = ModelParam.emissivity;
-                emissivity_melt_switch = true;
-            else
-                emissivity = ModelParam.emissivity_re_large;
-                emissivity_melt_switch = false; % no need to check further as re(1) > emissivity_re_threshold
-            end
-    end
+        else
+            emissivity = ModelParam.emissivity_re_large;
+        end
+        emissivity_melt_switch = false;
+    case "re_w_threshold"
+        
+        if re_surface <= (ModelParam.emissivity_re_threshold + gdn_tolerance) 
+            % populate emissivity for first thermo interation then update
+            emissivity = ModelParam.emissivity;
+            emissivity_melt_switch = true;
+        else
+            emissivity = ModelParam.emissivity_re_large;
+            emissivity_melt_switch = false; % no need to check further as re(1) > emissivity_re_threshold
+        end
+end
 end
