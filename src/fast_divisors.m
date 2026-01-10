@@ -1,7 +1,14 @@
-function D = fast_divisors(N)
+function d = fast_divisors(n)
 % fast_divisors is a faster implementation of the divisors function and
 % does NOT require the Symbolic Math Toolbox. 
 % 
+%% Syntax
+% 
+%  d = fast_divisors(n)
+%
+%% Description
+% 
+% d = fast_divisors(n) finds all nonnegative divisors of an integer n.
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -13,10 +20,10 @@ function D = fast_divisors(N)
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 % Find divisors up to the square root
-K = 1:ceil(sqrt(N));
-D = K(rem(N,K)==0);
+k = 1:ceil(sqrt(n));
+d = k(rem(n,k)==0);
 
 % Find corresponding divisors > sqrt(N) and combine
-D = [D sort(N./D)];
+d = [d sort(n./d)];
 
 end
