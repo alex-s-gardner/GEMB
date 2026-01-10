@@ -59,22 +59,22 @@ function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
 %  EC                       : kg           Cumulative evaporation/condensation mass.
 %  ulwrf                    : W m^-2       Upward longwave radiation flux.
 %
-%% Documentation
-%
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
-%
 %% References
-% If you use GEMB, please cite the following:
-%
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
-% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 %
 % Physics implementations based on:
 % Bougamont, M., et al. (2005). (Surface roughness).
 % Foken, T. (2008). Micrometeorology. (Roughness lengths).
 % Patankar, S. V. (1980). Numerical Heat Transfer and Fluid Flow. (Discretization).
 % Sturm, M., et al. (1997). (Thermal conductivity).
+%
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 %% INITIALIZE
 CI = 2102;          % heat capacity of snow/ice (J kg-1 k-1)

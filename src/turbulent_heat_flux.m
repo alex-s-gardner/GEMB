@@ -50,16 +50,7 @@ function [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ,
 %  lhf                : W m^-2       Latent heat flux (positive toward surface).
 %  L                  : J kg^-1      Latent heat of vaporization or sublimation used.
 %
-%% Documentation
-%
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
-%
 %% References
-% If you use GEMB, please cite the following:
-%
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci.
-% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 %
 % Physics implementations based on:
 % Beljaars, A. C. M., & Holtslag, A. A. M. (1991). Flux parameterization over 
@@ -67,6 +58,15 @@ function [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ,
 % Ohmura, A. (1982). Climate and Energy-Balance on the Arctic Tundra.
 % Murray, F. W. (1967). (Saturation vapor pressure over water).
 % Bolton, D. (1980). (Saturation vapor pressure over ice).
+%
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 %% CONSTANTS & INITIALIZATION
 T_tolerance  = 1e-10;       % Tolerance

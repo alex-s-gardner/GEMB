@@ -30,16 +30,14 @@ function [dz, z_center] = model_initialize_grid(ModelParam)
 % ModelParam.column_zmax  = 250; 
 % ModelParam.column_zy    = 1.025; 
 % 
-%% Documentation
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
 % 
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB 
-% 
-%% References 
-% If you use GEMB, please cite the following: 
-% 
-% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass 
-% Balance (GEMB): a model of firn processes for cryosphere research, Geosci. 
-% Model Dev., 16, 2277–2302, https://doi.org/10.5194/gmd-16-2277-2023, 2023.
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 %% Error checks: 
 

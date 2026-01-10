@@ -34,10 +34,6 @@ function K = thermal_conductivity(T, d, ModelParam)
 %
 %  K                                      : W m^-1 K^-1  Vector of thermal conductivities.
 %
-%% Documentation
-%
-% For complete documentation, see: https://github.com/alex-s-gardner/GEMB
-%
 %% References
 % If you use GEMB, please cite the following:
 %
@@ -50,39 +46,51 @@ function K = thermal_conductivity(T, d, ModelParam)
 %   Journal of Glaciology.
 % Calonne, N., et al. (2011). Thermal conductivity of snow...
 %   Geophysical Research Letters.
+%
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-    %% CONSTANTS & INITIALIZATION
-    % Tolerance to prevent floating point errors at the density threshold
-    d_tolerance  = 1e-11;
-    
-    % Get number of grid cells
-    m = length(d);
-    
-    % Initialize conductivity vector with zeros
-    K = zeros(m,1);
-    
-    %% IDENTIFY SNOW VS ICE
-    % Create logical mask: True for snow/firn, False for ice
-    sfIdx = d < ModelParam.density_ice - d_tolerance ;
-    
-    %% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
-    % Use empirical density-based regressions
-    switch ModelParam.thermal_conductivity_method
-        case "Calonne"
-            % Parameterization from Calonne et al. (2011)
-            % Often used for a wider range of snow microstructures
-            K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
-            
-        case "Sturm"
-            % Parameterization from Sturm et al. (1997) [Default]
-            % Standard regression for seasonal snow
-            K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
-    end
-    
-    %% CALCULATE CONDUCTIVITY FOR ICE
-    % For densities >= ModelParam.density_ice, conductivity is dominated by temperature dependence.
-    % Formula typically attributed to Weller & Schwerdtfeger (1977) or similar
-    % standard glaciological relations.
-    % Note: ~sfIdx selects the inverse of the snow index (i.e., the ice cells)
-    K(~sfIdx) = 9.828 * exp(-5.7E-3 * T(~sfIdx));
+%% CONSTANTS & INITIALIZATION
+% Tolerance to prevent floating point errors at the density threshold
+d_tolerance  = 1e-11;
+
+% Get number of grid cells
+m = length(d);
+
+% Initialize conductivity vector with zeros
+K = zeros(m,1);
+
+%% IDENTIFY SNOW VS ICE
+% Create logical mask: True for snow/firn, False for ice
+
+sfIdx = d < ModelParam.density_ice - d_tolerance ;
+
+%% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
+% Use empirical density-based regressions
+switch ModelParam.thermal_conductivity_method
+    case "Calonne"
+        % Parameterization from Calonne et al. (2011)
+        % Often used for a wider range of snow microstructures
+        K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
+        
+    case "Sturm"
+        % Parameterization from Sturm et al. (1997) [Default]
+        % Standard regression for seasonal snow
+        K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
+end
+
+%% CALCULATE CONDUCTIVITY FOR ICE
+% For densities >= ModelParam.density_ice, conductivity is dominated by temperature dependence.
+% Formula typically attributed to Weller & Schwerdtfeger (1977) or similar
+% standard glaciological relations.
+% Note: ~sfIdx selects the inverse of the snow index (i.e., the ice cells)
+
+K(~sfIdx) = 9.828 * exp(-5.7E-3 * T(~sfIdx));
+
 end
