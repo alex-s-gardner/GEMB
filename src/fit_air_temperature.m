@@ -89,7 +89,6 @@ function coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
     
     % --- daily_amp_scale ---
     % Model: Amp = (DTR_base / 2) * daily_amp_scale
-    % DTR_base = 10 + (elev/1000)
     dtr_base = 10 + (elev / 1000);
     base_amp_daily = dtr_base / 2;
     
@@ -106,7 +105,7 @@ function coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
     % Otherwise, high-freq sampling (e.g. hourly) would skew the correlation.
     
     day_indices = floor(dec_year * 365.25);
-    [unique_days, ~, idx] = unique(day_indices);
+    [~, ~, idx] = unique(day_indices);
     
     % Compute daily mean of residuals
     daily_res = accumarray(idx, residuals, [], @mean);

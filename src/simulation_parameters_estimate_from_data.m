@@ -49,7 +49,6 @@
 fn = '/Users/gardnera/Code/GEMB/GEMB_0.21/TEST/TEST_INPUT_1.mat'; % path to input data 
 inputs = load(fn);
 
-
 %% location and time parameters
 location_parameters.description = "parameters estimated using simulation_parameters_estimate_from_data.m as fit to original TEST_INPUT_1.mat data";
 
@@ -63,8 +62,8 @@ location_parameters.rand_seed = 42; % Sets the seed to a fixed number
 
 location_parameters.Vz = inputs.LP.Vz; % wind observation height above surface [m]
 location_parameters.Tz = inputs.LP.Tz; % temperature observation height above surface [m]
-location_parameters.T_air_mean = inputs.LP.T_air_mean; % average annual temerature [K]
-location_parameters.P_mean = inputs.LP.P_mean; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
+location_parameters.T_air_mean = mean(inputs.T_air0); % average annual temerature [K]
+location_parameters.P_mean = mean(inputs.P0); % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
 
 dec_year = location_parameters.start_date: location_parameters.time_step:location_parameters.end_date+1;
 dec_year = dec_year(1:length(inputs.T_air0));
@@ -117,7 +116,7 @@ varname = "rh";
 min_max = [0, 100]';
 longname = varname2longname(varname);
 disp("%% " + longname)
-inputs.(varname + "0") = relative_humidity(inputs.eAir0, inputs.T_air0);
+inputs.(varname + "0") = relative_humidity(inputs.e_air0, inputs.T_air0);
 coeffs.(varname) = fit_seasonal_daily_noise(dec_year, inputs.(varname + "0"));
 coeffs.(varname).min_max = min_max;
 simulate_coeffs_disp(coeffs.(varname), "coeffs." + varname)
