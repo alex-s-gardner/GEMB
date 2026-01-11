@@ -9,6 +9,12 @@ function d = fast_divisors(n)
 %% Description
 % 
 % d = fast_divisors(n) finds all nonnegative divisors of an integer n.
+% 
+%% Example 
+% 
+%  fast_divisors(42)
+%  ans =
+%     1     2     3     6     7    14    21    42
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -24,6 +30,6 @@ k = 1:ceil(sqrt(n));
 d = k(rem(n,k)==0);
 
 % Find corresponding divisors > sqrt(N) and combine
-d = [d sort(n./d)];
+d = unique([d n./d]);
 
 end
