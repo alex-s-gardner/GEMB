@@ -108,9 +108,6 @@ end
 %% Start spinup loop
 for simulation_iteration = 1:total_cycles
 
-    % Determine initial mass [kg]:
-    M_initial = sum (dz .* d) + sum(W);
-
     % Initialize cumulative variables:
     R_cumulative          = 0;
     F_cumulative          = 0;
@@ -144,27 +141,11 @@ for simulation_iteration = 1:total_cycles
         M_cumulative          = M + M_cumulative;
         M_surf_cumulative     = M_surf + M_surf_cumulative;
         R_cumulative          = R + R_cumulative;
-        W_total               = sum(W);
         P_cumulative          = ClimateForcingStep.P +  P_cumulative;
         EC_cumulative         = EC + EC_cumulative;   % evap(-) / cond(+)
         Ra_cumulative         = Ra + Ra_cumulative;
         F_cumulative          = F + F_cumulative;
       
-        % calculate total system mass
-        M_total    = sum(dz .* d);
-        M_change   = M_total + R_cumulative + W_total- P_cumulative - EC_cumulative - M_initial - M_added_cumulative;
-        M_change   = round(M_change * 100)/100;
-
-        % check mass conservation
-        if M_change ~= 0
-            error('total system mass not conserved in MB function')
-        end
-
-        % check bottom grid cell T is unchanged
-        if abs(T(end)-T_bottom) > 0.001
-            error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
-        end
-
         % !! This needs to be made into a function call !!!
         if simulation_iteration == ModelParam.n_spinup_cycles + 1
 
@@ -190,7 +171,7 @@ for simulation_iteration = 1:total_cycles
              
              % Create message: Date | Cycle X of Y
              msg = sprintf('Simulating: %s | Cycle: %d / %d', ...
-                 datestr(daten(date_ind), 'dd-mmm-yyyy'), ...
+                 datetime(daten(date_ind),'ConvertFrom', 'datenum'), ...
                  simulation_iteration, ...
                  total_cycles);
              

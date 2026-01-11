@@ -16,6 +16,12 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
+if verbose
+    % Determine initial mass [kg]:
+    M_total_initial = sum (dz .* d) + sum(W);
+    T_bottom        = T(end);
+end
+
 % 1. Snow grain metamorphism
 % [always calculate, used in thermo and albedo]
 [re, gdn, gsp] = ...
@@ -73,4 +79,22 @@ compaction_dens = ...
 
 compaction_dens = ...
     (compaction_dens - sum(dz)); % Calculate dry compaction
+
+
+if verbose
+    % calculate total system mass
+    M_total_final = sum (dz .* d) + sum(W);
+    M_change   = M_total_final + R - ClimateForcingStep.P - EC - M_total_initial - M_added;
+
+    % check mass conservation
+    if abs(M_change) > 1E-3
+        error('total system mass not conserved in MB function')
+    end
+
+    % check bottom grid cell T is unchanged
+    if abs(T(end)-T_bottom) > 1E-3
+        error('temperature of bottom grid cell changed: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
+    end
+end
+
 end
