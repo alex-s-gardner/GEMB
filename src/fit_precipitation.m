@@ -1,9 +1,10 @@
-function coeffs = fit_precipitation(dec_year, precip)
+function coeffs = fit_precipitation(dec_year, precip, options)
 % fit_precipitation fits a seasonal Markov-Gamma model to hourly precipitation.
 %
 %% Syntax
 %
 %  coeffs = fit_precipitation(dec_year, precip)
+%  coeffs = fit_precipitation(dec_year, precip, wet_threshold=value)
 %
 %% Description
 %
@@ -11,10 +12,22 @@ function coeffs = fit_precipitation(dec_year, precip)
 % of harmonic coefficients for the model from Mx1 vector inputs dec_year of
 % decimal years (e.g., 2021.45) and precipitation precip (mm). 
 %
+% coeffs = fit_precipitation(dec_year, precip, wet_threshold=value) specifies a
+% minimimum quantity (mm) to consider "wet". Default wet_threshold is 0.1.
+%
 %% Example 
+% For the mid date of 2025, with precipitation of 2.2 mm, specify a wet 
+% threshold of 0.3 mm: 
 %
-%
-%
+%  fit_precipitation(2023.3, 2.2, wet_threshold=0.3)
+%     ans = 
+%       struct with fields:
+%   
+%          P01_harmonics: [3×1 double]
+%          P11_harmonics: [3×1 double]
+%        Alpha_harmonics: [3×1 double]
+%         Beta_harmonics: [3×1 double]
+%          wet_threshold: 0.3000
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -25,17 +38,25 @@ function coeffs = fit_precipitation(dec_year, precip)
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-% 1. Constants and Setup
-wet_threshold = 0.1; % Minimum mm to count as "wet"
+%% Parse inputs
+
+arguments
+    dec_year (:,1) {mustBeNumeric} 
+    precip (:,1) {mustBeNumeric} 
+    options.wet_threshold (1,1) {mustBeNumeric} = 0.1
+end
+
+%% 1. Setup
 
 % Extract fractional year (0 to 1) for seasonality
 t_season = mod(dec_year, 1);
 
 % Determine Wet/Dry states
-is_wet = precip >= wet_threshold;
+is_wet = precip >= options.wet_threshold;
 
-% 2. Calculate Monthly Statistics (12 bins)
+%% 2. Calculate Monthly Statistics (12 bins)
 % We bin by month to get robust estimates, then fit harmonics to the bins.
+
 months = ceil(t_season * 12);
 months(months == 0) = 1; % Handle edge case exactly at 0.0
 
@@ -70,7 +91,7 @@ for m = 1:12
     end
     
     % --- Gamma Distribution Parameters (Method of Moments) ---
-    wet_amts = precip_m(precip_m >= wet_threshold);
+    wet_amts = precip_m(precip_m >= options.wet_threshold);
     if length(wet_amts) > 5
         mu = mean(wet_amts);
         v  = var(wet_amts);
@@ -83,7 +104,7 @@ for m = 1:12
     end
 end
 
-% 3. Fit Harmonic Curves
+%% 3. Fit Harmonic Curves
 % Model: Y = C1 + C2*sin(2*pi*t) + C3*cos(2*pi*t)
 % We fit this to the 12 monthly values.
 
@@ -101,6 +122,6 @@ coeffs.Alpha_harmonics = B(:, 3);
 coeffs.Beta_harmonics  = B(:, 4);
 
 % Store threshold for simulation
-coeffs.wet_threshold = wet_threshold;
+coeffs.wet_threshold = options.wet_threshold;
 
 end
