@@ -1,8 +1,15 @@
 function [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
-% densification computes the densification of snow/firn using the emperical model of
-% Herron and Langway (1980) or the semi-emperical model of Anthern et al. (2010).
+% densification computes the densification of snow/firn.
 %
-% Inputs:
+%% Syntax
+%
+%  [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
+%
+%% Description
+%
+% [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
+%
+%% Inputs:
 %   ModelParam.densification_method = densification model to use:
 %       1-"HerronLangway": emperical model of Herron and Langway (1980)
 %       2-"Anthern": semi-emperical model of Anthern et al. (2010)
@@ -28,21 +35,6 @@ function [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
 % ClimateForcingStep.dt           = 60*60;
 % re                              = 0.7;
 % ClimateForcingStep.T_air_mean   = 273.15-18;
-%
-%% Syntax
-%
-%
-%
-%% Description
-%
-%
-%
-%% Inputs
-%
-%
-%
-%% Outputs
-%
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions

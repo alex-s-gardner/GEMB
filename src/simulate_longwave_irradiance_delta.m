@@ -2,6 +2,18 @@ function dlw_delta = simulate_longwave_irradiance_delta(dec_year, coeff)
 % simulate_longwave_irradiance_delta 
 % 
 %
+%% Syntax
+% 
+%
+%
+%% Description
+% 
+%
+%
+%% Example 
+% 
+%
+%
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available

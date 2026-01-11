@@ -1,6 +1,5 @@
 function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
     ClimateForcingStep, ModelParam)
-
 % albedo calculates snow, firn and ice albedo as a function of:
 %   1 : effective grain radius (Gardner & Sharp, 2009)
 %   2 : effective grain radius (Brun et al., 2009)
@@ -9,7 +8,7 @@ function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
 %
 %% Syntax
 %
-%
+% [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ClimateForcingStep, ModelParam)
 %
 %% Description
 %
@@ -66,14 +65,6 @@ function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-%% Usage
-% Method 1
-% a = albedo(1, 0.1);
-
-% Method 4
-% a = albedo(4, [], [], [], 0.48, 0.85, [0.8 0.5 ... 0.48], ...
-%   [273 272.5 ... 265], [0 0.001 ... 0], 0, 0.01, 15, 15, 7, 3600)
-
 T_tolerance  = 1e-10;
 d_tolerance  = 1e-11;
 W_tolerance  = 1e-13;
@@ -87,12 +78,12 @@ albedo_ice_min      = ModelParam.albedo_ice;  % minimum ice albedo
 albedo_snow_min     = 0.65;        % minimum snow albedo, from Alexander 2014
 
 %% Function
+
 if (ModelParam.albedo_method == "None") || ((ModelParam.albedo_desnity_threshold - d(1)) < d_tolerance)
     a(1) = ModelParam.albedo_fixed;
 else
     switch ModelParam.albedo_method
         case "GardnerSharp" % function of effective grain radius
-
             % ClimateForcingStep.black_carbon_snow, IssmDouble ClimateForcingStep.black_carbon_ice, IssmDouble ClimateForcingStep.solar_zenith_angle, IssmDouble ClimateForcingStep.cloud_optical_thickness, int m
             a(1)         = albedo_gardner(re, dz, d, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice,  ClimateForcingStep.solar_zenith_angle, ClimateForcingStep.cloud_optical_thickness);
             a_diffuse(1) = albedo_gardner(re, dz, d, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice, 50.0, ClimateForcingStep.cloud_optical_thickness);
