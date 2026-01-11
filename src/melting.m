@@ -1,5 +1,5 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_total, M_surf, R_total, F_total] = ...
-    melt(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, density_ice, verbose)
+    melting(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, density_ice, verbose)
 % melt computes the quantity of meltwater due to snow temperature in excess
 % of 0 deg C, determines pore water content and adjusts grid spacing.
 %

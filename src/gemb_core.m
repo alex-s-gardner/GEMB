@@ -1,6 +1,6 @@
-function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
-    lhf, ulw, Ra, M, R, F, M_added, E_added, compaction_dens, compaction_melt] = ...
-   gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, ...
+function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, melt_surface, sw_net, shf, ...
+    lhf, ulw, Ra, melt, R, F, M_added, E_added, compaction_dens, compaction_melt] = ...
+   gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, melt_surface, ...
     ClimateForcingStep, ModelParam, verbose)
 % GEMB_STEP Performs a single time-step of the GEMB model.
 %   Calculates grain growth, albedo, radiative transfer, thermodynamics, 
@@ -17,9 +17,19 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 if verbose
-    % Determine initial mass [kg]:
-    M_total_initial = sum (dz .* d) + sum(W);
+    % Specify constants:
+    CtoK = 273.15;   % Celsius to Kelvin conversion
+    CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
+    LF   = 0.3345E6; % latent heat of fusion (J kg-1)
+
+    M               = dz .* d;
+    M_total_initial = sum(M) + sum(W);        % total mass [kg]
+    E_total_initial = sum(M .* T * CI) + ...
+        sum(W .* (LF + CtoK * CI));           % total energy [J] = initial enegy of snow/ice + initial enegy of water
     T_bottom        = T(end);
+
+    % Determine initial energy [kg]:
+
 end
 
 % 1. Snow grain metamorphism
@@ -28,9 +38,9 @@ end
     grain_growth(T, dz, d, W, re, gdn, gsp, ClimateForcingStep, ModelParam);
 
 % 2. Calculate snow, firn, and ice albedo
-% Uses EC and M_surf from the previous time step
+% Uses EC and melt_surface from the previous time step
 [a, a_diffuse] = ...
-    albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ClimateForcingStep, ModelParam);
+    albedo(T, dz, d, W, re, a, a_diffuse, EC, melt_surface, ClimateForcingStep, ModelParam);
 
 % 3. Determine distribution of absorbed SW radiation with depth
 swf = ...
@@ -50,18 +60,17 @@ sw_net = ...
 dz(1) = ...
     dz(1) + EC / d(1);
 
-
 % 7. Add snow/rain to top grid cell adjusting cell depth, temperature, and density
 [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
     accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcingStep, ModelParam);
 
 % 8. Melt and wet compaction
-% Calculate water production M [kg m-2], runoff R [kg m-2], and resulting changes
+% Calculate water production melt [kg m-2], runoff R [kg m-2], and resulting changes
 compaction_melt = ...
     sum(dz); % Track thickness before melt
 
-[T, dz, d, W, re, gdn, gsp, a, a_diffuse, M, M_surf, R, F] = ...
-    melt(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, ModelParam.density_ice, verbose);
+[T, dz, d, W, re, gdn, gsp, a, a_diffuse, melt, melt_surface, R, F] = ...
+    melting(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, ModelParam.density_ice, verbose);
 
 compaction_melt = ...
     (compaction_melt - sum(dz)); % Calculate wet compaction
@@ -83,7 +92,11 @@ compaction_dens = ...
 
 if verbose
     % calculate total system mass
-    M_total_final = sum (dz .* d) + sum(W);
+     M = dz .* d;
+     M_total_final = sum(M) + sum(W);        % total mass [kg]
+     E_total_final = sum(M .* T * CI) + ...
+        sum(W .* (LF + CtoK * CI));           % total energy [J] = initial enegy of snow/ice + initial enegy of water
+
     M_change   = M_total_final + R - ClimateForcingStep.P - EC - M_total_initial - M_added;
 
     % check mass conservation
