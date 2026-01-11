@@ -1,21 +1,69 @@
 function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
-% SIMULATE_AIR_TEMPERATURE Simulates air temp using fitted coefficients.
+% simulate_air_temperature simulates air temp using fitted coefficients.
 %
-%   T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
+%% Syntax
 %
-%   INPUTS:
-%   dec_year - Decimal year (e.g., 2024.5).
-%   lat      - Latitude in degrees.
-%   elev     - Elevation in meters.
-%   coeffs   - Structure containing fitted parameters (from fit_air_temperature):
-%              .lat_scale           (Scaling for annual seasonal amplitude)
-%              .daily_amp_scale     (Scaling for diurnal/daily amplitude)
-%              .weather_sigma_scale (Scaling for weather noise magnitude)
-%              .weather_corr        (Day-to-day weather persistence, 0 to 1)
-%              .mean_offset         (mean offset adjustment in Kelvin [K])
+%  T_air = simulate_air_temperature(dec_year, lat, elev)
+%  T_air = simulate_air_temperature(..., lat_scale=value)
+%  T_air = simulate_air_temperature(..., daily_amp_scale=value)
+%  T_air = simulate_air_temperature(..., weather_sigma_scale=value)
+%  T_air = simulate_air_temperature(..., weather_corr=value)
+%  T_air = simulate_air_temperature(..., mean_offset=value)
 %
-%   OUTPUT:
-%   T_air       - Near-surface air temperature in Kelvin [K].
+%% Description
+%
+% T_air = simulate_air_temperature(dec_year, lat, elev) simulates near-surface
+% air temperatures (K) as a function of decimal year dec_year, latitude lat,
+% and elevation elev (m). 
+%  
+% T_air = simulate_air_temperature(..., lat_scale=value) specifies scaling
+% for annual seasonal amplitude. Must be positive. By default, lat_scale=1. 
+%  
+% T_air = simulate_air_temperature(..., daily_amp_scale=value) specifies
+% scaling for diurnal amplitude. Must be positive. By default,
+% daily_amp_scale=1.
+%  
+% T_air = simulate_air_temperature(..., weather_sigma_scale=value)
+% specifies scaling for weather noise magnitude. Must be positive. By 
+% default, weather_sigma_scale=1. 
+%  
+% T_air = simulate_air_temperature(..., weather_corr=value) specifies
+% day-to-day weather persistence in a range of 0 to 1. By default,
+% weather_corr=0.7.
+%  
+% T_air = simulate_air_temperature(..., mean_offset=value) specifies a mean
+% temperature offset. By default, mean_offset=0. 
+%
+%% Example
+% Consider Summit Station in Greenland (72.579583°N, 38.459186°W), 
+% whose surface elevation is 3207 m. Simulate hourly surface temperatures
+% at Summit for the first half of the 2023: 
+% 
+%   dec_year = 2023:1/(365*24):2023.5; % hourly time array
+%  
+%   T_air = simulate_air_temperature(dec_year, 72.579583, 3207);
+%  
+%   figure
+%   plot(dec_year,T_air,'DisplayName','Default options')
+%   ylabel 'Air temperature (K)'
+%
+% In the figure above, air temperature increases from winter to summer,
+% with some randomness to simulate weather noise. Daily cycles are represented 
+% as a pure sinusoid with a 24 hour period that remains constant throughout
+% the time series. 
+% 
+% Now assume a mean offset of 9.8842 K, meaning XXXX. Also assume
+% weather_corr = 0.7315, meaning YYYY, and weather_sigma_scale = 0.8418
+% because ZZZZ. 
+% 
+%   T_air2 = simulate_air_temperature(dec_year, 72.579583, 3207,...
+%       mean_offset = 9.8842,...
+%       weather_corr = 0.7315,...
+%       weather_sigma_scale = 0.8418);
+%  
+%   hold on
+%   plot(dec_year,T_air2,'DisplayName','Fancy options')
+%   legend('location','northwest')
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -29,37 +77,33 @@ function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
 % See also: fit_air_temperature.
 
 %% 1. Input Setup & Extraction
-if ~isscalar(dec_year), dec_year = dec_year(:); end
-if ~isscalar(lat) && length(lat)==length(dec_year), lat = lat(:); end
 
-% Extract parameters from struct with defaults if missing
-% (This allows manual struct creation if needed)
-if ~isfield(coeffs, 'lat_scale'), coeffs.lat_scale = 1.0; end
-if ~isfield(coeffs, 'daily_amp_scale'), coeffs.daily_amp_scale = 1.0; end
-if ~isfield(coeffs, 'weather_sigma_scale'), coeffs.weather_sigma_scale = 1.0; end
-if ~isfield(coeffs, 'weather_corr'), coeffs.weather_corr = 0.7; end
+arguments
+    dec_year                   (:,1) {mustBeNumeric} 
+    lat                        (:,1) {mustBeGreaterThanOrEqual(lat,-90),mustBeLessThanOrEqual(lat,90)} 
+    elev                       (:,1) {mustBeGreaterThanOrEqual(elev,0),mustBeLessThanOrEqual(elev,10e3)} 
+    coeffs.lat_scale           (1,1) {mustBePositive} = 1;
+    coeffs.daily_amp_scale     (1,1) {mustBePositive} = 1;
+    coeffs.weather_sigma_scale (1,1) {mustBePositive} = 1;
+    coeffs.weather_corr        (1,1) {mustBeGreaterThanOrEqual(coeffs.weather_corr,0),mustBeLessThanOrEqual(coeffs.weather_corr,1)} = 0.7;
+    coeffs.mean_offset         (1,1)                  = 0;
+end
 
-lat_scale = coeffs.lat_scale;
-daily_amp_scale = coeffs.daily_amp_scale;
+lat_scale           = coeffs.lat_scale;
+daily_amp_scale     = coeffs.daily_amp_scale;
 weather_sigma_scale = coeffs.weather_sigma_scale;
-weather_corr = coeffs.weather_corr;
-mean_offset = coeffs.mean_offset;
-
-% Validations
-if weather_corr > 1 || weather_corr < 0
-    error("coeffs.weather_corr must be between 0 and 1");
-end
-if lat_scale < 0 || daily_amp_scale < 0 || weather_sigma_scale < 0
-    error("Scale coefficients must be positive");
-end
+weather_corr        = coeffs.weather_corr;
+mean_offset         = coeffs.mean_offset;
 
 %% 2. Climatology (Mean Temp)
+
 phi = deg2rad(lat); 
 T_sea_level = 300 - 50 .* sin(phi).^2;
 LapseRate = 0.0065; 
 T_air_mean = T_sea_level - (elev .* LapseRate) + mean_offset;
 
 %% 3. Seasonal Cycle (Annual Wave)
+
 % Base amplitude is 3K minimum + 22K scaled by latitude
 T_amp_annual = 3 + (22 .* abs(sin(phi)) * lat_scale);
 
@@ -75,6 +119,7 @@ year_frac = dec_year - floor(dec_year);
 seasonal_signal = cos(2*pi * (year_frac - phase_shift_annual));
 
 %% 4. Diurnal Cycle (Daily Wave)
+
 % A. Calculate time of day (0.0 to 1.0)
 day_fraction = mod(dec_year * 365.25, 1);
 
@@ -86,6 +131,7 @@ T_amp_daily = (DTR / 2) * daily_amp_scale;
 diurnal_signal = cos(2*pi * (day_fraction - 0.625));
 
 %% 5. Synoptic Weather (Correlated Noise)
+
 % A. Determine total number of days involved
 start_day = floor(min(dec_year) * 365.25);
 end_day   = ceil(max(dec_year) * 365.25);
@@ -98,7 +144,10 @@ sigma_weather = base_sigma * weather_sigma_scale;
 daily_noise = zeros(num_days, 1);
 
 % Scale white noise by sqrt(1-alpha^2) to maintain variance over time
+previous_state = rng;
+rng(42);
 white_noise = randn(num_days, 1) * sigma_weather * sqrt(1 - weather_corr^2);
+rng(previous_state);
 
 daily_noise(1) = white_noise(1);
 for t = 2:num_days
@@ -110,6 +159,7 @@ user_day_indices = (dec_year * 365.25) - start_day + 1;
 weather_signal = interp1(1:num_days, daily_noise, user_day_indices, 'linear', 'extrap');
 
 %% 6. Final Combination
+
 T_air = T_air_mean...
    + (T_amp_annual .* seasonal_signal) ... % Annual Season
    + (T_amp_daily  .* diurnal_signal) ...  % Daily Cycle
