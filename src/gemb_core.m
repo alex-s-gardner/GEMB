@@ -51,7 +51,7 @@ sw_net = ...
     sum(swf);
 
 % 5. Calculate new temperature-depth profile and turbulent heat fluxes [W m-2]
-[T, shf, lhf, EC, ulw] = ...
+[T, ulw, shf, lhf, EC] = ...
     thermo(T, dz, d, W(1), re, swf, ClimateForcingStep, ModelParam, verbose);
 
 % 6. Change in thickness of top cell due to evaporation/condensation
@@ -95,9 +95,10 @@ if verbose
      M = dz .* d;
      M_total_final = sum(M) + sum(W);        % total mass [kg]
      E_total_final = sum(M .* T * CI) + ...
-        sum(W .* (LF + CtoK * CI));           % total energy [J] = initial enegy of snow/ice + initial enegy of water
+        sum(W .* (LF + CtoK * CI));          % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
     M_change   = M_total_final + R - ClimateForcingStep.P - EC - M_total_initial - M_added;
+    E_change   = E_total_final + R - ClimateForcingStep.P - EC - M_total_initial - M_added;
 
     % check mass conservation
     if abs(M_change) > 1E-3
