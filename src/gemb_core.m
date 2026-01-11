@@ -92,13 +92,19 @@ compaction_dens = ...
 
 if verbose
     % calculate total system mass
-     M = dz .* d;
-     M_total_final = sum(M) + sum(W);        % total mass [kg]
-     E_total_final = sum(M .* T * CI) + ...
-        sum(W .* (LF + CtoK * CI));          % total energy [J] = initial enegy of snow/ice + initial enegy of water
+    M = dz .* d;
+    M_total_final = sum(M) + sum(W);        % total mass [kg]
+    M_change   = M_total_final - M_total_initial + R - ClimateForcingStep.P - EC  - M_added;
 
-    M_change   = M_total_final + R - ClimateForcingStep.P - EC - M_total_initial - M_added;
-    E_change   = E_total_final + R - ClimateForcingStep.P - EC - M_total_initial - M_added;
+
+    ER_total = R_total * (LF + CtoK * CI);
+    EI       = M0 .* T * CI;
+    EW       = W .* (LF + CtoK * CI);
+    dt = ClimateForcingStep.dt;
+    E_total_final = sum(M .* T * CI) + ...
+        sum(W .* (LF + CtoK * CI));         % total energy [J] = initial enegy of snow/ice + initial enegy of water
+
+    E_change   = E_total_final - E_total_initial - (sw_net*dt) - (ulw*dt) - (shf*dt) - (lhf*dt);
 
     % check mass conservation
     if abs(M_change) > 1E-3

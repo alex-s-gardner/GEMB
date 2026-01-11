@@ -79,11 +79,11 @@ d_tolerance  = 1e-11;
 W_tolerance  = 1e-13;
 
 % Specify constants:
-CtoK        = 273.15;   % Celsius to Kelvin conversion
-CI          = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
-LF          = 0.3345E6; % latent heat of fusion (J kg-1)
-density_phc = 830.0;    % pore hole close off density [kg m-3]
-ice_layer_dzmin = 0.1; % if the density is greater than density_phc and the layer thickness exceeds ice_layer_dzmin [m], then all meltwater percolating down is counted as runoff
+CtoK            = 273.15;   % Celsius to Kelvin conversion
+CI              = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
+LF              = 0.3345E6; % latent heat of fusion (J kg-1)
+density_phc     = 830.0;    % pore hole close off density [kg m-3]
+ice_layer_dzmin = 0.1;      % if the density is greater than density_phc and the layer thickness exceeds ice_layer_dzmin [m], then all meltwater percolating down is counted as runoff
 
 m         = length(T);
 W_delta   = zeros(m,1);
@@ -93,8 +93,8 @@ M0  = dz .* d;                   % grid cell mass [kg]
 EI  = M0 .* T * CI;              % initial enegy of snow/ice
 EW  = W .* (LF + CtoK * CI);     % initial enegy of water
 
-M0_total = sum(W) + sum(M0);       % total mass [kg]
-E0_total = sum(EI) + sum(EW);      % total energy [J]
+M_total_initial = sum(W) + sum(M0);       % total mass [kg]
+E_total_initial = sum(EI) + sum(EW);      % total energy [J]
 
 % initialize melt and runoff scalars
 R_total   = 0;   % sum runoff [kg m^-2]
@@ -342,11 +342,11 @@ if verbose
     EI       = M0 .* T * CI;
     EW       = W .* (LF + CtoK * CI);
 
-    M1_total = sum(W) + sum(M0) + R_total;
-    E1_total = sum(EI) + sum(EW);
+    M_total_final = sum(W) + sum(M0) + R_total;
+    E_total_final = sum(EI) + sum(EW);
 
-    M_delta = round((M0_total - M1_total)*100)/100.;
-    E_delta = round(E0_total - E1_total - ER_total - E_surplus);
+    M_delta = round((M_total_initial - M_total_final)*100)/100.;
+    E_delta = round(E_total_initial - E_total_final - ER_total - E_surplus);
 
     if M_delta ~= 0 || E_delta ~= 0
         error(['Mass and energy are not conserved in melt equations:' newline ' M_delta: ' ...
