@@ -19,6 +19,8 @@ function y_sim = simulate_seasonal_daily_noise(dec_year, coeffs)
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+% 
+% See also fit_seasonal_daily_noise.
 
 % Ensure input is column vector
 t = dec_year(:);
