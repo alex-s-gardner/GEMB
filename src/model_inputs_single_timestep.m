@@ -1,8 +1,16 @@
-function [ClimateForcingStep] = ...
-   model_inputs_single_timestep(index, dt, ClimateForcing, ModelParam)
+function ClimateForcingStep = model_inputs_single_timestep(index, dt, ClimateForcing, ModelParam)
+% model_inputs_single_timestep
+%
+%% Syntax
+%
+%
+%
+%% Description
+%
+%
+%
+%% Example
 % 
-%
-%
 %
 %
 %% Author Information

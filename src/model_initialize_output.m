@@ -50,7 +50,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-% deteremine save time steps
+% Determine save time steps:
 date_vector = datevec([ClimateForcing.daten; (ClimateForcing.daten(end) ...
     + ClimateForcing.daten(end)-ClimateForcing.daten(end-1))]);
 switch ModelParam.output_frequency
@@ -69,14 +69,14 @@ varname.monolevel = {'time', 'M', 'R', 'F', 'EC', 'sw_net', ...
 
 n = sum(output_index);
 
-% set single level time series to NaNs
+% Set single level time series to NaNs:
 OutData.time = ClimateForcing.daten(output_index)';
 
 for v = 1:length(varname.monolevel)
     OutData.(varname.monolevel{v}) = nan(1,n);
 end
 
-% time averages/totals
+% Time averages/totals:
 I = find(output_index);                      % save index
 for i = 1:n
     if i == 1
@@ -88,19 +88,19 @@ for i = 1:n
     end
 end
 
-% multi level time series
+% Multi level time series:
 varname.profile = {'T', 'dz', 'd', 'W', 're', 'gdn', 'gsp', 'a', 'a_diffuse', 'ps'};
 
 for v = 1:length(varname.profile)
     OutData.(varname.profile{v}) = nan(column_length + ModelParam.output_padding, n);
 end
 
-% initialize cumulative output values
+% Initialize cumulative output values:
 varname.cumulative = {'R', 'M', 'F', 'EC', 'Ra', 'M_added', 'sw_net', ...
     'lw_net', 'shf', 'lhf', 'a1', 're1', 'ulw', 'd1', 'compaction_dens', ...
     'compaction_melt', 'Q_net', 'FAC'};
 
-% set cumulative values zero
+% Set cumulative values zero:
 for v = 1:length(varname.cumulative)
     OutCum.(varname.cumulative{v}) = 0;
 end

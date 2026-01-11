@@ -78,21 +78,22 @@ if ~(strcmp(ModelParam.albedo_method, 'GardnerSharp') || strcmp(ModelParam.albed
 end
 
 %% Function
+
 gsz = re * 2;
 
-% convert ClimateForcingStep.dt from seconds to days
+% Convert ClimateForcingStep.dt from seconds to days
 ClimateForcingStep.dt = ClimateForcingStep.dt/86400;
 
-% convert T from k to deg C
+% Convert T from K to deg C
 
-% determine liquied-water content in terms
+% Determine liquid-water content in terms
 lwc = W ./ (d .* dz) * 100;
 
-% set maximum water content by mass to 9 percent (Brun, 1980)
+% Set maximum water content by mass to 9 percent (Brun, 1980)
 lwc(lwc > (9 + W_tolerance)) = 9;
 
-%% Calculate temperature gradiant across grid cells
-% returns the average gradinet across the upper and lower grid cell
+%% Calculate temperature gradient across grid cells
+% returns the average gradient across the upper and lower grid cell
 
 % initialize
 dT = zeros(size(T));
@@ -121,6 +122,7 @@ dT = abs(dT);
 % index for dentricity > 0 & == 0
 G = gdn > (0 + gdn_tolerance);
 J = ~G;
+
 %% DENDRITIC SNOW METAMORPHISM
 % FOR SNOW DENTRICITY > 0
 
@@ -200,12 +202,12 @@ if sum(J) ~= 0
     dTi = dT;
     Q   = Marbouty(Ti(P), d(P), dTi(P));
     
-    % calculate grain growth
+    % Calculate grain growth
     gsz(P) = gsz(P) + Q * ClimateForcingStep.dt;
     
     % WET SNOW METAMORPHISM (Brun, 1989)
     
-    % index for nondendritic wet snow
+    % Index for nondendritic wet snow
     K = J & ~((W <= 0+W_tolerance)  | ((gsp <= 0+gdn_tolerance)  & (abs(dT) > 5+T_tolerance)));
     
     % check if snowpack is wet
@@ -225,13 +227,13 @@ if sum(J) ~= 0
     gsz(abs(gsp-1)>=W_tolerance  & gsz > 5-W_tolerance ) = 5;
 end
 
-% convert grain size back to effective grain radius
+% Convert grain size back to effective grain radius
 re = gsz/2;
 
 end
 
 function Q = Marbouty(T, d, dT)
-%% calculates grain growth according to Fig. 9 of Marbouty, 1980
+% Marbouty calculates grain growth according to Fig. 9 of Marbouty, 1980
 % ------NO GRAIN GROWTH FOR d > 400 kg m-3 because (H is set to zero)------
 % ---------------this is a major limitation of the model-------------------
 

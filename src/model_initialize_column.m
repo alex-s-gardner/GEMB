@@ -22,4 +22,5 @@ gdn       = zeros(m,1);                             % grain dentricity to old sn
 gsp       = zeros(m,1);                             % grain sphericity to old snow
 a         = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]
 a_diffuse = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]  
+
 end

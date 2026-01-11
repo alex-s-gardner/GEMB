@@ -1,14 +1,14 @@
 function [dz, z_center] = model_initialize_grid(ModelParam)
-% gridInitialize sets up the initial layer thickness and total grid depth.  
+% model_initialize_grid sets up the initial layer thickness and total grid depth.  
 % 
 %% Syntax 
 % 
-%  dz = gridInitialize(ModelParam.column_ztop, ModelParam.column_ztop, ModelParam.column_zmax, ModelParam.column_zy)
-%  [dz,z_center] = gridInitialize(ModelParam.column_ztop, ModelParam.column_ztop, ModelParam.column_zmax, ModelParam.column_zy)
-% 
+%  dz = model_initialize_grid(ModelParam)
+%  [dz,z_center] = model_initialize_grid(ModelParam)
+%
 %% Description
 % 
-% dz = gridInitialize(ModelParam.column_ztop, ModelParam.column_ztop, ModelParam.column_zmax, ModelParam.column_zy) creates a 1D grid structure
+% dz = model_initialize_grid(ModelParam) creates a 1D grid structure
 % containing the thickness dz of each cell in the column, where inputs match 
 % Fig. 1 of Gardner et al., 2023 (https://doi.org/10.5194/gmd-16-2277-2023)
 % and all inputs are scalars as follows: 
@@ -18,7 +18,7 @@ function [dz, z_center] = model_initialize_grid(ModelParam)
 %  * ModelParam.column_zmax (m): Maximum thickness of the total column. 
 %  * ModelParam.column_zy (unitless): Grid cell stretching parameter for the lower portion of the model grid, in which grid length increases linearly with depth. 
 % 
-% [dz,z_center] = gridInitialize(ModelParam.column_ztop, ModelParam.column_ztop, ModelParam.column_zmax, ModelParam.column_zy) also returns a
+% [dz,z_center] =model_initialize_grid(ModelParam) also returns a
 % 1D array z_center containing the center depths of each grid cell in
 % meters.
 % 

@@ -1,7 +1,17 @@
 function dlw = longwave_irradiance(temp_c, rh_percent)
-% longwave_irradiance Simulates downwelling longwave irradiance.
+% longwave_irradiance simulates downwelling longwave irradiance.
 %
-%   lw_down = calc_longwave_t_rh(temp_c, rh_percent)
+%% Syntax
+% 
+%  dlw = longwave_irradiance(temp_c, rh_percent)
+%
+%% Description
+%
+% dlw = longwave_irradiance(temp_c, rh_percent) calculates downwelling
+% longwave irradiance (W/m^2) from 2-meter atmospehric temperature (°C)
+% and relative humidity percent (0 to 100). 
+%
+%% Additional Information
 %
 %   Inputs:
 %       temp_c     : 2-meter Atmospheric Temperature in degrees Celsius.
@@ -18,6 +28,7 @@ function dlw = longwave_irradiance(temp_c, rh_percent)
 %       2. Calculates Actual Vapor Pressure from RH.
 %       3. Estimates Emissivity = 1.24 * (e_a / T_K)^(1/7).
 %       4. applies Stefan-Boltzmann Law.
+%
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available

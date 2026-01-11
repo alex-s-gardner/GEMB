@@ -1,5 +1,16 @@
 function M01 = densification_lookup_M01(densification_coeffs_M01)
+% densification_lookup_M01
 %
+%% Syntax
+% 
+%  M01 = densification_lookup_M01(densification_coeffs_M01)
+%
+%% Description
+% 
+% M01 = densification_lookup_M01(densification_coeffs_M01)
+% 
+%% Example 
+% 
 %
 %
 %% Author Information
@@ -46,8 +57,11 @@ switch densification_coeffs_M01
     case "Gre_RACMO_GB_SW1"
         M01 = [1.7834, 0.1409, 1.9260, 0.1527];
    
-    % Kuipers Munneke and others (2015) [semi-emperical], Greenland
+    % Kuipers Munneke and others (2015) [semi-empirical], Greenland
     case "Gre_KuipersMunneke"
         M01 = [1.042, 0.0916, 1.734, 0.2039];
+
+    otherwise
+        error("Unrecognized densification coefficients.")
 end
 

@@ -1,6 +1,5 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_total, M_surf, R_total, F_total] = ...
     melt(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, density_ice, verbose)
-
 % melt computes the quantity of meltwater due to snow temperature in excess
 % of 0 deg C, determines pore water content and adjusts grid spacing.
 %
@@ -115,6 +114,7 @@ T = min(T,CtoK);
 Swi = 0.07;  % assumed constant after Colbeck, 1974
 
 %% REFREEZE PORE WATER
+
 % check if any pore water
 if sum(W) > W_tolerance 
     % disp('PORE WATER REFREEZE')
@@ -139,6 +139,7 @@ W_irreducible = (density_ice - d) .* Swi .* (M0 ./ d);          % irreducible wa
 W_excess      = max(0, W - W_irreducible);                      % water "squeezed" from snow [kg m^-2]
 
 %% MELT, PERCOLATION AND REFREEZE
+
 F = zeros(m,1);
 
 % Add previous refreeze to F and reset W_delta
@@ -334,6 +335,7 @@ end
 F_total = sum(F);
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
+
 if verbose
     % Calculate final mass [kg] and energy [J]
     ER_total = R_total * (LF + CtoK * CI);

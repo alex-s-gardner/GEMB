@@ -42,59 +42,60 @@ function [OutData, OutCum] = ...
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-    if output_index(date_ind)
-        
-        % Store model output in structure format
-        varname = fieldnames(OutCum);
-        
-        % Determine the index for the output array (where to save in OutData)
-        r = sum(output_index(1:date_ind));
-        
-        % Define which variables are cumulative totals vs time-averages
-        cumulative_vars = {'M', 'R', 'F', 'EC', 'P', 'Ra', 'M_added', ...
-                           'compaction_dens', 'compaction_melt'};
-        is_cumulative = ismember(varname, cumulative_vars);
-        
-        % Transfer data from OutCum to OutData
-        for v = 1:length(varname)
-            if is_cumulative(v)
-                % Cumulative variables (e.g. Melt, Runoff) are just copied
-                OutData.(varname{v})(r) = OutCum.(varname{v});
-            else
-                % Averaged variables (e.g. Temperature) are divided by step count
-                OutData.(varname{v})(r) = OutCum.(varname{v}) / OutCum.count;
-            end
+if output_index(date_ind)
+    
+    % Store model output in structure format
+    varname = fieldnames(OutCum);
+    
+    % Determine the index for the output array (where to save in OutData)
+    r = sum(output_index(1:date_ind));
+    
+    % Define which variables are cumulative totals vs time-averages
+    cumulative_vars = {'M', 'R', 'F', 'EC', 'P', 'Ra', 'M_added', ...
+                       'compaction_dens', 'compaction_melt'};
+    is_cumulative = ismember(varname, cumulative_vars);
+    
+    % Transfer data from OutCum to OutData
+    for v = 1:length(varname)
+        if is_cumulative(v)
+            % Cumulative variables (e.g. Melt, Runoff) are just copied
+            OutData.(varname{v})(r) = OutCum.(varname{v});
+        else
+            % Averaged variables (e.g. Temperature) are divided by step count
+            OutData.(varname{v})(r) = OutCum.(varname{v}) / OutCum.count;
         end
-        
-        % Calculate Total Mass for surface height change (ps) calculation
-        M_total = sum(dz .* d);
-
-        % Store instantaneous level (profile) data
-        o = (size(d,1) - 1);
-        
-        % Ensure the output array is large enough to hold the current column depth
-        if (length(OutData.dz) - o) < 1
-            error("the length of the simulation column [%0.0f] is larger than the lenght of the output array [%0.0f]\n    -> try increasing the value of ModelParam.output_padding", (o+1), size(OutData.re,1))
-        end
-        
-        % Save vertical profiles
-        OutData.re(end-o:end,r)  = re;
-        OutData.d(end-o:end,r)   = d;
-        OutData.T(end-o:end,r)   = T;
-        OutData.W(end-o:end,r)   = W;
-        OutData.dz(end-o:end,r)  = dz;
-        OutData.gdn(end-o:end,r) = gdn;
-        OutData.gsp(end-o:end,r) = gsp;
-        
-        % Calculate surface height change relative to ice equivalent
-        OutData.ps(end-o:end,r)  = sum(dz) - M_total/ModelParam.density_ice;
-        OutData.m(r)             = o+1;
-        
-        % Reset cumulative values back to zero for the next interval
-        for v = 1:length(varname)
-            OutCum.(varname{v}) = 0;
-        end
-        
-        OutCum.count = 0;
     end
+    
+    % Calculate Total Mass for surface height change (ps) calculation
+    M_total = sum(dz .* d);
+
+    % Store instantaneous level (profile) data
+    o = (size(d,1) - 1);
+    
+    % Ensure the output array is large enough to hold the current column depth
+    if (length(OutData.dz) - o) < 1
+        error("the length of the simulation column [%0.0f] is larger than the lenght of the output array [%0.0f]\n    -> try increasing the value of ModelParam.output_padding", (o+1), size(OutData.re,1))
+    end
+    
+    % Save vertical profiles
+    OutData.re(end-o:end,r)  = re;
+    OutData.d(end-o:end,r)   = d;
+    OutData.T(end-o:end,r)   = T;
+    OutData.W(end-o:end,r)   = W;
+    OutData.dz(end-o:end,r)  = dz;
+    OutData.gdn(end-o:end,r) = gdn;
+    OutData.gsp(end-o:end,r) = gsp;
+    
+    % Calculate surface height change relative to ice equivalent
+    OutData.ps(end-o:end,r)  = sum(dz) - M_total/ModelParam.density_ice;
+    OutData.m(r)             = o+1;
+    
+    % Reset cumulative values back to zero for the next interval
+    for v = 1:length(varname)
+        OutCum.(varname{v}) = 0;
+    end
+    
+    OutCum.count = 0;
+end
+
 end
