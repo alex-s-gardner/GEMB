@@ -1,4 +1,4 @@
-function [T, shf, lhf, EC_cumulative, ulw] = ...
+function [T, shf, lhf, EC, ulw] = ...
     thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 
 % thermo computes new temperature profile accounting for energy absorption
@@ -324,8 +324,8 @@ end
 lhf = lhf_cumulative / ClimateForcingStep.dt; % J -> W/m2
 shf = shf_cumulative / ClimateForcingStep.dt; % J -> W/m2
 ulw = ulw_cumulative / ClimateForcingStep.dt; % J -> W/m2
+EC = EC_cumulative;
 end
-
 
 function [emissivity, emissivity_melt_switch] = emissivity_initialize(re_surface, ModelParam)
 gdn_tolerance  = 1e-10;
