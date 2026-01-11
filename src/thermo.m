@@ -1,4 +1,4 @@
-function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
+function [T, shf, lhf, EC_cumulative, ulw] = ...
     thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 
 % thermo computes new temperature profile accounting for energy absorption
@@ -6,7 +6,7 @@ function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
 %
 %% Syntax
 %
-% [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
+% [T, shf_cumulative, lhf_cumulative, EC_cumulative, ulw] = ...
 %    thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 %
 %% Description
@@ -54,10 +54,10 @@ function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
 %% Outputs
 %
 %  T                        : K            Updated grid cell temperature (vector).
-%  shf_cumulative           : W m^-2       Cumulative sensible heat flux.
-%  lhf_cumulative           : W m^-2       Cumulative latent heat flux.
-%  EC                       : kg           Cumulative evaporation/condensation mass.
-%  ulwrf                    : W m^-2       Upward longwave radiation flux.
+%  shf                      : W m^-2       Cumulative sensible heat flux.
+%  lhf                      : W m^-2       Cumulative latent heat flux.
+%  EC_cumulative            : kg           Cumulative evaporation/condensation mass.
+%  ulw                      : W m^-2       Upward longwave radiation flux.
 %
 %% References
 %
@@ -78,7 +78,7 @@ function [T, shf_cumulative, lhf_cumulative, EC, ulwrf] = ...
 
 %% INITIALIZE
 CI = 2102;          % heat capacity of snow/ice (J kg-1 k-1)
-R  = 8.314;         % gas constant [mol-1 K-1]
+RC  = 8.314;         % gas constant [mol-1 K-1]
 SB = 5.67E-8;       % Stefan-Boltzmann constant [W m-2 K-4]
 
 d_tolerance    = 1e-11;
@@ -87,7 +87,7 @@ W_tolerance    = 1e-13;
 ds             = d(1);      % density of top grid cell
 
 % calculated air density [kg/m3]
-density_air = 0.029 * ClimateForcingStep.p_air / (R * ClimateForcingStep.T_air);
+density_air = 0.029 * ClimateForcingStep.p_air / (RC * ClimateForcingStep.T_air);
 
 % thermal capacity of top grid cell [J/k]
 TCs = d(1) * dz(1) * CI;
@@ -99,11 +99,10 @@ if m == 0
 end
 
 % initialize Evaporation - Condensation
-EC             = 0.0;
-ulwrf          = 0.0;
+ulw_cumulative = 0.0;
+EC_cumulative  = 0.0;
 lhf_cumulative = 0.0;
 shf_cumulative = 0.0;
-T_surface      = T(1);
 CtoK           = 273.15;
 
 if verbose
@@ -120,10 +119,8 @@ else
     z0 = 0.0013;        % 1.3 mm for wet snow
 end
 
-
 % determine emissivity
 [emissivity, emissivity_melt_switch] = emissivity_initialize(re(1), ModelParam);
-
 
 % zT and zQ are percentage of z0 (Foken 2008)
 zratio = 10.0;
@@ -213,8 +210,8 @@ dlw = ClimateForcingStep.dlw * dt;
 T_delta_dlw = dlw / TCs;
 
 % only update turbulent head flux every thf_trigger_threshold
-thf_trigger_threshold = 1*60*60; % this will update thf every simulation hour
-thf_trigger = thf_trigger_threshold;
+thf_trigger_threshold = 1 * 60 * 60; % this will update thf every simulation hour
+thf_trigger           = thf_trigger_threshold;
 
 %% PREALLOCATE ARRAYS BEFORE LOOP FOR IMPROVED PERFORMANCE
 Tu = zeros(m,1);
@@ -240,21 +237,23 @@ for i = 1:dt:ClimateForcingStep.dt
 
     % TURBULENT HEAT FLUX
     if thf_trigger >= thf_trigger_threshold
-        [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
+        [shf, lhf, latent_heat] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
         thf_trigger = 0;
     end
+    lhf_cumulative = lhf_cumulative + lhf * dt;
+    shf_cumulative = shf_cumulative + shf * dt;
 
     % mass loss (-)/accretion(+) due to evaporation/condensation [kg]
-    EC_day = lhf * 86400 / L;
+    EC = lhf / latent_heat * dt;
 
     % temperature change due turbulent fluxes
     thf = (shf + lhf) * dt;
     T_delta_thf = thf  / TCs;
 
     % upward longwave radiation
-    ulw         = -(SB * T_surface.^4.0 * emissivity) * dt;
-    T_delta_ulw = ulw / TCs;
-    ulwrf       = ulwrf - (ulw / ClimateForcingStep.dt); % accumulated for output
+    ulw            = -(SB * T_surface.^4.0 * emissivity) * dt;
+    ulw_cumulative = ulw_cumulative - ulw; % accumulated for output
+    T_delta_ulw    = ulw / TCs;
 
     % new grid point temperature
 
@@ -285,10 +284,7 @@ for i = 1:dt:ClimateForcingStep.dt
     T = (Np .* T) + (Nu .* Tu) + (Nd .* Td);
 
     % calculate cumulative evaporation (+)/condensation(-)
-    EC = EC + (EC_day / 86400) * dt;
-
-    lhf_cumulative = lhf_cumulative + lhf * dt / ClimateForcingStep.dt;
-    shf_cumulative = shf_cumulative + shf * dt / ClimateForcingStep.dt;
+    EC_cumulative = EC_cumulative + EC;
 
     % if emissivity_method == "re_w_threshold" then check if the surface is melting
     if emissivity_melt_switch
@@ -322,8 +318,12 @@ for i = 1:dt:ClimateForcingStep.dt
             error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_bottom,T(end))
         end
     end
-    thf_trigger = thf_trigger+dt;
+    thf_trigger = thf_trigger + dt;
 end
+
+lhf = lhf_cumulative / ClimateForcingStep.dt; % J -> W/m2
+shf = shf_cumulative / ClimateForcingStep.dt; % J -> W/m2
+ulw = ulw_cumulative / ClimateForcingStep.dt; % J -> W/m2
 end
 
 

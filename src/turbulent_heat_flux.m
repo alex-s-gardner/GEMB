@@ -1,10 +1,11 @@
-function [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep)
+function [shf, lhf, latent_heat] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep)
 % turbulent_heat_flux computes sensible and latent heat fluxes using 
 % Monin-Obukhov similarity theory.
 %
 %% Syntax
 %
-% [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep)
+% [shf, lhf, latent_heat] = ...
+%    turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep)
 %
 %% Description
 %
@@ -48,7 +49,7 @@ function [shf, lhf, L] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ,
 %
 %  shf                : W m^-2       Sensible heat flux (positive toward surface).
 %  lhf                : W m^-2       Latent heat flux (positive toward surface).
-%  L                  : J kg^-1      Latent heat of vaporization or sublimation used.
+%  latent_heat        : J kg^-1      Latent heat of vaporization or sublimation used.
 %
 %% References
 %
@@ -137,19 +138,21 @@ shf = shf/(coefM*coefHT);
 % Determine Phase (Melting or Freezing) for Latent Heat Constant and Saturation Pressure
 if (T_surface >= CtoK - T_tolerance )
     % Liquid water surface
-    L = LV; 
+    latent_heat = LV; 
     % Saturation Vapor Pressure (Murray 1967)
     eS = 610.78 * exp(17.2693882 * (T_surface - CtoK - 0.01) / (T_surface - 35.86));
 else
     % Ice surface
-    L = LS; 
+    latent_heat = LS; 
     % Saturation Vapor Pressure (Ding et al., 2019 / Bolton 1980)
-    eS = 610.78 * exp(21.8745584 * (T_surface - CtoK - 0.01) / (T_surface - 7.66));
+    eS = 610.78 * exp(21.8745584 * ...
+        (T_surface - CtoK - 0.01) / (T_surface - 7.66));
 end
 
 % Calculate Latent Heat Flux
 % 461.9 is the specific gas constant for water vapor [J kg-1 K-1]
-lhf = C * L * (ClimateForcingStep.e_air - eS) / (461.9 * (ClimateForcingStep.T_air + T_surface) / 2.0);
+lhf = C * latent_heat * (ClimateForcingStep.e_air - eS) / ...
+    (461.9 * (ClimateForcingStep.T_air + T_surface) / 2.0);
 
 % Adjust using Monin-Obukhov stability theory
 lhf = lhf / (coefM * coefHQ);
