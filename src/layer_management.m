@@ -81,10 +81,10 @@ CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
 LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 
 % store initial mass [kg] and energy [J]
-M        = dz .* d;               % grid cell mass [kg]
-M_total_initial = sum(W) + sum(M);       % total mass [kg]
+M        = dz .* d;                       % grid cell mass [kg]
+M_total_initial = sum(W) + sum(M);        % total mass [kg]
 E_total_initial = sum(M .* T * CI) + ...
-    sum(W .* (LF + CtoK * CI));   % total energy [J] = initial enegy of snow/ice + initial enegy of water
+    sum(W .* (LF + CtoK * CI));           % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
 
 T_bottom = T(end);
