@@ -81,25 +81,19 @@ CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
 LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 
 % store initial mass [kg] and energy [J]
-M  = dz .* d;                  % grid cell mass [kg]
-EI = M .* T * CI;              % initial enegy of snow/ice
-EW = W .* (LF + CtoK * CI);    % initial enegy of water
+M        = dz .* d;               % grid cell mass [kg]
+M_total_initial = sum(W) + sum(M);       % total mass [kg]
+E_total_initial = sum(M .* T * CI) + ...
+    sum(W .* (LF + CtoK * CI));   % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
-M0_total = sum(W) + sum(M);       % total mass [kg]
-E0_total = sum(EI) + sum(EW);     % total energy [J]
 
 T_bottom = T(end);
 m        = length(T);
 
-% store initial mass [kg] and energy [J]
-M  = dz .* d;                  % grid cell mass [kg]
-EI = M .* T * CI;              % initial enegy of snow/ice
-EW = W .* (LF + CtoK * CI);    % initial enegy of water
-
-Z_cumulative = cumsum(dz);
+z_cumulative = cumsum(dz);
 
 % A logical "mask" that indicates which cells are in the top layers:
-top_layers = Z_cumulative <= (ModelParam.column_ztop + d_tolerance);
+top_layers = z_cumulative <= (ModelParam.column_ztop + d_tolerance);
 
 % Define column_dzmin2 array using the top-layers' ModelParam.column_dzmin value for the entire column:
 column_dzmin2 = ModelParam.column_dzmin * ones(m,1);
@@ -137,8 +131,8 @@ for i=1:m
         % Move the quantities to the target location. Quantities are
         % calculated as linearly weighted functions of mass:
         m_new               = M(i) + M(i_target);
-        T(i_target)         = (T(i) * M(i) + T(i_target) * M(i_target)) / m_new;
-        a(i_target)         = (a(i) * M(i) + a(i_target) * M(i_target)) / m_new;
+        T(i_target)         = (T(i)         * M(i) + T(i_target)         * M(i_target)) / m_new;
+        a(i_target)         = (a(i)         * M(i) + a(i_target)         * M(i_target)) / m_new;
         a_diffuse(i_target) = (a_diffuse(i) * M(i) + a_diffuse(i_target) * M(i_target)) / m_new;
 
         % Use grain properties from lower cell:
@@ -151,12 +145,10 @@ for i=1:m
         d(i_target)  = m_new / dz(i_target);         % combine top densities
         W(i_target)  = W(i) + W(i_target);           % combine liquid water
         M(i_target)  = m_new;                        % combine top masses
-
     end
 end
 
 % Delete combined cells:
-M(delete_cell)                 = [];
 W(delete_cell)                 = [];
 dz(delete_cell)                = [];
 d(delete_cell)                 = [];
@@ -166,8 +158,6 @@ re(delete_cell)                = [];
 gdn(delete_cell)               = [];
 gsp(delete_cell)               = [];
 a_diffuse(delete_cell)         = [];
-EI(delete_cell)                = [];
-EW(delete_cell)                = [];
 column_dzmax2(delete_cell)     = [];
 
 % Calculate *new* length of cells:
@@ -181,10 +171,7 @@ f = find(dz > (column_dzmax2 + d_tolerance));
 
 % Conserve quantities among the cells that will be split:
 dz(f) = dz(f)/2;
-W(f)  = W(f)/2;
-M(f)  = M(f)/2;
-EI(f) = EI(f)/2;
-EW(f) = EW(f)/2;
+W(f)  = W(f) /2;
 
 % Sort the indices of all the cells including the ones that will be duplicated:
 fs = sort([(1:m)';f]);
@@ -192,13 +179,10 @@ fs = sort([(1:m)';f]);
 % Recreate the variables with split cells:
 dz        = dz(fs);
 W         = W(fs);
-M         = M(fs);
 T         = T(fs);
 d         = d(fs);
 a         = a(fs);
 a_diffuse = a_diffuse(fs);
-EI        = EI(fs);
-EW        = EW(fs);
 re        = re(fs);
 gdn       = gdn(fs);
 gsp       = gsp(fs);
@@ -208,19 +192,18 @@ gsp       = gsp(fs);
 % INTERPRETATION
 
 % Calculate total model depth:
-Z_total = sum(dz);
+z_total = sum(dz);
 
-if Z_total < (ModelParam.column_zmax - d_tolerance)
+if z_total < (ModelParam.column_zmax - d_tolerance)
 
     % Mass and energy to be added:
-    M_added   = M(end) + W(end);
-    E_added   = T(end) * M(end) * CI + W(end) * (LF + CtoK * CI);
+    M_added   = (dz(end) * d(end)) + W(end);
+    E_added   = T(end) * (dz(end) * d(end)) * CI + W(end) * (LF + CtoK * CI);
 
     % Add a grid cell of the same size and temperature to the bottom:
     dz        = [   dz;    dz(end)];
     T         = [    T;     T(end)];
     W         = [    W;     W(end)];
-    M         = [    M;     M(end)];
     d         = [    d;     d(end)];
     a         = [    a;     a(end)];
     a_diffuse = [a_diffuse; a_diffuse(end)];
@@ -228,17 +211,16 @@ if Z_total < (ModelParam.column_zmax - d_tolerance)
     gdn       = [  gdn;   gdn(end)];
     gsp       = [  gsp;   gsp(end)];
 
-elseif Z_total > ModelParam.column_zmax+d_tolerance 
+elseif z_total > ModelParam.column_zmax+d_tolerance 
 
     % Mass and energy loss:
-    M_added   = -(M(end) + W(end));
-    E_added   = -(T(end) * M(end) * CI) - W(end) * (LF+CtoK*CI);
+    M_added   = -((dz(end)*d(end)) + W(end));
+    E_added   = -(T(end) * (dz(end)*d(end)) * CI) - W(end) * (LF+CtoK*CI);
 
     % Remove a grid cell from the bottom:
     dz(end)        = [];
     T(end)         = [];
     W(end)         = [];
-    M(end)         = [];
     d(end)         = [];
     a(end)         = [];
     re(end)        = [];
@@ -256,24 +238,22 @@ end
 %       T(end) = T_bottom
 % This is to satisfy the Constant Temperature (Dirichlet) boundary
 % condition. If this is not done then then thermal diffusion will blow up
-E_added   = E_added + ((T_bottom - T(end)) * M(end) * CI);
+E_added   = E_added + ((T_bottom - T(end)) * (dz(end)*d(end)) * CI);
 T(end)    = T_bottom;
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 if verbose
     % Calculate final mass [kg] and energy [J]
+    M             = dz .* d;               % grid cell mass [kg]
+    M_total_final = sum(W) + sum(M);       % total mass [kg]
+    E_total_final = sum(M .* T * CI) + ...
+        sum(W .* (LF + CtoK * CI));        % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
-    EI    = M .* T * CI;
-    EW    = W .* (LF + CtoK * CI);
+    M_delta = M_total_initial - M_total_final + M_added;
+    E_delta = E_total_initial - E_total_final + E_added;
 
-    M1_total = sum(W) + sum(M);
-    E1_total = sum(EI) + sum(EW);
-
-    M_delta = round((M0_total - M1_total + M_added)*100)/100.;
-    E_delta = round(E0_total - E1_total + E_added);
-
-    if M_delta ~= 0 || E_delta ~= 0
-        error(['Mass and energy are not conserved in melt equations:' newline ' M_delta: ' ...
+    if (abs(M_delta) > 1E-3) || (abs(E_delta) > 1E-3)
+        error(['Mass and/or energy are not conserved in melt equations:' newline ' M_delta: ' ...
             num2str(M_delta) ' E_delta: ' num2str(E_delta) newline])
     end
 
