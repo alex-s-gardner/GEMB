@@ -63,7 +63,10 @@ lw_net = ...
 % ## NEED TO FIX THIS IN CASE ALL OR MORE OF CELL EVAPORATES ##
 dz(1) = ...
     dz(1) + EC / d(1);
-E_EC = EC * T(1) * CI;
+
+if verbose
+    E_EC = EC * T(1) * CI;
+end
 
 % 7. Add snow/rain to top grid cell adjusting cell depth, temperature, and density
 [T, dz, d, water, re, gdn, gsp, a, a_diffuse, Ra] = ...

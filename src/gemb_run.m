@@ -129,7 +129,7 @@ run_id = "test_1";
 %% RUN GEMB
 switch run_id
     case "test_1"
-        verbose = true;
+        verbose = false;
 
         % [1] specify model parameters
         % [if data is not modified then it can be passed as an stucture]
