@@ -1,13 +1,13 @@
 function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-    layer_management(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
+    layer_management(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
 % layer_management adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
 % set for the minimum and maximum allowable layer thickness.
 %
 %% Syntax
 %
-% [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-%    layer_management(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
+% [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
+%    layer_management(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
 %
 %% Description
 %
@@ -35,7 +35,7 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
 %  T                       : K            Grid cell temperature.
 %  dz                      : m            Grid cell thickness.
 %  d                       : kg m^-3      Grid cell density.
-%  W                       : kg m^-2      Water content.
+%  water                   : kg m^-2      Water content.
 %  re                      : mm           Grain size (effective radius).
 %  gdn                     : unitless     Grain dendricity.
 %  gsp                     : unitless     Grain sphericity.
@@ -55,7 +55,7 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
 %  T            : K            Updated grid cell temperature.
 %  dz           : m            Updated grid cell thickness.
 %  d            : kg m^-3      Updated grid cell density.
-%  W            : kg m^-2      Updated water content.
+%  water        : kg m^-2      Updated water content.
 %  re           : mm           Updated grain size.
 %  gdn          : unitless     Updated grain dendricity.
 %  gsp          : unitless     Updated grain sphericity.
@@ -82,9 +82,9 @@ LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 
 % store initial mass [kg] and energy [J]
 M        = dz .* d;                       % grid cell mass [kg]
-M_total_initial = sum(W) + sum(M);        % total mass [kg]
+M_total_initial = sum(water) + sum(M);    % total mass [kg]
 E_total_initial = sum(M .* T * CI) + ...
-    sum(W .* (LF + CtoK * CI));           % total energy [J] = initial enegy of snow/ice + initial enegy of water
+    sum(water .* (LF + CtoK * CI));       % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
 
 T_bottom = T(end);
@@ -141,15 +141,15 @@ for i=1:m
         gsp(i_target) = gsp(i);
 
         % Merge with underlying grid cell and delete old cell:
-        dz(i_target) = dz(i) + dz(i_target);         % combine cell depths
-        d(i_target)  = m_new / dz(i_target);         % combine top densities
-        W(i_target)  = W(i) + W(i_target);           % combine liquid water
-        M(i_target)  = m_new;                        % combine top masses
+        dz(i_target)     = dz(i) + dz(i_target);         % combine cell depths
+        d(i_target)      = m_new / dz(i_target);         % combine top densities
+        water(i_target)  = water(i) + water(i_target);   % combine liquid water
+        M(i_target)      = m_new;                        % combine top masses
     end
 end
 
 % Delete combined cells:
-W(delete_cell)                 = [];
+water(delete_cell)             = [];
 dz(delete_cell)                = [];
 d(delete_cell)                 = [];
 T(delete_cell)                 = [];
@@ -170,15 +170,15 @@ m = length(T);
 f = find(dz > (column_dzmax2 + d_tolerance));
 
 % Conserve quantities among the cells that will be split:
-dz(f) = dz(f)/2;
-W(f)  = W(f) /2;
+dz(f)    = dz(f)/2;
+water(f) = water(f) /2;
 
 % Sort the indices of all the cells including the ones that will be duplicated:
 fs = sort([(1:m)';f]);
 
 % Recreate the variables with split cells:
 dz        = dz(fs);
-W         = W(fs);
+water     = water(fs);
 T         = T(fs);
 d         = d(fs);
 a         = a(fs);
@@ -197,30 +197,30 @@ z_total = sum(dz);
 if z_total < (ModelParam.column_zmax - d_tolerance)
 
     % Mass and energy to be added:
-    M_added   = (dz(end) * d(end)) + W(end);
-    E_added   = T(end) * (dz(end) * d(end)) * CI + W(end) * (LF + CtoK * CI);
+    M_added   = (dz(end) * d(end)) + water(end);
+    E_added   = T(end) * (dz(end) * d(end)) * CI + water(end) * (LF + CtoK * CI);
 
     % Add a grid cell of the same size and temperature to the bottom:
-    dz        = [   dz;    dz(end)];
-    T         = [    T;     T(end)];
-    W         = [    W;     W(end)];
-    d         = [    d;     d(end)];
-    a         = [    a;     a(end)];
+    dz        = [   dz;     dz(end)       ];
+    T         = [    T;     T(end)        ];
+    water     = [    water; water(end)    ];
+    d         = [    d;     d(end)        ];
+    a         = [    a;     a(end)        ];
     a_diffuse = [a_diffuse; a_diffuse(end)];
-    re        = [   re;    re(end)];
-    gdn       = [  gdn;   gdn(end)];
-    gsp       = [  gsp;   gsp(end)];
+    re        = [   re;     re(end)       ];
+    gdn       = [  gdn;     gdn(end)      ];
+    gsp       = [  gsp;     gsp(end)      ];
 
 elseif z_total > ModelParam.column_zmax+d_tolerance 
 
     % Mass and energy loss:
-    M_added   = -((dz(end)*d(end)) + W(end));
-    E_added   = -(T(end) * (dz(end)*d(end)) * CI) - W(end) * (LF+CtoK*CI);
+    M_added   = -((dz(end)*d(end)) + water(end));
+    E_added   = -(T(end) * (dz(end)*d(end)) * CI) - water(end) * (LF+CtoK*CI);
 
     % Remove a grid cell from the bottom:
     dz(end)        = [];
     T(end)         = [];
-    W(end)         = [];
+    water(end)     = [];
     d(end)         = [];
     a(end)         = [];
     re(end)        = [];
@@ -244,10 +244,10 @@ T(end)    = T_bottom;
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 if verbose
     % Calculate final mass [kg] and energy [J]
-    M             = dz .* d;               % grid cell mass [kg]
-    M_total_final = sum(W) + sum(M);       % total mass [kg]
+    M             = dz .* d;                % grid cell mass [kg]
+    M_total_final = sum(water) + sum(M);    % total mass [kg]
     E_total_final = sum(M .* T * CI) + ...
-        sum(W .* (LF + CtoK * CI));        % total energy [J] = initial enegy of snow/ice + initial enegy of water
+        sum(water .* (LF + CtoK * CI));     % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
     M_delta = M_total_initial - M_total_final + M_added;
     E_delta = E_total_initial - E_total_final + E_added;

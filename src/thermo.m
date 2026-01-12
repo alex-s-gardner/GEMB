@@ -1,12 +1,12 @@
 function [T, ulw, shf, lhf, ghf, EC] = ...
-    thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
+    thermo(T, dz, d, water_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 % thermo computes new temperature profile accounting for energy absorption
 % and thermal diffusion.
 %
 %% Syntax
 %
 % [T, ulw, shf, lhf, ghf, EC] = ...
-%    thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
+%    thermo(T, dz, d, water_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 %
 %% Description
 %
@@ -37,7 +37,7 @@ function [T, ulw, shf, lhf, ghf, EC] = ...
 %  T                        : K            Grid cell temperature (vector).
 %  dz                       : m            Grid cell thickness (vector).
 %  d                        : kg m^-3      Grid cell density (vector).
-%  W_surface                : kg m^-2      Surface water content.
+%  water_surface            : kg m^-2      Surface water content.
 %  re                       : mm           Grain radius (vector).
 %  swf                      : W m^-2       Absorbed shortwave radiation flux per layer.
 %  ClimateForcingStep       : struct       Forcing data for the current time step:
@@ -120,7 +120,7 @@ end
 %% SURFACE ROUGHNESS (Bougamont, 2005)
 
 % wind/temperature surface roughness height [m]
-if (ds < (ModelParam.density_ice - d_tolerance)) && (W_surface < W_tolerance)
+if (ds < (ModelParam.density_ice - d_tolerance)) && (water_surface < W_tolerance)
     z0 = 0.00012;       % 0.12 mm for dry snow
 elseif ds >= (ModelParam.density_ice - d_tolerance)
     z0 = 0.0032;        % 3.2 mm for ice
@@ -312,8 +312,8 @@ for i = 1:dt:ClimateForcingStep.dt
         E_tolerance = 1e-3;
         if (abs(E_delta) > E_tolerance) || isnan(E_delta)
            
-            fprintf('inputs : T_surface = %0.4f K, W_surface = %0.4f kg m-2, re_surface = %0.04f mm, swf = %0.4f W m-2, dlwf = %0.4f W m-2, ClimateForcingStep.T_air = %0.4f K, ClimateForcingStep.V = %0.4f m/s, ClimateForcingStep.e_air = %0.3f Pa, ClimateForcingStep.p_air = %0.4f Pa \n', ...
-                              T(1)               , W_surface               , re(1)                 , sum(swf)         , ClimateForcingStep.dlw             , ClimateForcingStep.T_air          , ClimateForcingStep.V            , ClimateForcingStep.e_air           , ClimateForcingStep.p_air)
+            fprintf('inputs : T_surface = %0.4f K, water_surface = %0.4f kg m-2, re_surface = %0.04f mm, swf = %0.4f W m-2, dlwf = %0.4f W m-2, ClimateForcingStep.T_air = %0.4f K, ClimateForcingStep.V = %0.4f m/s, ClimateForcingStep.e_air = %0.3f Pa, ClimateForcingStep.p_air = %0.4f Pa \n', ...
+                              T(1)               , water_surface               , re(1)                 , sum(swf)         , ClimateForcingStep.dlw             , ClimateForcingStep.T_air          , ClimateForcingStep.V            , ClimateForcingStep.e_air           , ClimateForcingStep.p_air)
 
             fprintf('internals : sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, thf = %0.10g J, ghf = %0.10g J \n', ...
                                  sum(sw)      , dlw           , ulw           , thf           , ghf_flux)
