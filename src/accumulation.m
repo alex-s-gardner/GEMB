@@ -137,7 +137,7 @@ if ClimateForcingStep.P > (0 + P_tolerance)
         % liquid: must account for latent heat of fusion
         T(1) = ((ClimateForcingStep.P * (ClimateForcingStep.T_air + LF/CI)) + ...
             (T(1) * M_surface)) / M_surface_new;
-        
+
         % adjust grid cell density
         d(1) = M_surface_new / dz(1);
 
@@ -159,10 +159,10 @@ if ClimateForcingStep.P > (0 + P_tolerance)
         E_total_final = sum(M .* T * CI) + ...
             sum(water .* (LF + CtoK * CI));       % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
-        E_P = ((ClimateForcingStep.P - rain) * (ClimateForcingStep.T_air ) * CI) + ...
-            (rain * (ClimateForcingStep.T_air * CI + LF));
+        E_snow = ((ClimateForcingStep.P - rain) * (ClimateForcingStep.T_air ) * CI);
+        E_rain = (rain * (ClimateForcingStep.T_air * CI + LF));
 
-        E_delta = E_total_final - E_total_initial - E_P;
+        E_delta = E_total_final - E_total_initial - E_snow - E_rain;
         
         if (abs(M_delta) > 1E-3) || (abs(E_delta) > 1E-3)
             error(['Mass and/or energy are not conserved:' newline ' M_delta: ' ...

@@ -111,10 +111,11 @@ if verbose
     % need to account for rain
     %{ 
     % --------------- WORK IN PROGRESS -----------------
-    E_runoff   = sum(R * (LF + CtoK * CI)); 
+
+    E_snow = ((ClimateForcingStep.P - R) * (ClimateForcingStep.T_air) * CI);
+    E_rain = (R * (ClimateForcingStep.T_air * CI + LF));
     E_thermal  = sum((dz .* d) .* T * CI);
     E_water    = sum(W .* (LF + CtoK * CI));
-    E_P              = ClimateForcingStep.P .* ClimateForcingStep.T_air * CI;
     E_sw             = (sw_net*dt);
     E_lw             = (lw_net*dt);
     E_thf            = ((shf+lhf)*dt);
