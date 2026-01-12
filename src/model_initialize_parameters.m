@@ -1,5 +1,4 @@
 function options = model_initialize_parameters(options)
-function options = model_initialize_parameters(options)
 % model_initialize_parameters initializes and validates the model configuration
 % options, setting default values for physics modules, grid geometry, and
 % output controls.
