@@ -56,7 +56,7 @@ sw_net = ...
 
 % 4. Calculate net longwave [W m-2]
 lw_net = ...
-    ulw - ClimateForcingStep.dlw;
+    ClimateForcingStep.dlw - ulw;
 
 % 6. Change in thickness of top cell due to evaporation/condensation
 % Assuming same density as top cell
@@ -67,7 +67,7 @@ E_EC = EC * T(1) * CI;
 
 % 7. Add snow/rain to top grid cell adjusting cell depth, temperature, and density
 [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
-    accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcingStep, ModelParam);
+    accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcingStep, ModelParam, verbose);
 
 % 8. Melt and wet compaction
 % Calculate water production melt [kg m-2], runoff R [kg m-2], and resulting changes
@@ -109,21 +109,22 @@ if verbose
     end
 
     % need to account for rain
-    %{ 
     % --------------- WORK IN PROGRESS -----------------
-    E_runoff   = sum(R * (LF + CtoK * CI)); 
+
+    E_snow     = ((ClimateForcingStep.P - Ra) * (ClimateForcingStep.T_air) * CI);
+    E_rain     = Ra * (ClimateForcingStep.T_air * CI + LF);
+    E_R        = R * (LF + CtoK * CI);
     E_thermal  = sum((dz .* d) .* T * CI);
     E_water    = sum(W .* (LF + CtoK * CI));
-    E_P              = ClimateForcingStep.P .* ClimateForcingStep.T_air * CI;
-    E_sw             = (sw_net*dt);
-    E_lw             = (lw_net*dt);
-    E_thf            = ((shf+lhf)*dt);
-    E_ghf            = (ghf*dt);
+    E_sw       = (sw_net*dt);
+    E_lw       = (lw_net*dt);
+    E_thf      = ((shf+lhf)*dt);
+    E_ghf      = (ghf*dt);
 
-    E_total_final = E_thermal + E_water + E_runoff; % total energy [J] = initial enegy of snow/ice + initial enegy of water
+    E_total_final = E_thermal + E_water + E_R; % total energy [J] = initial enegy of snow/ice + initial enegy of water
   
     E_used     = E_total_final - E_total_initial;
-    E_supplied = E_sw + E_lw + E_thf + E_P + E_ghf + E_added + E_EC;
+    E_supplied = E_sw + E_lw + E_thf + E_snow + E_rain + E_ghf + E_EC + E_added ;
     E_delta   = E_used - E_supplied;
 
     % check energy conservation

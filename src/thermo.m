@@ -1,12 +1,11 @@
 function [T, ulw, shf, lhf, ghf, EC] = ...
     thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
-
 % thermo computes new temperature profile accounting for energy absorption
 % and thermal diffusion.
 %
 %% Syntax
 %
-% [T, shf_cumulative, lhf_cumulative, EC_cumulative, ulw] = ...
+% [T, ulw, shf, lhf, ghf, EC] = ...
 %    thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 %
 %% Description
@@ -21,7 +20,7 @@ function [T, ulw, shf, lhf, ghf, EC] = ...
 %      and Foken (2008).
 %    * Radiative Fluxes: Incoming/outgoing longwave radiation and surface 
 %      shortwave absorption.
-%      % 2. Subsurface Physics: 
+% 2. Subsurface Physics: 
 %    * Thermal Diffusion: Solves the discretized heat equation using a 
 %      finite-volume scheme (Patankar, 1980).
 %    * Shortwave Penetration: Adds absorbed shortwave energy (calculated 
@@ -38,7 +37,7 @@ function [T, ulw, shf, lhf, ghf, EC] = ...
 %  T                        : K            Grid cell temperature (vector).
 %  dz                       : m            Grid cell thickness (vector).
 %  d                        : kg m^-3      Grid cell density (vector).
-%  W_surface                : kg           Surface water content.
+%  W_surface                : kg m^-2      Surface water content.
 %  re                       : mm           Grain radius (vector).
 %  swf                      : W m^-2       Absorbed shortwave radiation flux per layer.
 %  ClimateForcingStep       : struct       Forcing data for the current time step:
@@ -48,17 +47,24 @@ function [T, ulw, shf, lhf, ghf, EC] = ...
 %    .e_air                 : Pa           Vapor pressure.
 %    .p_air                 : Pa           Air pressure.
 %    .dt                    : s            Time step duration.
-%  ModelParam               : struct       Model parameters (density_ice, emissivity, etc.).
+%  ModelParam               : struct       Model parameters:
+%    .density_ice           : kg m^-3      Ice density (threshold for roughness changes).
+%    .surface_roughness_effective_ratio : - Ratio of scalar roughness (zT, zQ) to momentum roughness (z0).
+%    .dt_divisors           : -            Factors used to find stable time steps.
+%    .emissivity_method     : string       Method for calculating emissivity ("uniform", "re_threshold", etc.).
+%    .emissivity            : -            Base longwave emissivity.
+%    .emissivity_re_threshold : mm         Grain radius threshold for emissivity switching.
+%    .emissivity_re_large   : -            Emissivity for large grain sizes.
 %  verbose                  : logical      Flag to enable energy conservation checks.
 %
 %% Outputs
 %
 %  T                        : K            Updated grid cell temperature (vector).
-%  shf                      : W m^-2       Cumulative sensible heat flux.
-%  lhf                      : W m^-2       Cumulative latent heat flux.
-%  ulw                      : W m^-2       Upward longwave radiation flux.
-%  ghf                      : W m^-2       Ground heat flux
-%  EC_cumulative            : kg           Cumulative evaporation/condensation mass.
+%  ulw                      : W m^-2       Mean upward longwave radiation flux.
+%  shf                      : W m^-2       Mean sensible heat flux.
+%  lhf                      : W m^-2       Mean latent heat flux.
+%  ghf                      : W m^-2       Mean ground heat flux (flux at bottom boundary).
+%  EC                       : kg m^-2      Cumulative evaporation (+) / condensation (-) mass.
 %
 %% References
 %
@@ -75,7 +81,7 @@ function [T, ulw, shf, lhf, ghf, EC] = ...
 % 
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
-% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 %% INITIALIZE
 CI = 2102;          % heat capacity of snow/ice (J kg-1 k-1)
@@ -112,6 +118,7 @@ if verbose
 end
 
 %% SURFACE ROUGHNESS (Bougamont, 2005)
+
 % wind/temperature surface roughness height [m]
 if (ds < (ModelParam.density_ice - d_tolerance)) && (W_surface < W_tolerance)
     z0 = 0.00012;       % 0.12 mm for dry snow
@@ -124,10 +131,9 @@ end
 % determine emissivity
 [emissivity, emissivity_melt_switch] = emissivity_initialize(re(1), ModelParam);
 
-% zT and zQ are percentage of z0 (Foken 2008)
-zratio = 10.0;
-zT     = z0 / zratio;
-zQ     = z0 / zratio;
+% zT and zQ are percentage of z0
+zT     = z0 * ModelParam.surface_roughness_effective_ratio;
+zQ     = z0 * ModelParam.surface_roughness_effective_ratio;
 
 % if ClimateForcingStep.V = 0 goes to infinity therfore if ClimateForcingStep.V = 0 change
 ClimateForcingStep.V(ClimateForcingStep.V < 0.01-d_tolerance) = 0.01;
@@ -157,7 +163,7 @@ K = thermal_conductivity(T, d, ModelParam);
 % u, d, and p conductivities
 KU = [NaN   ; K(1:m-1)];
 KD = [K(2:m); NaN];
-KP = K;
+KP =  K;
 
 % determine u, d & p cell widths
 dzU = [NaN    ; dz(1:m-1)];

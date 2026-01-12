@@ -97,8 +97,8 @@ end
 
 % Initialize cumulative output values:
 varname.cumulative = {'R', 'M', 'F', 'EC', 'Ra', 'M_added', 'sw_net', ...
-    'lw_net', 'shf', 'lhf', 'a1', 're1', 'ulw', 'd1', 'compaction_dens', ...
-    'compaction_melt', 'Q_net', 'FAC'};
+    'lw_net', 'shf', 'lhf', 'a1', 're1', 'd1', 'compaction_dens', ...
+    'compaction_melt', 'FAC'};
 
 % Set cumulative values zero:
 for v = 1:length(varname.cumulative)

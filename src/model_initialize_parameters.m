@@ -1,4 +1,5 @@
 function options = model_initialize_parameters(options)
+function options = model_initialize_parameters(options)
 % model_initialize_parameters initializes and validates the model configuration
 % options, setting default values for physics modules, grid geometry, and
 % output controls.
@@ -16,12 +17,13 @@ function options = model_initialize_parameters(options)
 % Key Configuration Areas:
 % 1. Initialization: Sets spin-up cycles and run identifiers.
 % 2. Densification & Mass: Selects firn compaction models, fresh snow density, 
-%    and ice density.
+%    ice density, and rain/snow temperature thresholds.
 % 3. Energy Balance: Configures longwave emissivity, thermal conductivity, 
-%    and detailed albedo/shortwave penetration schemes.
-% 4. Grid Geometry: Defines the vertical discretization, including the 
+%    surface roughness ratios, and detailed albedo/shortwave penetration schemes.
+% 4. Melt & Water: Sets irreducible water saturation for the snowpack.
+% 5. Grid Geometry: Defines the vertical discretization, including the 
 %    high-resolution surface capture zone and deep layer stretching.
-% 5. Output: Controls temporal resolution and array padding.
+% 6. Output: Controls temporal resolution and array padding.
 %
 %% Inputs
 %
@@ -36,15 +38,20 @@ function options = model_initialize_parameters(options)
 %    .densification_coeffs_M01      : string       Coeffs for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").
 %    .new_snow_method               : string       Fresh snow density model (e.g., "350kgm2", "Fausto").
 %    .density_ice                   : double       Density of glacier ice [kg m^-3].
+%    .rain_temperature_threshold    : double       Temperature threshold [C] above which precipitation falls as rain.
 %
-%    --- LONGWAVE EMISSIVITY ---
+%    --- LONGWAVE EMISSIVITY & ROUGHNESS ---
 %    .emissivity_method             : string       Method: "uniform", "re_threshold", "re_w_threshold".
 %    .emissivity                    : double       Base longwave emissivity (0-1).
 %    .emissivity_re_large           : double       Emissivity for large grain sizes (0-1).
 %    .emissivity_re_threshold       : double       Grain radius threshold [mm] for emissivity switching.
+%    .surface_roughness_effective_ratio : double   Ratio of physical surface roughness to effective roughness.
 %
 %    --- THERMAL CONDUCTIVITY ---
 %    .thermal_conductivity_method   : string       Model: "Sturm" or "Calonne".
+%
+%    --- MELT & LIQUID WATER ---
+%    .water_irreducible_saturation  : double       Irreducible water content saturation fraction (0-0.2).
 %
 %    --- ALBEDO & RADIATION ---
 %    .albedo_method                 : string       Scheme: "GardnerSharp", "GreuellKonzelmann", etc.
@@ -89,7 +96,7 @@ function options = model_initialize_parameters(options)
 % 
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
-% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 arguments
     %% GEMB INITIALIZATION
@@ -142,6 +149,9 @@ arguments
     % density of glacier ice
     options.density_ice (1,1) double {mustBeInRange(options.density_ice, 800, 950)} = 910; % density of ice [kg m-3]
 
+    % temperature threshold [C] above which precipitation is rain 
+    options.rain_temperature_threshold (1,1) double {mustBeInRange(options.rain_temperature_threshold, -3, 3)} = 0;
+
     %% LONGWAVE EMISSIVITY
     % Select method for calculating emissivity (default is "uniform")
     %   0-"uniform"       : uses "emissivity" for all snow/firn/ice surfaces
@@ -151,6 +161,10 @@ arguments
     %                       & "emissivity_re_large" for (re > emissivity_re_threshold or when there is liquid water at the surface)
     options.emissivity_method (1,1) string {mustBeMember(options.emissivity_method, ...
         ["uniform", "re_threshold", "re_w_threshold"])} = "uniform";
+
+    % Set ratio of physical surface roughness to effective surface roughness [fraction] 
+    options.surface_roughness_effective_ratio (1,1) ...
+        double {mustBeInRange(options.surface_roughness_effective_ratio, 0, 3)} = 0.10; % (Foken 2008)
 
     % Specify longwave emissivity (emissivity_re_large only used for
     % "emissivity_method" == "re_threshold" or "re_w_threshold"
