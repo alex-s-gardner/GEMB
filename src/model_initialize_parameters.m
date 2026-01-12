@@ -16,12 +16,13 @@ function options = model_initialize_parameters(options)
 % Key Configuration Areas:
 % 1. Initialization: Sets spin-up cycles and run identifiers.
 % 2. Densification & Mass: Selects firn compaction models, fresh snow density, 
-%    and ice density.
+%    ice density, and rain/snow temperature thresholds.
 % 3. Energy Balance: Configures longwave emissivity, thermal conductivity, 
 %    and detailed albedo/shortwave penetration schemes.
-% 4. Grid Geometry: Defines the vertical discretization, including the 
+% 4. Melt & Water: Sets irreducible water saturation for the snowpack.
+% 5. Grid Geometry: Defines the vertical discretization, including the 
 %    high-resolution surface capture zone and deep layer stretching.
-% 5. Output: Controls temporal resolution and array padding.
+% 6. Output: Controls temporal resolution and array padding.
 %
 %% Inputs
 %
@@ -36,6 +37,7 @@ function options = model_initialize_parameters(options)
 %    .densification_coeffs_M01      : string       Coeffs for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").
 %    .new_snow_method               : string       Fresh snow density model (e.g., "350kgm2", "Fausto").
 %    .density_ice                   : double       Density of glacier ice [kg m^-3].
+%    .rain_temperature_threshold    : double       Temperature threshold [C] above which precipitation falls as rain.
 %
 %    --- LONGWAVE EMISSIVITY ---
 %    .emissivity_method             : string       Method: "uniform", "re_threshold", "re_w_threshold".
@@ -45,6 +47,9 @@ function options = model_initialize_parameters(options)
 %
 %    --- THERMAL CONDUCTIVITY ---
 %    .thermal_conductivity_method   : string       Model: "Sturm" or "Calonne".
+%
+%    --- MELT & LIQUID WATER ---
+%    .water_irreducible_saturation  : double       Irreducible water content saturation fraction (0-0.2).
 %
 %    --- ALBEDO & RADIATION ---
 %    .albedo_method                 : string       Scheme: "GardnerSharp", "GreuellKonzelmann", etc.
@@ -89,7 +94,7 @@ function options = model_initialize_parameters(options)
 % 
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
-% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023.
 
 arguments
     %% GEMB INITIALIZATION

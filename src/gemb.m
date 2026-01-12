@@ -83,9 +83,6 @@ M_surf = 0;                        % initialize surface melt for albedo paramete
 % pre calculate (this is a speed optimization for thermal)
 ModelParam.dt_divisors = fast_divisors(dt * 10000)/10000;
 
-% fixed lower temperature bounday condition - T is fixed
-T_bottom = T(end);
-
 %% initialize output structure
 column_length = length(dz);
 [output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam);
@@ -128,7 +125,7 @@ for simulation_iteration = 1:total_cycles
         
         % run GEMB for a single time interval
         [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
-            lhf, ulw, Ra, M, R, F, M_added, E_added, ...
+            lhf, ulw, Ra, M, R, F, M_added, ~, ...
             compaction_dens, compaction_melt] = ...
            gemb_core(T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, ...
             ClimateForcingStep, ModelParam, verbose);
@@ -146,7 +143,7 @@ for simulation_iteration = 1:total_cycles
         Ra_cumulative         = Ra + Ra_cumulative;
         F_cumulative          = F + F_cumulative;
       
-        % !! This needs to be made into a function call !!!
+        % Check if not in spinup_cycle
         if simulation_iteration == ModelParam.n_spinup_cycles + 1
 
             % grow cumulative output values
