@@ -190,3 +190,203 @@ if ~isempty(h_bar) && ishandle(h_bar)
 end
 
 end
+
+%% SUBFUNCTIONS
+function OutCum = model_cumulative_add(M, R, F, EC, Ra, M_added, ...
+    sw_net, lw_net, shf, lhf, compaction_dens, compaction_melt, ...
+    d, a, re, dz, ModelParam, OutCum)
+% model_cumulative_add updates cumulative variables for model output.
+%
+%% Syntax
+%
+% OutCum = model_cumulative_add(OutCum, M, R, F, EC, Ra, M_added, ...
+%    sw_net, lw_net, shf, lhf, ulw, compaction_dens, compaction_melt, ...
+%    d, a, re, dz, ModelParam)
+%
+%% Description
+%
+% This function updates the tracking structure `OutCum` by adding the current
+% time-step's values to the running totals. It replaces the use of `eval()`
+% in earlier versions of GEMB to significantly improve runtime performance.
+%
+% It performs two main tasks:
+% 1. Calculates derived variables for the current state (e.g., FAC, 
+%    surface properties d1, a1, re1).
+% 2. Explicitly sums these values into the `OutCum` structure fields.
+%
+%% Inputs
+%
+%  OutCum           : struct       Structure containing cumulative variables from previous steps.
+%  M                : kg m^-2      Melt mass.
+%  R                : kg m^-2      Runoff mass.
+%  F                : kg m^-2      Refrozen mass.
+%  EC               : kg m^-2      Evaporation/Condensation mass.
+%  Ra               : kg m^-2      Rain mass.
+%  M_added          : kg m^-2      Mass added/removed by layer management.
+%  sw_net           : W m^-2       Net shortwave radiation.
+%  lw_net           : W m^-2       Net longwave radiation.
+%  shf              : W m^-2       Sensible heat flux.
+%  lhf              : W m^-2       Latent heat flux.
+%  ulw              : W m^-2       Upward longwave radiation.
+%  compaction_dens  : m            Compaction due to densification.
+%  compaction_melt  : m            Compaction due to melt.
+%  d                : kg m^-3      Density profile.
+%  a                : fraction     Albedo profile.
+%  re               : mm           Grain radius profile.
+%  dz               : m            Layer thickness profile.
+%  ModelParam       : struct       Model parameters (needs .density_ice).
+%
+%% Outputs
+%
+%  OutCum           : struct       Updated cumulative structure with incremented .count.
+%
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+
+% 1. Calculate derived variables for output
+d1    = d(1);
+a1    = a(1);
+re1   = re(1);
+
+% Firn Air Content (FAC) [m]
+% Defined as the integrated column thickness of air equivalent.
+% FAC = sum(dz * (rho_ice - rho) / rho_ice) for rho < rho_ice
+% Note: The original implementation divided by 1000 instead of ModelParam.density_ice?
+% Preserving original logic: sum(dz.*(ModelParam.density_ice - min(d,ModelParam.density_ice)))/1000;
+FAC = sum(dz .* (ModelParam.density_ice - min(d, ModelParam.density_ice))) / 1000;
+
+% 2. Explicitly accumulate values
+% Using explicit assignment is significantly faster than dynamic field access
+OutCum.R               = OutCum.R + R;
+OutCum.M               = OutCum.M + M;
+OutCum.F               = OutCum.F + F;
+OutCum.EC              = OutCum.EC + EC;
+OutCum.Ra              = OutCum.Ra + Ra;
+OutCum.M_added         = OutCum.M_added + M_added;
+
+OutCum.sw_net          = OutCum.sw_net + sw_net;
+OutCum.lw_net          = OutCum.lw_net + lw_net;
+OutCum.shf             = OutCum.shf + shf;
+OutCum.lhf             = OutCum.lhf + lhf;
+
+OutCum.a1              = OutCum.a1 + a1;
+OutCum.re1             = OutCum.re1 + re1;
+OutCum.d1              = OutCum.d1 + d1;
+
+OutCum.compaction_dens = OutCum.compaction_dens + compaction_dens;
+OutCum.compaction_melt = OutCum.compaction_melt + compaction_melt;
+OutCum.FAC             = OutCum.FAC + FAC;
+
+% Increment the counter
+OutCum.count = OutCum.count + 1;
+
+end
+
+
+function [OutData, OutCum] = ...
+    model_output_populate(d, T, water, dz, re, gdn, gsp, ...
+     output_index, date_ind, ModelParam, OutData, OutCum)
+% model_output_populate stores model state and fluxes into the output structure.
+%
+%% Syntax
+%
+% [OutData, OutCum] = model_output_populate(OutData, OutCum, ...
+%    d, T, water, dz, re, gdn, gsp, ...
+%    ModelParam, output_index, date_ind)
+%
+%% Description
+%
+% This function checks if the current simulation step (`date_ind`) corresponds
+% to a requested output interval. If so, it performs the following:
+% 1. **Time-Averaging:** Calculates averages for state variables (e.g., Albedo, Temperature)
+%    stored in `OutCum` by dividing by the step count.
+% 2. **Profile Storage:** Saves instantaneous vertical profiles (Density, Temperature, 
+%    Grain properties) into the pre-allocated `OutData` arrays.
+% 3. **Reset:** Resets all cumulative trackers in `OutCum` to zero for the next interval.
+%
+%% Inputs
+%
+%  OutData          : struct       Main output structure containing time series.
+%  OutCum           : struct       Accumulator structure for the current interval.
+%  d, T, water, ... : vectors      Current vertical profiles of density, temperature, etc.
+%  ModelParam       : struct       Model parameters (needs .density_ice, .output_padding).
+%  output_index     : logical      Vector indicating which time steps are output steps.
+%  date_ind         : integer      Current time step index.
+%
+%% Outputs
+%
+%  OutData          : struct       Updated output structure.
+%  OutCum           : struct       Reset accumulator structure (if output occurred).
+%
+%% Author Information
+% The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
+% from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
+% at https://github.com/alex-s-gardner/GEMB. Please cite any use of GEMB as:
+% 
+% Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
+% a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
+% https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+
+if output_index(date_ind)
+    
+    % Store model output in structure format
+    varname = fieldnames(OutCum);
+    
+    % Determine the index for the output array (where to save in OutData)
+    r = sum(output_index(1:date_ind));
+    
+    % Define which variables are cumulative totals vs time-averages
+    cumulative_vars = {'M', 'R', 'F', 'EC', 'P', 'Ra', 'M_added', ...
+                       'compaction_dens', 'compaction_melt'};
+    is_cumulative = ismember(varname, cumulative_vars);
+    
+    % Transfer data from OutCum to OutData
+    for v = 1:length(varname)
+        if is_cumulative(v)
+            % Cumulative variables (e.g. Melt, Runoff) are just copied
+            OutData.(varname{v})(r) = OutCum.(varname{v});
+        else
+            % Averaged variables (e.g. Temperature) are divided by step count
+            OutData.(varname{v})(r) = OutCum.(varname{v}) / OutCum.count;
+        end
+    end
+    
+    % Calculate Total Mass for surface height change (ps) calculation
+    M_total = sum(dz .* d);
+
+    % Store instantaneous level (profile) data
+    o = (size(d,1) - 1);
+    
+    % Ensure the output array is large enough to hold the current column depth
+    if (length(OutData.dz) - o) < 1
+        error("the length of the simulation column [%0.0f] is larger than the lenght of the output array [%0.0f]\n    -> try increasing the value of ModelParam.output_padding", (o+1), size(OutData.re,1))
+    end
+    
+    % Save vertical profiles
+    OutData.re(end-o:end,r)      = re;
+    OutData.d(end-o:end,r)       = d;
+    OutData.T(end-o:end,r)       = T;
+    OutData.water(end-o:end,r)   = water;
+    OutData.dz(end-o:end,r)      = dz;
+    OutData.gdn(end-o:end,r)     = gdn;
+    OutData.gsp(end-o:end,r)     = gsp;
+    
+    % Calculate surface height change relative to ice equivalent
+    OutData.ps(end-o:end,r)  = sum(dz) - M_total/ModelParam.density_ice;
+    OutData.m(r)             = o+1;
+    
+    % Reset cumulative values back to zero for the next interval
+    for v = 1:length(varname)
+        OutCum.(varname{v}) = 0;
+    end
+    
+    OutCum.count = 0;
+end
+
+end
