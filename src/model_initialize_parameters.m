@@ -142,6 +142,9 @@ arguments
     % density of glacier ice
     options.density_ice (1,1) double {mustBeInRange(options.density_ice, 800, 950)} = 910; % density of ice [kg m-3]
 
+    % temperature threshold [C] above which precipitation is rain 
+    options.rain_temperature_threshold (1,1) double {mustBeInRange(options.rain_temperature_threshold, -3, 3)} = 0;
+
     %% LONGWAVE EMISSIVITY
     % Select method for calculating emissivity (default is "uniform")
     %   0-"uniform"       : uses "emissivity" for all snow/firn/ice surfaces

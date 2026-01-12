@@ -94,16 +94,17 @@ water_delta  = zeros(m,1);
 % store initial mass [kg] and energy [J]
 M = dz .* d;                   % grid cell mass [kg]
 
-M_total_initial = sum(water)  + sum(M);      % total mass [kg]
-E_total_initial = sum(M .* T * CI) + sum(water .* (LF + CtoK * CI)); % total energy [J] = initial enegy of snow/ice + initial enegy of water
+if verbose
+    M_total_initial = sum(water)  + sum(M);      % total mass [kg]
+
+    E_total_initial = sum(M .* T * CI) + ...
+        sum(water .* (LF + CtoK * CI));          % total energy [J] = initial enegy of snow/ice + initial enegy of water
+end
 
 % initialize melt and runoff scalars
 runoff_total = 0;   % sum runoff [kg m^-2]
 melt_total   = 0;   % total melt [kg m^-2]
 melt_surface = 0;   % surface layer melt
-
-% output
-E_surplus = 0;
 
 % calculate temperature excess above 0 degC
 T_excess = max(0, T - CtoK);        % [K] to [degC]

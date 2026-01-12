@@ -67,7 +67,7 @@ E_EC = EC * T(1) * CI;
 
 % 7. Add snow/rain to top grid cell adjusting cell depth, temperature, and density
 [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
-    accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcingStep, ModelParam);
+    accumulation(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcingStep, ModelParam, verbose);
 
 % 8. Melt and wet compaction
 % Calculate water production melt [kg m-2], runoff R [kg m-2], and resulting changes
