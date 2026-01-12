@@ -48,7 +48,7 @@ function options = model_initialize_parameters(options)
 %
 %    --- ALBEDO & RADIATION ---
 %    .albedo_method                 : string       Scheme: "GardnerSharp", "GreuellKonzelmann", etc.
-%    .albedo_desnity_threshold      : double       Density threshold [kg m^-3] below which albedo_method is applied.
+%    .albedo_density_threshold      : double       Density threshold [kg m^-3] below which albedo_method is applied.
 %    .sw_absorption_method          : double       0 (surface only) or 1 (subsurface penetration).
 %    .albedo_snow                   : double       Albedo for fresh snow (0.5-0.95).
 %    .albedo_ice                    : double       Albedo for bare ice (0.2-0.6).
@@ -178,7 +178,7 @@ arguments
     %% ALBEDO
 
     % Select method of calculating albedo and subsurface absorption (default is "GardnerSharp")
-    %   0-"None"             : direct input from albedo_fixed parameter, no use of albedo_desnity_threshold
+    %   0-"None"             : direct input from albedo_fixed parameter, no use of albedo_density_threshold
     %   1-"GardnerSharp"     : effective grain radius (Gardner & Sharp, 2009)
     %   2-"BruneLeFebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with sw_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
     %   3-"GreuellKonzelmann": density and cloud amount (Greuell & Konzelmann, 1994)
@@ -188,7 +188,7 @@ arguments
     
     % Apply albedo_method method to all areas with densities below this value, or else apply direct input value from albedo_fixed, allowing albedo to be altered.
     % Default value is rho water (1023 kg m-3).
-    options.albedo_desnity_threshold (1,1) double {mustBeInRange(options.albedo_desnity_threshold, 0, 1023)} = 1023;
+    options.albedo_density_threshold (1,1) double {mustBeInRange(options.albedo_density_threshold, 0, 1023)} = 1023;
     
     % apply all SW to top grid cell (0) or allow SW to penetrate surface (1)
     % (default 0: if sw_absorption_method=1 and albedo_method=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
@@ -198,7 +198,7 @@ arguments
     % --------------- "GardnerSharp" & "BruneLeFebre" ----------------------
     options.albedo_snow (1,1) double {mustBeInRange(options.albedo_snow, 0.5, .95)}   = 0.85; % new snow albedo (0.64 - 0.89)
     options.albedo_ice (1,1) double {mustBeInRange(options.albedo_ice, 0.2, .6)}      = 0.48; % range 0.27-0.58 for old snow
-    options.albedo_fixed (1,1) double {mustBeInRange(options.albedo_fixed, 0.2, .95)} = 0.85; % Albedo forcing at every element.  Used only if albedo_method == 0, or density exceeds albedo_desnity_threshold
+    options.albedo_fixed (1,1) double {mustBeInRange(options.albedo_fixed, 0.2, .95)} = 0.85; % Albedo forcing at every element.  Used only if albedo_method == 0, or density exceeds albedo_density_threshold
     
     % Default values, but these can also be set as time series forcing
     options.dsw_diffuse (1,1) double {mustBeInRange(options.dsw_diffuse, 0, 1000)}                       = 0.0;  % downward diffusive shortwave radiation flux [W/m^2]

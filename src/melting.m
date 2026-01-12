@@ -344,7 +344,6 @@ if verbose
     E_total_final = sum(M .* T * CI) + sum(water .* (LF + CtoK * CI));
 
     M_delta = M_total_initial - M_total_final;
-    display(E_surplus)
     E_delta = E_total_initial - E_total_final - E_total_runoff;
 
     if (abs(M_delta) > 1E-3) || (abs(E_delta) > 1E-3)

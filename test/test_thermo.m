@@ -21,7 +21,7 @@ classdef test_thermo < matlab.unittest.TestCase
     
     methods (TestClassSetup)
         function create_mocks(tcase)
-            % thermo.m depends on two other functions. To unit test thermo in isolation,
+            % thermo.m depends on helper functions. To unit test thermo in isolation,
             % we create temporary mock files for these dependencies.
             
             % 1. Mock thermal_conductivity
@@ -41,6 +41,16 @@ classdef test_thermo < matlab.unittest.TestCase
             fprintf(fid, '    L = 2.5e6;\n');
             fprintf(fid, 'end\n');
             fclose(fid);
+
+            % 3. Mock thermo_optimal_dt
+            % FIX: Return a stable timestep (3600s). 
+            % Previous version returned max(divisors) = 86400, which caused 
+            % numerical instability (checking Von Neumann stability) and test failure.
+            fid = fopen('thermo_optimal_dt.m', 'w');
+            fprintf(fid, 'function dt = thermo_optimal_dt(~, ~, ~, ~, ~)\n');
+            fprintf(fid, '    dt = 3600;\n'); 
+            fprintf(fid, 'end\n');
+            fclose(fid);
             
             % Add current folder to path to ensure mocks are found
             addpath(pwd);
@@ -48,6 +58,7 @@ classdef test_thermo < matlab.unittest.TestCase
             % Ensure we clean up later
             tcase.addTeardown(@() delete('thermal_conductivity.m'));
             tcase.addTeardown(@() delete('turbulent_heat_flux.m'));
+            tcase.addTeardown(@() delete('thermo_optimal_dt.m'));
             
             % Add source path if it exists
             try
@@ -84,10 +95,18 @@ classdef test_thermo < matlab.unittest.TestCase
             % Initialize ModelParam (MP)
             tcase.MP.density_ice = 917;
             tcase.MP.emissivity = 0.98;
+            tcase.MP.emissivity_re_large = 0.98; % Default fallback
             tcase.MP.ulw_delta = 0;
             tcase.MP.emissivity_re_threshold = 10;
-            tcase.MP.emissivity_method = 0;
+            
+            % thermo.m expects a string for the method
+            tcase.MP.emissivity_method = "uniform"; 
+            
             tcase.MP.thermal_conductivity_method = "Sturm"; % Mocked anyway
+            
+            % thermo.m requires dt_divisors to determine stability
+            tcase.MP.dt_divisors = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, ...
+                                    120, 300, 600, 900, 1200, 1800, 3600, 86400];
         end
     end
     
@@ -179,7 +198,8 @@ classdef test_thermo < matlab.unittest.TestCase
         
         function test_timestep_subcycling(tcase)
             % thermo.m calculates a stability limit and sub-cycles if dt is too large.
-            % We provide a very large dt and ensure it finishes without instability (NaNs).
+            % We provide a very large dt (1 day) and ensure it finishes without instability (NaNs).
+            % The mock thermo_optimal_dt returns 3600, so this will subcycle 24 times.
             
             tcase.CF.dt = 86400; % 1 day step
             

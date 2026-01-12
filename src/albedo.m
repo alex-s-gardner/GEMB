@@ -20,7 +20,7 @@ function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
 % Method 0
 %  ModelParam.albedo_fixed = direct input value for albedo, override all changes to albedo
 %
-% ModelParam.albedo_desnity_threshold
+% ModelParam.albedo_density_threshold
 %  Apply below method to all areas with densities below this value,
 %  or else apply direct input value, allowing albedo to be altered.
 %
@@ -79,7 +79,7 @@ albedo_snow_min     = 0.65;        % minimum snow albedo, from Alexander 2014
 
 %% Function
 
-if (ModelParam.albedo_method == "None") || ((ModelParam.albedo_desnity_threshold - d(1)) < d_tolerance)
+if (ModelParam.albedo_method == "None") || ((ModelParam.albedo_density_threshold - d(1)) < d_tolerance)
     a(1) = ModelParam.albedo_fixed;
 else
     switch ModelParam.albedo_method
@@ -166,7 +166,7 @@ else
 
     %If we do not have fresh snow
     if ismember(ModelParam.albedo_method,["GardnerSharp","BruneLeFebre"]) && ...
-            ((ModelParam.albedo_desnity_threshold - d(1)) >= d_tolerance)
+            ((ModelParam.albedo_density_threshold - d(1)) >= d_tolerance)
 
         % In a snow layer < 10cm, account for mix of ice and snow,
         % after ClimateForcingStep.P. Alexander et al., 2014

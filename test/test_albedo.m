@@ -43,7 +43,7 @@ classdef test_albedo < matlab.unittest.TestCase
             % Initialize ModelParam Defaults
             tcase.MP.albedo_method = "None";
             tcase.MP.albedo_fixed = 0.8;
-            tcase.MP.albedo_desnity_threshold = 1023; % Threshold to force fixed albedo
+            tcase.MP.albedo_density_threshold = 1023; % Threshold to force fixed albedo
             tcase.MP.density_ice = 917;
             tcase.MP.albedo_snow = 0.85;
             tcase.MP.albedo_ice = 0.48;
@@ -82,7 +82,7 @@ classdef test_albedo < matlab.unittest.TestCase
             tcase.MP.albedo_fixed = 0.4;
             
             % Set threshold low, and density high to trigger override
-            tcase.MP.albedo_desnity_threshold = 300; 
+            tcase.MP.albedo_density_threshold = 300; 
             tcase.d(1) = 350; % Higher than threshold
             
             [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
