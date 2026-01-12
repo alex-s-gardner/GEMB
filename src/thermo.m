@@ -1,4 +1,4 @@
-function [T, shf, lhf, EC, ulw] = ...
+function [T, ulw, shf, lhf, ghf, EC] = ...
     thermo(T, dz, d, W_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 
 % thermo computes new temperature profile accounting for energy absorption
@@ -56,8 +56,9 @@ function [T, shf, lhf, EC, ulw] = ...
 %  T                        : K            Updated grid cell temperature (vector).
 %  shf                      : W m^-2       Cumulative sensible heat flux.
 %  lhf                      : W m^-2       Cumulative latent heat flux.
-%  EC_cumulative            : kg           Cumulative evaporation/condensation mass.
 %  ulw                      : W m^-2       Upward longwave radiation flux.
+%  ghf                      : W m^-2       Ground heat flux
+%  EC_cumulative            : kg           Cumulative evaporation/condensation mass.
 %
 %% References
 %
@@ -103,6 +104,7 @@ ulw_cumulative = 0.0;
 EC_cumulative  = 0.0;
 lhf_cumulative = 0.0;
 shf_cumulative = 0.0;
+ghf_cumulative = 0.0;
 CtoK           = 273.15;
 
 if verbose
@@ -262,9 +264,9 @@ for i = 1:dt:ClimateForcingStep.dt
     T(1) = T(1) + T_delta_dlw + T_delta_ulw + T_delta_thf;
 
     % energy flux across lower boundary (energy supplied by underling ice)
-    if verbose
-        base_flux = Ad(end-1) * (T(end) - T(end-1)) * dt;
-    end
+    ghf = Ad(end-1) * (T(end) - T(end-1)) * dt;
+    ghf_cumulative = ghf_cumulative + ghf;
+
 
     % temperature diffusion
 
@@ -298,7 +300,7 @@ for i = 1:dt:ClimateForcingStep.dt
     %% CHECK FOR ENERGY (E) CONSERVATION [UNITS: J]
     if verbose
         E_used     = sum(T .* (CI * d .* dz)) - E_initial;
-        E_supplied = sum(sw) + dlw + ulw + thf + base_flux;
+        E_supplied = sum(sw) + dlw + ulw + thf + ghf;
         E_delta    = E_used - E_supplied;
 
         E_tolerance = 1e-3;
@@ -307,8 +309,8 @@ for i = 1:dt:ClimateForcingStep.dt
             fprintf('inputs : T_surface = %0.4f K, W_surface = %0.4f kg m-2, re_surface = %0.04f mm, swf = %0.4f W m-2, dlwf = %0.4f W m-2, ClimateForcingStep.T_air = %0.4f K, ClimateForcingStep.V = %0.4f m/s, ClimateForcingStep.e_air = %0.3f Pa, ClimateForcingStep.p_air = %0.4f Pa \n', ...
                               T(1)               , W_surface               , re(1)                 , sum(swf)         , ClimateForcingStep.dlw             , ClimateForcingStep.T_air          , ClimateForcingStep.V            , ClimateForcingStep.e_air           , ClimateForcingStep.p_air)
 
-            fprintf('internals : sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, thf = %0.10g J, base_flux = %0.10g J \n', ...
-                                 sum(sw)      , dlw           , ulw           , thf           , base_flux)
+            fprintf('internals : sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, thf = %0.10g J, ghf = %0.10g J \n', ...
+                                 sum(sw)      , dlw           , ulw           , thf           , ghf_flux)
 
             error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J',...
                                                                      E_supplied         , E_used)
@@ -324,6 +326,7 @@ end
 lhf = lhf_cumulative / ClimateForcingStep.dt; % J -> W/m2
 shf = shf_cumulative / ClimateForcingStep.dt; % J -> W/m2
 ulw = ulw_cumulative / ClimateForcingStep.dt; % J -> W/m2
+ghf = ghf_cumulative / ClimateForcingStep.dt; % J -> W/m2
 EC = EC_cumulative;
 end
 

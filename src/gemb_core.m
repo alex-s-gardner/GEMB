@@ -51,14 +51,19 @@ sw_net = ...
     sum(swf);
 
 % 5. Calculate new temperature-depth profile and turbulent heat fluxes [W m-2]
-[T, shf, lhf, EC, ulw] = ...
+[T, ulw, shf, lhf, ghf, EC] = ...
     thermo(T, dz, d, W(1), re, swf, ClimateForcingStep, ModelParam, verbose);
+
+% 4. Calculate net longwave [W m-2]
+lw_net = ...
+    ulw - ClimateForcingStep.dlw;
 
 % 6. Change in thickness of top cell due to evaporation/condensation
 % Assuming same density as top cell
 % ## NEED TO FIX THIS IN CASE ALL OR MORE OF CELL EVAPORATES ##
 dz(1) = ...
     dz(1) + EC / d(1);
+E_EC = EC * T(1) * CI;
 
 % 7. Add snow/rain to top grid cell adjusting cell depth, temperature, and density
 [T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra] = ...
@@ -70,7 +75,7 @@ compaction_melt = ...
     sum(dz); % Track thickness before melt
 
 [T, dz, d, W, re, gdn, gsp, a, a_diffuse, melt, melt_surface, R, F] = ...
-    melting(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, ModelParam.density_ice, verbose);
+    melting(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, ModelParam, verbose);
 
 compaction_melt = ...
     (compaction_melt - sum(dz)); % Calculate wet compaction
@@ -91,18 +96,42 @@ compaction_dens = ...
 
 
 if verbose
-    % calculate total system mass
-     M = dz .* d;
-     M_total_final = sum(M) + sum(W);        % total mass [kg]
-     E_total_final = sum(M .* T * CI) + ...
-        sum(W .* (LF + CtoK * CI));           % total energy [J] = initial enegy of snow/ice + initial enegy of water
+    dt = ClimateForcingStep.dt;
 
-    M_change   = M_total_final + R - ClimateForcingStep.P - EC - M_total_initial - M_added;
+    % calculate total system mass
+    M = dz .* d;
+    M_total_final = sum(M) + sum(W);        % total mass [kg]
+    M_delta   = M_total_final - M_total_initial + R - ClimateForcingStep.P - EC - M_added;
 
     % check mass conservation
-    if abs(M_change) > 1E-3
-        error('total system mass not conserved in MB function')
+    if abs(M_delta) > 1E-3
+        error('total system mass not conserved: M_delta = %0.4f', M_delta)
     end
+
+    % need to account for rain
+    %{ 
+    % --------------- WORK IN PROGRESS -----------------
+    E_runoff   = sum(R * (LF + CtoK * CI)); 
+    E_thermal  = sum((dz .* d) .* T * CI);
+    E_water    = sum(W .* (LF + CtoK * CI));
+    E_P              = ClimateForcingStep.P .* ClimateForcingStep.T_air * CI;
+    E_sw             = (sw_net*dt);
+    E_lw             = (lw_net*dt);
+    E_thf            = ((shf+lhf)*dt);
+    E_ghf            = (ghf*dt);
+
+    E_total_final = E_thermal + E_water + E_runoff; % total energy [J] = initial enegy of snow/ice + initial enegy of water
+  
+    E_used     = E_total_final - E_total_initial;
+    E_supplied = E_sw + E_lw + E_thf + E_P + E_ghf + E_added + E_EC;
+    E_delta   = E_used - E_supplied;
+
+    % check energy conservation
+    if abs(E_delta) > 1E-3
+        error('total system energy not conserved: E_delta = %0.4f \n E_sw = %0.4f, E_lw = %0.4f, E_thf = %0.4f, E_added = %0.4f', E_delta, E_sw, E_lw, E_thf, E_added)
+    end
+    %}
+
 
     % check bottom grid cell T is unchanged
     if abs(T(end)-T_bottom) > 1E-3

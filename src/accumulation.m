@@ -147,6 +147,7 @@ if ClimateForcingStep.P > 0+P_tolerance
     mass      = sum(d .* dz);
     mass_diff = mass - sum(mInit) - ClimateForcingStep.P;
     mass_diff = round(mass_diff * 100)/100;
+    
     if mass_diff > 0
         error('Mass not conserved in accumulation function.')
     end
