@@ -16,7 +16,7 @@ function OutCum = model_cumulative_add(M, R, F, EC, Ra, M_added, ...
 % in earlier versions of GEMB to significantly improve runtime performance.
 %
 % It performs two main tasks:
-% 1. Calculates derived variables for the current state (e.g., Q_net, FAC, 
+% 1. Calculates derived variables for the current state (e.g., FAC, 
 %    surface properties d1, a1, re1).
 % 2. Explicitly sums these values into the `OutCum` structure fields.
 %
@@ -59,7 +59,6 @@ function OutCum = model_cumulative_add(M, R, F, EC, Ra, M_added, ...
 d1    = d(1);
 a1    = a(1);
 re1   = re(1);
-Q_net = sw_net + lw_net + shf + lhf;
 
 % Firn Air Content (FAC) [m]
 % Defined as the integrated column thickness of air equivalent.
@@ -81,8 +80,6 @@ OutCum.sw_net          = OutCum.sw_net + sw_net;
 OutCum.lw_net          = OutCum.lw_net + lw_net;
 OutCum.shf             = OutCum.shf + shf;
 OutCum.lhf             = OutCum.lhf + lhf;
-OutCum.ulw             = OutCum.ulw + ulw;
-OutCum.Q_net           = OutCum.Q_net + Q_net;
 
 OutCum.a1              = OutCum.a1 + a1;
 OutCum.re1             = OutCum.re1 + re1;
