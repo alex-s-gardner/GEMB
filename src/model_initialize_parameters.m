@@ -1,4 +1,5 @@
 function options = model_initialize_parameters(options)
+function options = model_initialize_parameters(options)
 % model_initialize_parameters initializes and validates the model configuration
 % options, setting default values for physics modules, grid geometry, and
 % output controls.
@@ -18,7 +19,7 @@ function options = model_initialize_parameters(options)
 % 2. Densification & Mass: Selects firn compaction models, fresh snow density, 
 %    ice density, and rain/snow temperature thresholds.
 % 3. Energy Balance: Configures longwave emissivity, thermal conductivity, 
-%    and detailed albedo/shortwave penetration schemes.
+%    surface roughness ratios, and detailed albedo/shortwave penetration schemes.
 % 4. Melt & Water: Sets irreducible water saturation for the snowpack.
 % 5. Grid Geometry: Defines the vertical discretization, including the 
 %    high-resolution surface capture zone and deep layer stretching.
@@ -39,11 +40,12 @@ function options = model_initialize_parameters(options)
 %    .density_ice                   : double       Density of glacier ice [kg m^-3].
 %    .rain_temperature_threshold    : double       Temperature threshold [C] above which precipitation falls as rain.
 %
-%    --- LONGWAVE EMISSIVITY ---
+%    --- LONGWAVE EMISSIVITY & ROUGHNESS ---
 %    .emissivity_method             : string       Method: "uniform", "re_threshold", "re_w_threshold".
 %    .emissivity                    : double       Base longwave emissivity (0-1).
 %    .emissivity_re_large           : double       Emissivity for large grain sizes (0-1).
 %    .emissivity_re_threshold       : double       Grain radius threshold [mm] for emissivity switching.
+%    .surface_roughness_effective_ratio : double   Ratio of physical surface roughness to effective roughness.
 %
 %    --- THERMAL CONDUCTIVITY ---
 %    .thermal_conductivity_method   : string       Model: "Sturm" or "Calonne".
@@ -159,6 +161,10 @@ arguments
     %                       & "emissivity_re_large" for (re > emissivity_re_threshold or when there is liquid water at the surface)
     options.emissivity_method (1,1) string {mustBeMember(options.emissivity_method, ...
         ["uniform", "re_threshold", "re_w_threshold"])} = "uniform";
+
+    % Set ratio of physical surface roughness to effective surface roughness [fraction] 
+    options.surface_roughness_effective_ratio (1,1) ...
+        double {mustBeInRange(options.surface_roughness_effective_ratio, 0, 3)} = 0.10; % (Foken 2008)
 
     % Specify longwave emissivity (emissivity_re_large only used for
     % "emissivity_method" == "re_threshold" or "re_w_threshold"
