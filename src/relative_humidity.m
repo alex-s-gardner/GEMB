@@ -1,17 +1,25 @@
 function rh = relative_humidity(e_air, T_air)
 % relative_humidity calculates relative humidity from vapor pressure and temperature.
+% using the formula: 
 %
-%   rh = relative_humidity(e_air, T_air)
+%  rh = (e_air / e_saturation(T_air)) * 100
+% 
+%% Syntax 
+% 
+%  rh = relative_humidity(e_air, T_air)
 %
-%   INPUTS:
-%   e_air - Actual Vapor Pressure in Pascals [Pa]
-%   T_air   - Near-surface air temperature in Kelvin [K]
+%% Description
+% 
+% rh = relative_humidity(e_air, T_air) returns percent relative humidity rh 
+% (from 0 to 100) as a function of vapor pressure e_air (Pa) and
+% near-surface temperature T_air (K). 
 %
-%   OUTPUT:
-%   rh   - Relative Humidity in Percent [%] (clamped 0 to 100)
-%
-%   FORMULA:
-%   RH = (e_air / e_saturation(T_air)) * 100
+%% Example 
+% If the vapor pressure 313.9 Pa and temperature is 265.3 K, 
+% then the relative humidity is: 
+% 
+%   rh = relative_humidity(313.9, 265.3)
+%      = 92.7913
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -21,6 +29,11 @@ function rh = relative_humidity(e_air, T_air)
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+
+arguments
+    e_air (:,:) {mustBeNumeric,mustBeGreaterThanOrEqual(e_air,0)}
+    T_air (:,:) {mustBeNumeric,mustBeGreaterThan(T_air,0)}
+end
 
 % 1. Calculate Saturated Vapor Pressure (es) in Pa
 %    Using Tetens' Formula: es = 610.78 * exp(17.27 * Tc / (Tc + 237.3))
