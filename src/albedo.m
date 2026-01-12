@@ -1,4 +1,4 @@
-function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
+function [a, a_diffuse] = albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ...
     ClimateForcingStep, ModelParam)
 % albedo calculates snow, firn and ice albedo as a function of:
 %   1 : effective grain radius (Gardner & Sharp, 2009)
@@ -8,7 +8,7 @@ function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
 %
 %% Syntax
 %
-% [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ClimateForcingStep, ModelParam)
+% [a, a_diffuse] = albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ClimateForcingStep, ModelParam)
 %
 %% Description
 %
@@ -44,7 +44,7 @@ function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
 %   ModelParam.albedo_snow          = albedo of fresh snow
 %   a                               = grid cell albedo from prevous time step;
 %   T                               = grid cell temperature [k]
-%   W                               = pore water [kg]
+%   water                           = pore water [kg]
 %   ClimateForcingStep.P            = precipitation [mm w.e.] or [kg m-3]
 %   EC                              = surface evaporation (-) condensation (+) [kg m-2]
 %   ModelParam.albedo_wet_snow_t0   = time scale for wet snow (15-21.9) [d]
@@ -65,9 +65,9 @@ function [a, a_diffuse] = albedo(T, dz, d, W, re, a, a_diffuse, EC, M_surf, ...
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-T_tolerance  = 1e-10;
-d_tolerance  = 1e-11;
-W_tolerance  = 1e-13;
+T_tolerance      = 1e-10;
+d_tolerance      = 1e-11;
+water_tolerance  = 1e-13;
 
 % constants
 CtoK                = 273.15;      % Celsius to Kelvin conversion
@@ -133,16 +133,16 @@ else
             % t0_wet = ModelParam.albedo_wet_snow_t0;      % time scale for wet snow (15-21.9) [d]
             % t0_dry = ModelParam.albedo_dry_snow_t0;      % warm snow timescale [15] [d]
             % ModelParam.albedo_K = 7                % time scale temperature coef. (7) [d]
-            % W0 = 300;            % 200 - 600 [mm]
+            % water0 = 300;            % 200 - 600 [mm]
             z_snow = 15;           % 16 - 32 [mm]
 
             % determine timescale for albedo decay
-            t0(W > 0+W_tolerance ) = ModelParam.albedo_wet_snow_t0;                                % wet snow timescale
+            t0(water > 0+water_tolerance ) = ModelParam.albedo_wet_snow_t0;                                % wet snow timescale
             TC                     = T - CtoK;                                                     % change T from K to °C
             t0warm                 = abs(TC) * ModelParam.albedo_K + ModelParam.albedo_dry_snow_t0;% 'warm' snow timescale
 
-            t0(abs(W)<W_tolerance  & TC >= -10-T_tolerance ) = ...
-                t0warm(abs(W)<W_tolerance  & TC >= -10-T_tolerance );
+            t0(abs(water)<water_tolerance  & TC >= -10-T_tolerance ) = ...
+                t0warm(abs(water)<water_tolerance  & TC >= -10-T_tolerance );
             t0(TC < -10-T_tolerance ,1) =  10 * ModelParam.albedo_K ...
                 + ModelParam.albedo_dry_snow_t0;                             % 'cold' snow timescale
 
@@ -196,8 +196,8 @@ else
                 %ModelParam.albedo_K is a scale factor (set to 200 kg m^-2)
                 %Msw(t) is the time-dependent accumulated amount of excessive surface meltwater
                 %  before run-off in kg m^-2 (melt per GEMB timestep, i.e. 3 hourly)
-                M = M_surf+W(1);
-                a(1)=max(albedo_ice_min + (albedo_ice_max - albedo_ice_min) * exp(-1.0 * (M / 200.0)), albedo_ice_min);
+                M    = M_surf + water(1);
+                a(1) = max(albedo_ice_min + (albedo_ice_max - albedo_ice_min) * exp(-1.0 * (M / 200.0)), albedo_ice_min);
             end
         end
     end

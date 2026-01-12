@@ -89,7 +89,7 @@ for i = 1:n
 end
 
 % Multi level time series:
-varname.profile = {'T', 'dz', 'd', 'W', 're', 'gdn', 'gsp', 'a', 'a_diffuse', 'ps'};
+varname.profile = {'T', 'dz', 'd', 'water', 're', 'gdn', 'gsp', 'a', 'a_diffuse', 'ps'};
 
 for v = 1:length(varname.profile)
     OutData.(varname.profile{v}) = nan(column_length + ModelParam.output_padding, n);

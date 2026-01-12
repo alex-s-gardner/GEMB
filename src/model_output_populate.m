@@ -1,12 +1,12 @@
 function [OutData, OutCum] = ...
-    model_output_populate(d, T, W, dz, re, gdn, gsp, ...
+    model_output_populate(d, T, water, dz, re, gdn, gsp, ...
      output_index, date_ind, ModelParam, OutData, OutCum)
 % model_output_populate stores model state and fluxes into the output structure.
 %
 %% Syntax
 %
 % [OutData, OutCum] = model_output_populate(OutData, OutCum, ...
-%    d, T, W, dz, re, gdn, gsp, ...
+%    d, T, water, dz, re, gdn, gsp, ...
 %    ModelParam, output_index, date_ind)
 %
 %% Description
@@ -23,7 +23,7 @@ function [OutData, OutCum] = ...
 %
 %  OutData          : struct       Main output structure containing time series.
 %  OutCum           : struct       Accumulator structure for the current interval.
-%  d, T, W, ...     : vectors      Current vertical profiles of density, temperature, etc.
+%  d, T, water, ... : vectors      Current vertical profiles of density, temperature, etc.
 %  ModelParam       : struct       Model parameters (needs .density_ice, .output_padding).
 %  output_index     : logical      Vector indicating which time steps are output steps.
 %  date_ind         : integer      Current time step index.
@@ -78,13 +78,13 @@ if output_index(date_ind)
     end
     
     % Save vertical profiles
-    OutData.re(end-o:end,r)  = re;
-    OutData.d(end-o:end,r)   = d;
-    OutData.T(end-o:end,r)   = T;
-    OutData.W(end-o:end,r)   = W;
-    OutData.dz(end-o:end,r)  = dz;
-    OutData.gdn(end-o:end,r) = gdn;
-    OutData.gsp(end-o:end,r) = gsp;
+    OutData.re(end-o:end,r)      = re;
+    OutData.d(end-o:end,r)       = d;
+    OutData.T(end-o:end,r)       = T;
+    OutData.water(end-o:end,r)   = water;
+    OutData.dz(end-o:end,r)      = dz;
+    OutData.gdn(end-o:end,r)     = gdn;
+    OutData.gsp(end-o:end,r)     = gsp;
     
     % Calculate surface height change relative to ice equivalent
     OutData.ps(end-o:end,r)  = sum(dz) - M_total/ModelParam.density_ice;
