@@ -70,7 +70,7 @@ compaction_melt = ...
     sum(dz); % Track thickness before melt
 
 [T, dz, d, W, re, gdn, gsp, a, a_diffuse, melt, melt_surface, R, F] = ...
-    melting(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, ModelParam.density_ice, verbose);
+    melting(T, dz, d, W, re, gdn, gsp, a, a_diffuse, Ra, ModelParam, verbose);
 
 compaction_melt = ...
     (compaction_melt - sum(dz)); % Calculate wet compaction
@@ -97,8 +97,8 @@ if verbose
     M_change   = M_total_final - M_total_initial + R - ClimateForcingStep.P - EC  - M_added;
 
 
-    ER_total = R_total * (LF + CtoK * CI);
-    EI       = M0 .* T * CI;
+    ER_total = R * (LF + CtoK * CI);
+    EI       = (dz .* d) .* T * CI;
     EW       = W .* (LF + CtoK * CI);
     dt = ClimateForcingStep.dt;
     E_total_final = sum(M .* T * CI) + ...

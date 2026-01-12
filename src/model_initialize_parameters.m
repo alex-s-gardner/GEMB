@@ -169,6 +169,12 @@ arguments
     options.thermal_conductivity_method (1,1) string {mustBeMember(options.thermal_conductivity_method, ...
         ["Sturm", "Calonne"])} = "Sturm";
      
+    %% MELT AND LIQUID WATER
+
+    % specify irreducible water content saturation [fraction]
+    % assumed constant after Colbeck, 1974
+    options.water_irreducible_saturation (1,1) double {mustBeInRange(options.water_irreducible_saturation, 0, 0.2)} = 0.07;
+
     %% ALBEDO
 
     % Select method of calculating albedo and subsurface absorption (default is "GardnerSharp")
