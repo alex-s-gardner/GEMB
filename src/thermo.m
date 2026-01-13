@@ -248,6 +248,7 @@ for i = 1:dt:ClimateForcingStep.dt
         [shf, lhf, latent_heat] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
         thf_trigger = 0;
     end
+
     lhf_cumulative = lhf_cumulative + lhf * dt;
     shf_cumulative = shf_cumulative + shf * dt;
 
@@ -316,7 +317,7 @@ for i = 1:dt:ClimateForcingStep.dt
                               T(1)               , water_surface               , re(1)                 , sum(swf)         , ClimateForcingStep.dlw             , ClimateForcingStep.T_air          , ClimateForcingStep.V            , ClimateForcingStep.e_air           , ClimateForcingStep.p_air)
 
             fprintf('internals : sw = %0.10g J, dlw = %0.10g J, ulw = %0.10g J, thf = %0.10g J, ghf = %0.10g J \n', ...
-                                 sum(sw)      , dlw           , ulw           , thf           , ghf_flux)
+                                 sum(sw)      , dlw           , ulw           , thf           , ghf)
 
             error('energy not conserved in thermodynamics equations: supplied = %0.10g J, used = %0.10g J',...
                                                                      E_supplied         , E_used)
