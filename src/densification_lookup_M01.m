@@ -11,7 +11,10 @@ function M01 = densification_lookup_M01(densification_coeffs_M01)
 % 
 %% Example 
 % 
-%
+%   densification_lookup_M01("Gre_ERA5_GS_SW0")
+%   ans =
+%       1.3566    0.1350    1.8705    0.2290
+%       1.4318    0.1055    2.0453    0.2137
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
