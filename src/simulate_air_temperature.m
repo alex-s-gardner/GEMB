@@ -83,7 +83,7 @@ arguments
     lat                        (:,1) {mustBeGreaterThanOrEqual(lat,-90),mustBeLessThanOrEqual(lat,90)} 
     elev                       (:,1) {mustBeGreaterThanOrEqual(elev,0),mustBeLessThanOrEqual(elev,10e3)} 
     coeffs.lat_scale           (1,1) {mustBePositive} = 1;
-    coeffs.daily_amp_scale     (1,1) {mustBePositive} = 1;
+    coeffs.daily_amp_scale     (1,1) {mustBeGreaterThanOrEqual(coeffs.daily_amp_scale,0)} = 1;
     coeffs.weather_sigma_scale (1,1) {mustBePositive} = 1;
     coeffs.weather_corr        (1,1) {mustBeGreaterThanOrEqual(coeffs.weather_corr,0),mustBeLessThanOrEqual(coeffs.weather_corr,1)} = 0.7;
     coeffs.mean_offset         (1,1)                  = 0;
