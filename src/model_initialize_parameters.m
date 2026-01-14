@@ -54,7 +54,7 @@ function options = model_initialize_parameters(options)
 %
 %    --- ALBEDO & RADIATION ---
 %    .albedo_method                 : string       Scheme: "GardnerSharp", "GreuellKonzelmann", etc.
-%    .albedo_density_threshold      : double       Density threshold [kg m^-3] below which albedo_method is applied.
+%    .albedo_density_threshold      : double       Density threshold [kg m^-3] below which albedo_method is applied (Default Inf).
 %    .sw_absorption_method          : double       0 (surface only) or 1 (subsurface penetration).
 %    .albedo_snow                   : double       Albedo for fresh snow (0.5-0.95).
 %    .albedo_ice                    : double       Albedo for bare ice (0.2-0.6).
@@ -200,8 +200,8 @@ arguments
         ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"])} = "GardnerSharp";
     
     % Apply albedo_method method to all areas with densities below this value, or else apply direct input value from albedo_fixed, allowing albedo to be altered.
-    % Default value is rho water (1023 kg m-3).
-    options.albedo_density_threshold (1,1) double {mustBeInRange(options.albedo_density_threshold, 0, 1023)} = 1023;
+    % Default value is Inf.
+    options.albedo_density_threshold (1,1) double {mustBeGreaterThanOrEqual(options.albedo_density_threshold, 0)} = Inf;
     
     % apply all SW to top grid cell (0) or allow SW to penetrate surface (1)
     % (default 0: if sw_absorption_method=1 and albedo_method=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
