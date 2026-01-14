@@ -46,7 +46,9 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 %                  'P' (precipitation), and other standard forcing fields.
 % ModelParam     : Structure containing model configuration parameters.
 %                  Must include 'run_prefix' and 'n_spinup_cycles'.
-% verbose        : Logical flag or integer to control console output detail.
+% verbose        : If true, performs additional checks to ensure the model 
+%                  is conserving mass and energy for every time step. Note:
+%                  verbose checks may add ~10% to processing time. 
 %
 %% Outputs
 %
