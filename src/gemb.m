@@ -1,4 +1,4 @@
-function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, verbose)
+function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, options)
 % GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
 %
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed
@@ -9,12 +9,6 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 % * dynamic albedo with long-term memory
 % * subsurface temperature diffusion
 % * subsurface penetration of shortwave radiation
-%
-%% Syntax
-%
-% OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, verbose)
-%
-%% Description
 %
 % GEMB is the primary driver function for the Glacier Energy and Mass Balance
 % model. It integrates a 1-D column of snow/firn/ice forward in time given
@@ -30,34 +24,71 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 % 5. Checks for mass conservation and boundary condition stability.
 % 6. Aggregates and returns the simulation results.
 %
-%% Inputs
+%% Syntax
 %
-% T              : Vector of initial layer temperatures [K].
-% dz             : Vector of initial layer thicknesses [m].
-% d              : Vector of initial layer densities [kg m^-3].
-% W              : Vector of initial layer water content [kg m^-2].
-% re             : Vector of initial grain sizes (effective radius) [m].
-% gdn            : Vector of initial grain dendricity (0-1).
-% gsp            : Vector of initial grain sphericity (0-1).
-% a              : Initial surface albedo (0-1).
-% a_diffuse      : Initial diffuse albedo accumulator.
-% ClimateForcing : Structure containing time-series meteorological data.
-%                  Must include 'daten' (dates), 'dlw' (downward longwave),
-%                  'P' (precipitation), and other standard forcing fields.
-% ModelParam     : Structure containing model configuration parameters.
-%                  Must include 'run_prefix' and 'n_spinup_cycles'.
-% verbose        : If true, performs additional checks to ensure the model 
-%                  is conserving mass and energy for every time step. Note:
-%                  verbose checks may add ~10% to processing time. 
+%  OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam)
+%  OutData = gemb(..., verbose=true)
+%  OutData = gemb(..., display_waitbar=false)
 %
-%% Outputs
+%% Description
 %
-% OutData        : Structure containing the model results. The specific
-%                  fields are determined by 'model_initialize_output' and
-%                  populated by 'model_output_populate'. Typically includes
-%                  time series of mass balance, surface fluxes, and
-%                  subsurface profiles.
+% OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam)
+% produces time series of snow, firn, and ice properties OutData from input
+% vectors of the initial column T, dz, d, W, re, gdn, gsp, and a, a_diffuse.
+% Input ClimateForcing is a structure containing time series of surface
+% forcing parameters descibed below. Input ModelParam is from the function
+% model_initialize_parameters.m. 
 %
+%   T              : Vector of initial layer temperatures [K].
+%   dz             : Vector of initial layer thicknesses [m].
+%   d              : Vector of initial layer densities [kg m^-3].
+%   W              : Vector of initial layer water content [kg m^-2].
+%   re             : Vector of initial grain sizes (effective radius) [m].
+%   gdn            : Vector of initial grain dendricity (0-1).
+%   gsp            : Vector of initial grain sphericity (0-1).
+%   a              : Initial surface albedo (0-1).
+%   a_diffuse      : Initial diffuse albedo accumulator.
+%   ClimateForcing : Structure containing time-series meteorological data.
+%      .daten      : datenum      Time vector.
+%      .dsw0       : W m^-2       Downward shortwave radiation.
+%      .dlw0       : W m^-2       Downward longwave radiation.
+%      .T_air0     : K            Air temperature.
+%      .p_air0     : Pa           Air pressure.
+%      .rh0        : %            Relative humidity.
+%      .e_air0     : Pa           Vapor pressure.
+%      .V0         : m s^-1       Wind speed.
+%      .P0         : kg m^-2      Precipitation.
+%   ModelParam     : Structure containing model configuration parameters.
+%                    Must include 'run_prefix' and 'n_spinup_cycles'. See
+%                    model_initialize_parameters for more information.
+% 
+% OutData = gemb(..., verbose=true) turns on additional checks to ensure
+% the model conserves mass and energy for every timestep and logs the
+% results. Note: the verbose=true option may add ~10% to total processing
+% time. 
+%
+% OutData = gemb(..., display_waitbar=false) disables the graphical
+% waitbar. 
+%
+%% Example
+% Run a basic example: 
+%   
+%   % Initialize model parameters:
+%   ModelParam = model_initialize_parameters();
+%   
+%   ModelParam.output_frequency = "monthly"; 
+%   
+%   % Generate sample data: 
+%   time_step_hours = 3;
+%   ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
+%   
+%   % Initialize grid:
+%   [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
+%  
+%   % Run GEMB: 
+%   ModOutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam);
+%   
+%   
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
@@ -68,13 +99,39 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 
-disp(['------------------ STARTING RUN # ' num2str(ModelParam.run_prefix) ' --------------------' ])
-tic                                        % start timer
+%% Check Inputs 
+
+arguments 
+    T               (:,1) {mustBeNumeric}
+    dz              (:,1) {mustBeNumeric}
+    d               (:,1) {mustBeNumeric}
+    W               (:,1) {mustBeNumeric}
+    re              (:,1) {mustBeNumeric}
+    gdn             (:,1) {mustBeNumeric}
+    gsp             (:,1) {mustBeNumeric}
+    a               (:,1) {mustBeNumeric}
+    a_diffuse       (:,1) {mustBeNumeric}
+    ClimateForcing  (1,1) struct {mustHaveFields(ClimateForcing, ["daten", "dsw0", "dlw0", "T_air0", "p_air0", "rh0", "e_air0", "V0", "P0"])}
+    ModelParam      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "n_spinup_cycles"])}
+    options.verbose         (1,1) logical = false
+    options.display_waitbar (1,1) logical = true
+end
+
+verbose = options.verbose;
+
+%% Begin GEMB
+
+if verbose
+    disp(['------------------ STARTING RUN # ' num2str(ModelParam.run_prefix) ' --------------------' ])
+    tic                                        % start timer
+end
 daten = ClimateForcing.daten;              % extract daten for convenience
 dt    = (daten(2)-daten(1)) * (60*60*24);  % input time step in seconds
 
 if rem(dt,1) ~= 0
-    warning('rounding dt as it is not an exact integer: dt = %0.4f', dt)
+    if verbose
+        warning('Rounding dt as it is not an exact integer: dt = %0.4f', dt)
+    end
     dt = round(dt);
 end
 
@@ -85,26 +142,31 @@ M_surf = 0;                        % initialize surface melt for albedo paramete
 % pre calculate (this is a speed optimization for thermal)
 ModelParam.dt_divisors = fast_divisors(dt * 10000)/10000;
 
-%% initialize output structure
+%% Initialize output structure
+
 column_length = length(dz);
 [output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam);
 
 %% Initialize Progress Bar Variables
-total_cycles = ModelParam.n_spinup_cycles + 1;
-steps_per_cycle = length(daten);
-total_steps = total_cycles * steps_per_cycle;
-waitbar_step_mod = max(round(total_steps/100),1);
-global_step_count = 0;
 
-% Create waitbar if running in a graphical environment
-if usejava('desktop')
-    h_bar = waitbar(0, 'Initializing GEMB Simulation...', 'Name', 'GEMB Progress');
-else
-    h_bar = [];
+total_cycles = ModelParam.n_spinup_cycles + 1;
+
+if options.display_waitbar
+    steps_per_cycle = length(daten);
+    total_steps = total_cycles * steps_per_cycle;
+    waitbar_step_mod = max(round(total_steps/100),1);
+    global_step_count = 0;
+    
+    % Create waitbar if running in a graphical environment
+    if usejava('desktop')
+        h_bar = waitbar(0, 'Initializing GEMB Simulation...', 'Name', 'GEMB Progress');
+    else
+        h_bar = [];
+    end
 end
 
-
 %% Start spinup loop
+
 for simulation_iteration = 1:total_cycles
 
     % Initialize cumulative variables:
@@ -117,13 +179,13 @@ for simulation_iteration = 1:total_cycles
     M_surf_cumulative     = 0;
     Ra_cumulative         = 0;
 
-    %% Start loop for data frequency
+    % Start loop for data frequency
 
     % Specify the time range over which the mass balance is to be calculated:
     for date_ind = 1:length(daten)
 
         % Extract daily data:
-        [ClimateForcingStep] = model_inputs_single_timestep(date_ind, dt, ClimateForcing, ModelParam);
+        ClimateForcingStep = model_inputs_single_timestep(date_ind, dt, ClimateForcing, ModelParam);
         
         % run GEMB for a single time interval
         [T, dz, d, W, re, gdn, gsp, a, a_diffuse, EC, M_surf, sw_net, shf, ...
@@ -162,33 +224,39 @@ for simulation_iteration = 1:total_cycles
             end
         end
 
-        % Update Progress Bar
-        global_step_count = global_step_count + 1;
-        if ~isempty(h_bar) && (mod(global_step_count, waitbar_step_mod) == 0 || global_step_count == total_steps)
-             % Calculate percentage
-             pct_complete = global_step_count / total_steps;
-             
-             % Create message: Date | Cycle X of Y
-             msg = sprintf('Simulating: %s | Cycle: %d / %d', ...
-                 datetime(daten(date_ind),'ConvertFrom', 'datenum'), ...
-                 simulation_iteration, ...
-                 total_cycles);
-             
-             % Update the bar
-             waitbar(pct_complete, h_bar, msg);
+        if options.display_waitbar
+            % Update Progress Bar
+            global_step_count = global_step_count + 1;
+            if ~isempty(h_bar) && (mod(global_step_count, waitbar_step_mod) == 0 || global_step_count == total_steps)
+                 % Calculate percentage
+                 pct_complete = global_step_count / total_steps;
+                 
+                 % Create message: Date | Cycle X of Y
+                 msg = sprintf('Simulating: %s | Cycle: %d / %d', ...
+                     datetime(daten(date_ind),'ConvertFrom', 'datenum'), ...
+                     simulation_iteration, ...
+                     total_cycles);
+                 
+                 % Update the bar
+                 waitbar(pct_complete, h_bar, msg);
+            end
         end
     end
 
-    % display cycle completed and time to screen
-    disp([num2str(ModelParam.run_prefix) ': cycle: ' num2str(simulation_iteration) ' of '  ...
-        num2str(ModelParam.n_spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
-        ' avg melt: ' num2str(round(M_cumulative/(daten(end)-daten(1))*365.25)) ...
-        ' kg/m2/yr']);
+    if verbose
+        % Display cycle completed and time to screen:
+        disp([num2str(ModelParam.run_prefix) ': cycle: ' num2str(simulation_iteration) ' of '  ...
+            num2str(ModelParam.n_spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
+            ' avg melt: ' num2str(round(M_cumulative/(daten(end)-daten(1))*365.25)) ...
+            ' kg/m2/yr']);
+    end
 end
 
-% Close the progress bar
-if ~isempty(h_bar) && ishandle(h_bar)
-    close(h_bar);
+if options.display_waitbar
+    % Close the progress bar
+    if ~isempty(h_bar) && ishandle(h_bar)
+        close(h_bar);
+    end
 end
 
 end
@@ -581,5 +649,15 @@ function [OutData, OutCum] = ...
         end
         
         OutCum.count = 0;
+    end
+end
+
+% Custom Validation Function
+function mustHaveFields(s, requiredFields)
+    for f = requiredFields
+        if ~isfield(s, f)
+            error('InvalidInput:MissingField', ...
+                'Structure is missing the required field: %s', f);
+        end
     end
 end
