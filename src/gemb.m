@@ -1,4 +1,4 @@
-function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, options)
+function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, display_options)
 % GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
 %
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed
@@ -86,7 +86,7 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 %   [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
 %  
 %   % Run GEMB: 
-%   ModOutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam);
+%   OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam);
 %   
 %   
 %% Author Information
@@ -102,22 +102,22 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 %% Check Inputs 
 
 arguments 
-    T               (:,1) {mustBeNumeric}
-    dz              (:,1) {mustBeNumeric}
-    d               (:,1) {mustBeNumeric}
-    W               (:,1) {mustBeNumeric}
-    re              (:,1) {mustBeNumeric}
-    gdn             (:,1) {mustBeNumeric}
-    gsp             (:,1) {mustBeNumeric}
-    a               (:,1) {mustBeNumeric}
-    a_diffuse       (:,1) {mustBeNumeric}
-    ClimateForcing  (1,1) struct {mustHaveFields(ClimateForcing, ["daten", "dsw0", "dlw0", "T_air0", "p_air0", "rh0", "e_air0", "V0", "P0"])}
-    ModelParam      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "n_spinup_cycles"])}
-    options.verbose         (1,1) logical = false
-    options.display_waitbar (1,1) logical = true
+    T               (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
+    dz              (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
+    d               (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
+    W               (:,1) {mustBeNumeric,mustBeGreaterThanOrEqual(W,0)}
+    re              (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(re,0)}
+    gdn             (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(gdn,0)}
+    gsp             (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(gsp,0)}
+    a               (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(a,0)}
+    a_diffuse       (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(a_diffuse,0)}
+    ClimateForcing  (1,1) struct {mustHaveFields(ClimateForcing, ["daten", "dsw0", "dlw0", "T_air0", "p_air0", "rh0", "e_air0", "V0", "P0","Vz","Tz","T_air_mean","V_mean","P_mean"])}
+    ModelParam      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "n_spinup_cycles","output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","dsw_diffuse","cloud_fraction","density_ice"])}
+    display_options.verbose         (1,1) logical = false
+    display_options.display_waitbar (1,1) logical = true
 end
 
-verbose = options.verbose;
+verbose = display_options.verbose;
 
 %% Begin GEMB
 
@@ -151,7 +151,7 @@ column_length = length(dz);
 
 total_cycles = ModelParam.n_spinup_cycles + 1;
 
-if options.display_waitbar
+if display_options.display_waitbar
     steps_per_cycle = length(daten);
     total_steps = total_cycles * steps_per_cycle;
     waitbar_step_mod = max(round(total_steps/100),1);
@@ -224,7 +224,7 @@ for simulation_iteration = 1:total_cycles
             end
         end
 
-        if options.display_waitbar
+        if display_options.display_waitbar
             % Update Progress Bar
             global_step_count = global_step_count + 1;
             if ~isempty(h_bar) && (mod(global_step_count, waitbar_step_mod) == 0 || global_step_count == total_steps)
@@ -252,7 +252,7 @@ for simulation_iteration = 1:total_cycles
     end
 end
 
-if options.display_waitbar
+if display_options.display_waitbar
     % Close the progress bar
     if ~isempty(h_bar) && ishandle(h_bar)
         close(h_bar);
