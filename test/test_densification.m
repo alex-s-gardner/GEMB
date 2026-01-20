@@ -56,7 +56,7 @@ classdef test_densification < matlab.unittest.TestCase
             
             tcase.MP.densification_method = "HerronLangway";
             
-            [dz_out, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [dz_out, d_out] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             mass_final = d_out .* dz_out;
@@ -81,7 +81,7 @@ classdef test_densification < matlab.unittest.TestCase
             
             tcase.MP.densification_method = "HerronLangway";
             
-            [~, d_out] = densification(tcase.t_vec, tcase.dz, d_near_ice, tcase.re, ...
+            [~, d_out] = calculate_density(tcase.t_vec, tcase.dz, d_near_ice, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             tcase.verifyTrue(all(d_out <= tcase.MP.density_ice + 1e-10), ...
@@ -91,7 +91,7 @@ classdef test_densification < matlab.unittest.TestCase
         function test_herron_langway(tcase)
             % Test "HerronLangway" logic
             tcase.MP.densification_method = "HerronLangway";
-            [~, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d_out] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             tcase.verifyTrue(all(d_out > tcase.d), 'HerronLangway should densify layers');
@@ -100,7 +100,7 @@ classdef test_densification < matlab.unittest.TestCase
         function test_arthern(tcase)
             % Test "Anthern" (Semi-empirical Arthern)
             tcase.MP.densification_method = "Anthern";
-            [~, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d_out] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             tcase.verifyTrue(all(d_out > tcase.d), 'Anthern should densify layers');
@@ -111,12 +111,12 @@ classdef test_densification < matlab.unittest.TestCase
             tcase.MP.densification_method = "AnthernB";
             
             % Run standard
-            [~, d_std] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d_std] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             % Run with larger grain size
             re_large = tcase.re * 2;
-            [~, d_large] = densification(tcase.t_vec, tcase.dz, tcase.d, re_large, ...
+            [~, d_large] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, re_large, ...
                 tcase.CF, tcase.MP);
             
             % Formula B1 in Arthern: rate is proportional to 1/r^2. 
@@ -144,12 +144,12 @@ classdef test_densification < matlab.unittest.TestCase
             
             % Test Case 1: Standard RACMO
             tcase.MP.densification_coeffs_M01 = "Ant_RACMO_GS_SW0";
-            [~, d1] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d1] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             % Test Case 2: ERA5 variant (should have different M coeffs)
             tcase.MP.densification_coeffs_M01 = "Ant_ERA5_BF_SW1";
-            [~, d2] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d2] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             % Ensure densification occurred
@@ -166,7 +166,7 @@ classdef test_densification < matlab.unittest.TestCase
             tcase.MP.densification_method = "Ligtenberg";
             tcase.MP.densification_coeffs_M01 = "Gre_KuipersMunneke";
             
-            [~, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d_out] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             tcase.verifyTrue(all(d_out > tcase.d), 'Gre_KuipersMunneke coeffs should densify layers');
@@ -177,7 +177,7 @@ classdef test_densification < matlab.unittest.TestCase
             tcase.CF.dt = 0;
             tcase.MP.densification_method = "HerronLangway";
             
-            [dz_out, d_out] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [dz_out, d_out] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             tcase.verifyEqual(d_out, tcase.d);
@@ -191,12 +191,12 @@ classdef test_densification < matlab.unittest.TestCase
             
             % Case A: density_ice ~ 820 (Trigger specialized branch)
             tcase.MP.density_ice = 820;
-            [~, d_820] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d_820] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             % Case B: density_ice ~ 917 (Trigger standard branch)
             tcase.MP.density_ice = 917;
-            [~, d_917] = densification(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
+            [~, d_917] = calculate_density(tcase.t_vec, tcase.dz, tcase.d, tcase.re, ...
                 tcase.CF, tcase.MP);
             
             % The code uses M01(1,:) for 820 and M01(2,:) for others.

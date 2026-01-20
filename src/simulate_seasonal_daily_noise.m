@@ -1,5 +1,5 @@
 function y_sim = simulate_seasonal_daily_noise(dec_year, coeffs)
-% SEASONAL_DAILY_NOISE Generates data from fitted coefficients.
+% simulate_seasonal_daily_noise generates data from fitted coefficients.
 %
 %   y_sim = seasonal_daily_noise(frac_year, coeffs)
 %

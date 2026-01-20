@@ -1,12 +1,12 @@
 function [T, ulw, shf, lhf, ghf, EC] = ...
-    thermo(T, dz, d, water_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
-% thermo computes new temperature profile accounting for energy absorption
+    calculate_temperature(T, dz, d, water_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
+% calculate_temperature computes new temperature profile accounting for energy absorption
 % and thermal diffusion.
 %
 %% Syntax
 %
 % [T, ulw, shf, lhf, ghf, EC] = ...
-%    thermo(T, dz, d, water_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
+%    calculate_temperature(T, dz, d, water_surface, re, swf, ClimateForcingStep, ModelParam, verbose)
 %
 %% Description
 %
@@ -143,20 +143,19 @@ ClimateForcingStep.V(ClimateForcingStep.V < 0.01-d_tolerance) = 0.01;
 K = thermal_conductivity(T, d, ModelParam);
 
 %% THERMAL DIFFUSION COEFFICIENTS
-
 % A discretization scheme which truncates the Taylor-Series expansion
 % after the 3rd term is used. See Patankar 1980, Ch. 3&4
-
+%
 % discretized heat equation:
-
+%
 %                 Tp = (Au*Tuo+ Ad*Tdo+ (Ap-Au-Ad)Tpo+ S) / Ap
-
+%
 % where neighbor coefficients Au, Ap, & Ad are
-
+%
 %                   Au = [dz_u/2KU + dz/2KP]^-1
 %                   Ad = [dz_d/2KD + dz/2KP]^-1
 %                   Ap = d*CI*dz/Dt
-
+%
 % and u & d represent grid points up and down from the center grid point
 % point p and o identifies previous time step values. S is a source term.
 

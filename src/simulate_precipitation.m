@@ -1,5 +1,5 @@
 function precip = simulate_precipitation(dec_year, coeffs)
-% SIMULATE_PRECIPITATION Generates synthetic rainfall using fitted coeffs.
+% simulate_precipitation generates synthetic rainfall using fitted coeffs.
 %
 %   INPUTS:
 %       dec_year - N x 1 vector of desired decimal years to simulate

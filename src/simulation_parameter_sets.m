@@ -1,5 +1,5 @@
 function [location_parameters, coeffs] = simulation_parameter_sets(set_id)
-% simulation_parameter_sets Retrieves predefined parameter sets for climate
+% simulation_parameter_sets retrieves predefined parameter sets for climate
 % forcing simulations.
 %
 %% Syntax

@@ -70,7 +70,7 @@ classdef test_albedo < matlab.unittest.TestCase
             tcase.MP.albedo_method = "None";
             tcase.MP.albedo_fixed = 0.75;
             
-            [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             tcase.verifyEqual(a_out(1), 0.75, 'AbsTol', 1e-10, 'Method None should return fixed albedo');
@@ -85,7 +85,7 @@ classdef test_albedo < matlab.unittest.TestCase
             tcase.MP.albedo_density_threshold = 300; 
             tcase.d(1) = 350; % Higher than threshold
             
-            [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             tcase.verifyEqual(a_out(1), 0.4, 'AbsTol', 1e-10, 'Density > Threshold should use fixed albedo');
@@ -95,7 +95,7 @@ classdef test_albedo < matlab.unittest.TestCase
             % Test: GardnerSharp functionality (checking range validity)
             tcase.MP.albedo_method = "GardnerSharp";
             
-            [a_out, a_diff_out] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, a_diff_out] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             % Basic physical checks
@@ -108,7 +108,7 @@ classdef test_albedo < matlab.unittest.TestCase
             tcase.MP.albedo_method = "BruneLeFebre";
             tcase.re(1) = 0.5; % 0.5 mm
             
-            [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             % We verify it runs and changes the value from input
@@ -128,7 +128,7 @@ classdef test_albedo < matlab.unittest.TestCase
             tcase.MP.density_ice = 900;
             tcase.CF.cloud_fraction = 0.5;
             
-            [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             % Expected Calculation:
@@ -156,7 +156,7 @@ classdef test_albedo < matlab.unittest.TestCase
             % dry_snow_t0 = 30
             % t0 = 10 * K + dry_snow_t0 = 70 + 30 = 100 days
             
-            [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             t0 = 100;
@@ -177,7 +177,7 @@ classdef test_albedo < matlab.unittest.TestCase
             % Logic: P becomes P + (EC/300)*1000
             % a = a_snow - (a_snow - a_old) * exp(-P/z_snow)
             
-            [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             tcase.verifyTrue(a_out(1) > tcase.a_in(1), 'Deposition should increase albedo');
@@ -192,7 +192,7 @@ classdef test_albedo < matlab.unittest.TestCase
             tcase.d(1) = 350;   % Snow
             tcase.d(2) = 900;   % Ice (assume pore closeoff density is 830)
             
-            [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+            [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
             
             % Just verify that mixing logic ran (result should not be pure snow albedo)
@@ -215,7 +215,7 @@ classdef test_albedo < matlab.unittest.TestCase
              % ice_min = MP.albedo_ice (0.48)
              % K = 200
              
-             [a_out, ~] = albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
+             [a_out, ~] = calculate_albedo(tcase.T, tcase.dz, tcase.d, tcase.W, tcase.re, ...
                 tcase.a_in, tcase.a_diff_in, tcase.EC, tcase.M_surf, tcase.CF, tcase.MP);
              
              M = 100;

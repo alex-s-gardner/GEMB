@@ -1,5 +1,5 @@
 function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, display_options)
-% GEMB runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
+% gemb runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
 %
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed
 % representation of subsurface processes, and key features include:
@@ -58,6 +58,11 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 %      .e_air0     : Pa           Vapor pressure.
 %      .V0         : m s^-1       Wind speed.
 %      .P0         : kg m^-2      Precipitation.
+%      .Vz         : 
+%      .Tz         : 
+%      .T_air_mean : 
+%      .V_mean     : 
+%      .P_mean     : 
 %   ModelParam     : Structure containing model configuration parameters.
 %                    Must include 'run_prefix' and 'n_spinup_cycles'. See
 %                    model_initialize_parameters for more information.

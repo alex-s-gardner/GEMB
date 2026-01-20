@@ -1,13 +1,13 @@
-function [re, gdn, gsp]  = grain_growth(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam)
-% grain_growth models the evolution of effective snow grain size, dendricity, and sphericity.
+function [re, gdn, gsp]  = calculate_grain_size(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam)
+% calculate_grain_size models the evolution of effective snow grain size, dendricity, and sphericity.
 % 
 %% Syntax 
 % 
-%  [re, gdn, gsp] = grain_growth(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam)
+%  [re, gdn, gsp] = calculate_grain_size(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam)
 %
 %% Description
 % 
-% [re, gdn, gsp] = grain_growth(...) calculates the metamorphism of snow grains
+% [re, gdn, gsp] = calculate_grain_size(...) calculates the metamorphism of snow grains
 % over a single time step. The model accounts for different physical processes
 % depending on the snow state:
 %

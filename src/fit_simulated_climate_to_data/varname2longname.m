@@ -1,5 +1,5 @@
 function longname = varname2longname(varname)
-% varname2longname
+% varname2longname returns a short description of given variable names.
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions

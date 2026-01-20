@@ -1,5 +1,5 @@
 function e_air = simulate_vapor_pressure(T_air, rh)
-% SIMULATE_VAPOR_PRESSURE Estimates actual vapor pressure from Temp and RH.
+% simulate_vapor_pressure estimates actual vapor pressure from temperature and relative humidity.
 %
 %   e_air = simulate_vapor_pressure(T_air, rh)
 %

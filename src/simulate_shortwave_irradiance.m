@@ -1,5 +1,5 @@
 function dsw = simulate_shortwave_irradiance(decimal_year, latitude)
-% SHORTWAVE_IRRADIANCE Simulates clear sky shortwave irradiance.
+% simulate_shortwave_irradiance simulates clear sky shortwave irradiance.
 %
 %   dsw = shortwave_irradiance(decimal_year, latitude)
 %

@@ -1,7 +1,7 @@
 function [T, dz, d, water, re, gdn, gsp, a, a_diffuse, rain] = ...
-    accumulation(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ...
+    calculate_accumulation(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ...
     ClimateForcingStep, ModelParam, verbose)
-% accumulation adds precipitation and deposition to the model grid.
+% calculate_accumulation adds precipitation and deposition to the model column.
 %
 %% Syntax
 %

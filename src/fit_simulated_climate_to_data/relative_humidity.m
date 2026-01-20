@@ -1,5 +1,5 @@
 function rh = relative_humidity(e_air, T_air)
-% relative_humidity calculates relative humidity from vapor pressure and temperature.
+% relative_humidity calculates relative humidity from vapor pressure and temperature
 % using the formula: 
 %
 %  rh = (e_air / e_saturation(T_air)) * 100
