@@ -1,6 +1,6 @@
-function [a, a_diffuse] = albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ...
+function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ...
     ClimateForcingStep, ModelParam)
-% albedo calculates snow, firn and ice albedo as a function of:
+% calculate_albedo calculates snow, firn and ice albedo as a function of:
 %   1 : effective grain radius (Gardner & Sharp, 2009)
 %   2 : effective grain radius (Brun et al., 2009)
 %   3 : density and cloud amount (Greuell & Konzelmann, 1994)
@@ -8,7 +8,7 @@ function [a, a_diffuse] = albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, 
 %
 %% Syntax
 %
-% [a, a_diffuse] = albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ClimateForcingStep, ModelParam)
+% [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ClimateForcingStep, ModelParam)
 %
 %% Description
 %

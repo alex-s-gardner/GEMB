@@ -50,7 +50,7 @@ classdef test_shortwave < matlab.unittest.TestCase
             tcase.MP.sw_absorption_method = 0;
             tcase.MP.albedo_method = "GreuellKonzelmann"; 
             
-            swf = shortwave(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
+            swf = calculate_shortwave_radiation(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
                 tcase.CF, tcase.MP);
             
             % Expect all energy in top cell
@@ -69,7 +69,7 @@ classdef test_shortwave < matlab.unittest.TestCase
             tcase.MP.sw_absorption_method = 0;
             tcase.MP.albedo_method = "GardnerSharp";
             
-            swf = shortwave(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
+            swf = calculate_shortwave_radiation(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
                 tcase.CF, tcase.MP);
             
             dsw_direct = tcase.CF.dsw - tcase.CF.dsw_diffuse;
@@ -89,7 +89,7 @@ classdef test_shortwave < matlab.unittest.TestCase
             d_ice = tcase.d;
             d_ice(1) = tcase.MP.density_ice; % Set top cell to ice density
             
-            swf = shortwave(tcase.dz, d_ice, tcase.re, tcase.alb, tcase.alb_diff, ...
+            swf = calculate_shortwave_radiation(tcase.dz, d_ice, tcase.re, tcase.alb, tcase.alb_diff, ...
                 tcase.CF, tcase.MP);
             
             expected = (1 - tcase.alb) * tcase.CF.dsw;
@@ -106,7 +106,7 @@ classdef test_shortwave < matlab.unittest.TestCase
             tcase.MP.sw_absorption_method = 1;
             tcase.MP.albedo_method = "BruneLeFebre";
             
-            swf = shortwave(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
+            swf = calculate_shortwave_radiation(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
                 tcase.CF, tcase.MP);
             
             % 1. Energy must be distributed deeper than top cell
@@ -136,7 +136,7 @@ classdef test_shortwave < matlab.unittest.TestCase
             d_deep = 350 * ones(n_deep, 1);
             re_deep = 0.5 * ones(n_deep, 1);
             
-            swf = shortwave(dz_deep, d_deep, re_deep, tcase.alb, tcase.alb_diff, ...
+            swf = calculate_shortwave_radiation(dz_deep, d_deep, re_deep, tcase.alb, tcase.alb_diff, ...
                 tcase.CF, tcase.MP);
             
             % 1. Conservation: Sum of absorbed flux must equal Surface Net Flux
@@ -159,7 +159,7 @@ classdef test_shortwave < matlab.unittest.TestCase
             tcase.CF.dsw_diffuse = 0;
             tcase.MP.sw_absorption_method = 1;
             
-            swf = shortwave(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
+            swf = calculate_shortwave_radiation(tcase.dz, tcase.d, tcase.re, tcase.alb, tcase.alb_diff, ...
                 tcase.CF, tcase.MP);
             
             tcase.verifyEqual(sum(swf), 0, 'AbsTol', 1e-10, 'Zero input flux should result in zero absorption');

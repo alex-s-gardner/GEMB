@@ -2,7 +2,7 @@ function [T, dz, d, water, re, gdn, gsp, a, a_diffuse, EC, melt_surface, sw_net,
     lhf, ulw, Ra, melt, R, F, M_added, E_added, compaction_dens, compaction_melt] = ...
    gemb_core(T, dz, d, water, re, gdn, gsp, a, a_diffuse, EC, melt_surface, ...
     ClimateForcingStep, ModelParam, verbose)
-% GEMB_STEP Performs a single time-step of the GEMB model.
+% gemb_core performs a single time-step of the GEMB model.
 %   Calculates grain growth, albedo, radiative transfer, thermodynamics, 
 %   accumulation, melt, layer management, and densification.
 %
@@ -35,34 +35,30 @@ end
 % 1. Snow grain metamorphism
 % [always calculate, used in thermo and albedo]
 [re, gdn, gsp] = ...
-    grain_growth(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam);
+    calculate_grain_size(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam);
 
 % 2. Calculate snow, firn, and ice albedo
 % Uses EC and melt_surface from the previous time step
 [a, a_diffuse] = ...
-    albedo(T, dz, d, water, re, a, a_diffuse, EC, melt_surface, ClimateForcingStep, ModelParam);
+    calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC, melt_surface, ClimateForcingStep, ModelParam);
 
 % 3. Determine distribution of absorbed SW radiation with depth
-swf = ...
-    shortwave(dz, d, re, a(1), a_diffuse(1), ClimateForcingStep, ModelParam);
+swf = calculate_shortwave_radiation(dz, d, re, a(1), a_diffuse(1), ClimateForcingStep, ModelParam);
 
 % 4. Calculate net shortwave [W m-2]
-sw_net = ...
-    sum(swf);
+sw_net = sum(swf);
 
 % 5. Calculate new temperature-depth profile and turbulent heat fluxes [W m-2]
 [T, ulw, shf, lhf, ghf, EC] = ...
-    thermo(T, dz, d, water(1), re, swf, ClimateForcingStep, ModelParam, verbose);
+    calculate_temperature(T, dz, d, water(1), re, swf, ClimateForcingStep, ModelParam, verbose);
 
 % 4. Calculate net longwave [W m-2]
-lw_net = ...
-    ClimateForcingStep.dlw - ulw;
+lw_net = ClimateForcingStep.dlw - ulw;
 
 % 6. Change in thickness of top cell due to evaporation/condensation
 % Assuming same density as top cell
 % ## NEED TO FIX THIS IN CASE ALL OR MORE OF CELL EVAPORATES ##
-dz(1) = ...
-    dz(1) + EC / d(1);
+dz(1) = dz(1) + EC / d(1);
 
 if verbose
     E_EC = EC * T(1) * CI;
@@ -70,29 +66,25 @@ end
 
 % 7. Add snow/rain to top grid cell adjusting cell depth, temperature, and density
 [T, dz, d, water, re, gdn, gsp, a, a_diffuse, Ra] = ...
-    accumulation(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ClimateForcingStep, ModelParam, verbose);
+    calculate_accumulation(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ClimateForcingStep, ModelParam, verbose);
 
 % 8. Melt and wet compaction
 % Calculate water production melt [kg m-2], runoff R [kg m-2], and resulting changes
-compaction_melt = ...
-    sum(dz); % Track thickness before melt
+compaction_melt = sum(dz); % Track thickness before melt
 
 [T, dz, d, water, re, gdn, gsp, a, a_diffuse, melt, melt_surface, R, F] = ...
-    melting(T, dz, d, water, re, gdn, gsp, a, a_diffuse, Ra, ModelParam, verbose);
+    calculate_melt(T, dz, d, water, re, gdn, gsp, a, a_diffuse, Ra, ModelParam, verbose);
 
-compaction_melt = ...
-    (compaction_melt - sum(dz)); % Calculate wet compaction
+compaction_melt = (compaction_melt - sum(dz)); % Calculate wet compaction
 
 % 9. Manage the layering to match user defined requirements
 [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
     layer_management(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose);
 
 % 10. Allow non-melt densification and determine compaction [m]
-compaction_dens = ...
-    sum(dz); % Track thickness before densification
+compaction_dens = sum(dz); % Track thickness before densification
 
-[dz, d] = ...
-    densification(T, dz, d, re, ClimateForcingStep, ModelParam);
+[dz, d] = calculate_density(T, dz, d, re, ClimateForcingStep, ModelParam);
 
 compaction_dens = ...
     (compaction_dens - sum(dz)); % Calculate dry compaction

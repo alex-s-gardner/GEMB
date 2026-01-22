@@ -1,12 +1,12 @@
 function [T, dz, d, water, re, gdn, gsp, a, a_diffuse, melt_total, melt_surface, runoff_total, freeze_total] = ...
-    melting(T, dz, d, water, re, gdn, gsp, a, a_diffuse, rain, ModelParam, verbose)
-% melt computes the quantity of meltwater due to snow temperature in excess
+    calculate_melt(T, dz, d, water, re, gdn, gsp, a, a_diffuse, rain, ModelParam, verbose)
+% calculate_melt computes the quantity of meltwater due to snow temperature in excess
 % of 0 deg C, determines pore water content and adjusts grid spacing.
 %
 %% Syntax
 %
 % [T, dz, d, water, re, gdn, gsp, a, a_diffuse, melt_total, melt_surface, runoff_total, freeze_total] = ...
-%    melt(T, dz, d, water, re, gdn, gsp, a, a_diffuse, rain, ModelParam, verbose)
+%    calculate_melt(T, dz, d, water, re, gdn, gsp, a, a_diffuse, rain, ModelParam, verbose)
 %
 %% Description
 %

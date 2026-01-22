@@ -1,10 +1,10 @@
-function swf = shortwave(dz, d, re, a_surface, a_diffuse_surface, ...
+function swf = calculate_shortwave_radiation(dz, d, re, a_surface, a_diffuse_surface, ...
     ClimateForcingStep, ModelParam)
-% shortwave distributes absorbed shortwave radiation vertically within snow/ice.
+% calculate_shortwave_radiation distributes absorbed shortwave radiation vertically within snow/ice.
 %
 %% Syntax 
 % 
-% swf = shortwave(dz, d, re, a_surface, a_diffuse_surface, ...
+% swf = calculate_shortwave_radiation(dz, d, re, a_surface, a_diffuse_surface, ...
 %     ClimateForcingStep, ModelParam)
 %
 %% Description
@@ -48,7 +48,7 @@ function swf = shortwave(dz, d, re, a_surface, a_diffuse_surface, ...
 %% Example 
 % 
 % % Example call assuming initialized variables:
-% sw_flux = shortwave(dz, density, grain_radius, 0.85, 0.85, forcing, params);
+% sw_flux = calculate_shortwave_radiation(dz, density, grain_radius, 0.85, 0.85, forcing, params);
 % 
 %% References 
 % This function uses formulations from the following references: 

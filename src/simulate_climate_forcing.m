@@ -1,12 +1,11 @@
-function [ClimateForcing] = simulate_climate_forcing(set_id, time_step_hours)
-%
-% simulate_climate_forcing Generates synthetic climate forcing data for GEMB
+function ClimateForcing = simulate_climate_forcing(set_id, time_step_hours)
+% simulate_climate_forcing generates synthetic climate forcing data for GEMB
 % simulations based on predefined parameter sets.
 %
 %% Syntax
 %
-% [ClimateForcing] = simulate_climate_forcing(set_id)
-% [ClimateForcing] = simulate_climate_forcing(set_id, time_step_hours)
+% ClimateForcing = simulate_climate_forcing(set_id)
+% ClimateForcing = simulate_climate_forcing(set_id, time_step_hours)
 %
 %% Description
 %

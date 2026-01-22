@@ -1,5 +1,5 @@
 function p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
-% SIMULATE_AIR_PRESSURE Simulates screen-level atmospheric pressure [Pa].
+% simulate_air_pressure simulates screen-level atmospheric pressure [Pa].
 %
 %   p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
 %

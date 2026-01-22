@@ -1,5 +1,5 @@
 function simulate_coeffs_disp(coeffs, struct_name)
-% simulate_coeffs_disp Displays structure fields as executable MATLAB code.
+% simulate_coeffs_disp displays structure fields as executable MATLAB code.
 %
 %% Syntax
 %

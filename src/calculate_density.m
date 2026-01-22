@@ -1,13 +1,13 @@
-function [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
-% densification computes the densification of snow/firn.
+function [dz, d] = calculate_density(T, dz, d, re, ClimateForcingStep, ModelParam)
+% calculate_density computes the densification of snow/firn.
 %
 %% Syntax
 %
-%  [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
+%  [dz, d] = calculate_density(T, dz, d, re, ClimateForcingStep, ModelParam)
 %
 %% Description
 %
-% [dz, d] = densification(T, dz, d, re, ClimateForcingStep, ModelParam)
+% [dz, d] = calculate_density(T, dz, d, re, ClimateForcingStep, ModelParam)
 %
 %% Inputs:
 %   ModelParam.densification_method = densification model to use:

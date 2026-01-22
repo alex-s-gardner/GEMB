@@ -40,14 +40,14 @@ classdef test_grain_growth < matlab.unittest.TestCase
             
             % test method "None" (should skip)
             tcase.MP.albedo_method = "None";
-            [re_out, gdn_out, gsp_out] = grain_growth(t_in, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [re_out, gdn_out, gsp_out] = calculate_grain_size(t_in, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             tcase.verifyEqual(re_out, re_in);
             tcase.verifyEqual(gdn_out, gdn_in);
             tcase.verifyEqual(gsp_out, gsp_in);
 
             % test method "GreuellKonzelmann" (should skip)
             tcase.MP.albedo_method = "GreuellKonzelmann";
-            [re_out, ~, ~] = grain_growth(t_in, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [re_out, ~, ~] = calculate_grain_size(t_in, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             tcase.verifyEqual(re_out, re_in);
         end
 
@@ -65,7 +65,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0.8; 0.8; 0.8]; % high dentricity
             gsp_in = [0.2; 0.2; 0.2];
             
-            [re_out, gdn_out, gsp_out] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [re_out, gdn_out, gsp_out] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             % expect gdn to decrease (decay) and gsp to increase
             tcase.verifyTrue(all(gdn_out < gdn_in), 'dentricity should decrease for dry low gradient');
@@ -88,7 +88,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0.8; 0.8; 0.8];
             gsp_in = [0.2; 0.2; 0.2];
             
-            [~, gdn_out, gsp_out] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [~, gdn_out, gsp_out] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             % under high gradient, the coefficient c (negative) is applied to both
             tcase.verifyTrue(all(gdn_out < gdn_in), 'dentricity should decrease under high gradient');
@@ -108,7 +108,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0.8; 0.8; 0.8];
             gsp_in = [0.2; 0.2; 0.2];
             
-            [~, gdn_out, gsp_out] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [~, gdn_out, gsp_out] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             % wet snow causes rapid rounding: gdn decreases, gsp increases
             tcase.verifyTrue(all(gdn_out < gdn_in), 'wet snow should reduce dentricity');
@@ -130,7 +130,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0; 0; 0];
             gsp_in = [0.5; 0.5; 0.5];
             
-            [re_out, gdn_out, ~] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [re_out, gdn_out, ~] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             % expect growth in grain size
             tcase.verifyTrue(all(re_out > re_in), 'grain size should increase (marbouty)');
@@ -150,7 +150,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0; 0; 0];
             gsp_in = [0.5; 0.5; 0.5];
             
-            [re_out, ~, ~] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [re_out, ~, ~] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             % expect no growth
             tcase.verifyEqual(re_out, re_in, 'AbsTol', 1e-10, 'no growth expected above density threshold');
@@ -170,7 +170,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0; 0; 0];
             gsp_in = [0.5; 0.5; 0.5];
             
-            [re_out, gdn_out, ~] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [re_out, gdn_out, ~] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             % expect growth via 'e' factor
             tcase.verifyTrue(all(re_out > re_in), 'wet snow should grow grains (brun)');
@@ -191,7 +191,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0.1; 0.1; 0.1]; % close to 0
             gsp_in = [0.2; 0.2; 0.2];
             
-            [~, gdn_out, gsp_out] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [~, gdn_out, gsp_out] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             tcase.verifyTrue(all(gdn_out >= 0), 'gdn should have lower bound of 0');
             tcase.verifyTrue(all(gsp_out <= 1), 'gsp should have upper bound of 1');
@@ -212,7 +212,7 @@ classdef test_grain_growth < matlab.unittest.TestCase
             gdn_in = [0; 0; 0];
             gsp_in = [1; 1; 1];
             
-            [re_out, ~, ~] = grain_growth(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
+            [re_out, ~, ~] = calculate_grain_size(t_vec, dz, d, w, re_in, gdn_in, gsp_in, tcase.CF, tcase.MP);
             
             tcase.verifyTrue(all(re_out <= 1.0 + 1e-10), 'radius should be capped at 1.0mm (size 2mm) for spherical grains');
         end

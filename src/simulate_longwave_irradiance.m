@@ -1,5 +1,5 @@
 function dlw = simulate_longwave_irradiance(T_air, e_air)
-% SIMULATE_LONGWAVE_IRRADIANCE Estimates downward longwave radiation (Vectorized).
+% simulate_longwave_irradiance estimates downward longwave radiation (Vectorized).
 %
 %   dlw = simulate_longwave_irradiance(T_air, e_air)
 %

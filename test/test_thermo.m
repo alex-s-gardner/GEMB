@@ -21,7 +21,7 @@ classdef test_thermo < matlab.unittest.TestCase
     
     methods (TestClassSetup)
         function create_mocks(tcase)
-            % thermo.m depends on helper functions. To unit test thermo in isolation,
+            % calculate_temperature.m depends on helper functions. To unit test calculate_temperature in isolation,
             % we create temporary mock files for these dependencies.
             
             % 1. Mock thermal_conductivity
@@ -99,12 +99,12 @@ classdef test_thermo < matlab.unittest.TestCase
             tcase.MP.ulw_delta = 0;
             tcase.MP.emissivity_re_threshold = 10;
             
-            % thermo.m expects a string for the method
+            % calculate_temperature.m expects a string for the method
             tcase.MP.emissivity_method = "uniform"; 
             
             tcase.MP.thermal_conductivity_method = "Sturm"; % Mocked anyway
             
-            % thermo.m requires dt_divisors to determine stability
+            % calculate_temperature.m requires dt_divisors to determine stability
             tcase.MP.dt_divisors = [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60, ...
                                     120, 300, 600, 900, 1200, 1800, 3600, 86400];
         end
@@ -120,7 +120,7 @@ classdef test_thermo < matlab.unittest.TestCase
             sb = 5.67e-8;
             tcase.CF.dlw = sb * tcase.t_vec(1)^4 * tcase.MP.emissivity;
             
-            [t_out, ~, ~, ~, ~] = thermo(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
                 tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
             
             % Allow small diffusion drift
@@ -136,7 +136,7 @@ classdef test_thermo < matlab.unittest.TestCase
             sb = 5.67e-8;
             tcase.CF.dlw = sb * tcase.t_vec(1)^4 * tcase.MP.emissivity;
             
-            [t_out, ~, shf, ~, ~] = thermo(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
+            [t_out, ~, shf, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
                 tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyTrue(t_out(1) > tcase.t_vec(1), ...
@@ -161,7 +161,7 @@ classdef test_thermo < matlab.unittest.TestCase
             tcase.CF.dlw = 0;
             tcase.CF.T_air = 250;
             
-            [t_out, ~, ~, ~, ~] = thermo(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
                 tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
             
             % Top should cool down (giving heat to layer 2)
@@ -179,7 +179,7 @@ classdef test_thermo < matlab.unittest.TestCase
             tcase.swf(1) = 50;
             
             try
-                thermo(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
+                calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
                     tcase.swf, tcase.CF, tcase.MP, verbose_on);
             catch ME
                 tcase.verifyFail(['Energy conservation check failed with error: ' ME.message]);
@@ -190,20 +190,20 @@ classdef test_thermo < matlab.unittest.TestCase
             % Test bottom boundary condition (Fixed T)
             tcase.t_vec(end) = 240; % Distinct bottom temp
             
-            [t_out, ~, ~, ~, ~] = thermo(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
                 tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyEqual(t_out(end), 240, 'Bottom temperature should be fixed (Dirichlet BC)');
         end
         
         function test_timestep_subcycling(tcase)
-            % thermo.m calculates a stability limit and sub-cycles if dt is too large.
+            % calculate_temperature.m calculates a stability limit and sub-cycles if dt is too large.
             % We provide a very large dt (1 day) and ensure it finishes without instability (NaNs).
             % The mock thermo_optimal_dt returns 3600, so this will subcycle 24 times.
             
             tcase.CF.dt = 86400; % 1 day step
             
-            [t_out, ~, ~, ~, ~] = thermo(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
                 tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyFalse(any(isnan(t_out)), 'Solution should not explode (NaN) given large timestep');
