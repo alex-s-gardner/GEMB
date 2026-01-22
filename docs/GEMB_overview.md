@@ -8,7 +8,7 @@ The figure above shows all of the functions that are called by the `gemb_run` ex
 2. Use the `simulate_climate_forcing` function to initialize a `ClimateForcing` structure that contains time series of synthetic air temperature, downward shortwave and longwave radiation, air pressure, relative humidty, vapor pressure, wind speed, and precipitation. 
 3. Use the `model_initialize_column` function to create vertical columns that contain initial values of temperature, density, water content, grain properties, albedo, and column spacing. 
 
-With model parameters, climate forcing, and the initial state of the column defined, the `gemb` function calls `gemb_core` for each time step of the climate forcing. At each time step, `gemb_core` calls a series of functions that update the column grain size, albedo, shortwave radiation, temperature, accumulation, meltwater, and density. In this process, the `layer_management` function adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
+With model parameters, climate forcing, and the initial state of the column defined, the `gemb` function calls `gemb_core` for each time step of the climate forcing. At each time step, `gemb_core` calls a series of functions that update the column grain size, albedo, shortwave radiation, temperature, accumulation, meltwater, and density. In this process, the `manage_layers` function adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
 
 # Function List 
 
@@ -16,9 +16,9 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 [**`dz2z`**](dz2z_documentation.md) returns a center coordinates from GEMB column spacings. 
 
-**`gemb`** runs the GEMB model.
+[**`gemb`**](gemb_documentation.md) runs the GEMB model.
 
-**`model_initialize_column`** initializes a GEMB column based on specified model and climate forcing parameters.
+[**`model_initialize_column`**](model_initialize_column_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.
 
 **`model_initialize_parameters`** initializes and validates the model configuration options, setting default values for physics modules, grid geometry, and output controls.
 
@@ -82,7 +82,7 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 **`gemb_core`**  performs a single time-step of the GEMB model. Calculates grain growth, albedo, radiative transfer, thermodynamics, accumulation, melt, layer management, and densification.
 
-**`layer_management`** adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness.
+**`manage_layers`** adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness.
 
 **`thermal_conductivity`** computes the thermal conductivity profile for snow, firn, and ice based on density and temperature. [Currently only called by `calculate_temperature`.]
 

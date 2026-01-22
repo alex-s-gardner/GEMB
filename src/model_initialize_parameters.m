@@ -5,7 +5,8 @@ function options = model_initialize_parameters(options)
 %
 %% Syntax
 %
-% options = model_initialize_parameters(options)
+%  ModelParam = model_initialize_parameters
+%  ModelParam = model_initialize_parameters(option1=value1,...,optionN=valueN)
 %
 %% Description
 %
@@ -84,9 +85,20 @@ function options = model_initialize_parameters(options)
 %
 %    * See arguments block below for full list of valid defaults and ranges *
 %
+%% Examples
+%
+%   % All defaults: 
+%   ModelParam = model_initialize_parameters;
+%
+%   % Specify 3 spinup cycles, ice density of 920 kg/m3, and the Ligtenberg densification method: 
+%   ModelParam = model_initialize_parameters(n_spinup_cycles=3,...
+%                                                ice_density=920,...
+%                                       densification_method="Ligtenberg");
+%
+%
 %% Outputs
 %
-%  options                          : struct       Validated structure with all necessary model parameters populated.
+%  ModelParam                       : struct       Validated structure with all necessary model parameters populated.
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions

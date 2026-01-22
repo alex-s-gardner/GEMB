@@ -1,13 +1,13 @@
 function [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-    layer_management(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
-% layer_management adjusts the depth and number of vertical layers in the model
+    manage_layers(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
+% manage_layers adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
 % set for the minimum and maximum allowable layer thickness.
 %
 %% Syntax
 %
 % [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-%    layer_management(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
+%    manage_layers(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
 %
 %% Description
 %
