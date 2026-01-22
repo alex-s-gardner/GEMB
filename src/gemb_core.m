@@ -79,7 +79,7 @@ compaction_melt = (compaction_melt - sum(dz)); % Calculate wet compaction
 
 % 9. Manage the layering to match user defined requirements
 [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-    layer_management(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose);
+    manage_layers(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose);
 
 % 10. Allow non-melt densification and determine compaction [m]
 compaction_dens = sum(dz); % Track thickness before densification

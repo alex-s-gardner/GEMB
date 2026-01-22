@@ -10,20 +10,12 @@ function options = model_initialize_parameters(options)
 %
 %% Description
 %
-% This function utilizes MATLAB's argument validation framework to parse,
-% validate, and set defaults for the GEMB model parameters. It allows the user
-% to configure specific physical parameterizations and numerical settings.
+% ModelParam = model_initialize_parameters creates a ModelParam structure
+% containing 38 fields of default model parameters. 
 %
-% Key Configuration Areas:
-% 1. Initialization: Sets spin-up cycles and run identifiers.
-% 2. Densification & Mass: Selects firn compaction models, fresh snow density, 
-%    ice density, and rain/snow temperature thresholds.
-% 3. Energy Balance: Configures longwave emissivity, thermal conductivity, 
-%    surface roughness ratios, and detailed albedo/shortwave penetration schemes.
-% 4. Melt & Water: Sets irreducible water saturation for the snowpack.
-% 5. Grid Geometry: Defines the vertical discretization, including the 
-%    high-resolution surface capture zone and deep layer stretching.
-% 6. Output: Controls temporal resolution and array padding.
+% ModelParam = model_initialize_parameters(option1=value1,...,optionN=valueN)
+% creates a ModelParam structure with specified parameters set to preferred
+% values. Any unspecified parameters are set to default values. 
 %
 %% Inputs
 %
@@ -38,7 +30,7 @@ function options = model_initialize_parameters(options)
 %    .densification_coeffs_M01      : string       Coeffs for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").
 %    .new_snow_method               : string       Fresh snow density model (e.g., "350kgm2", "Fausto").
 %    .density_ice                   : double       Density of glacier ice [kg m^-3].
-%    .rain_temperature_threshold    : double       Temperature threshold [C] above which precipitation falls as rain.
+%    .rain_temperature_threshold    : double       Temperature threshold [K] above which precipitation falls as rain.
 %
 %    --- LONGWAVE EMISSIVITY & ROUGHNESS ---
 %    .emissivity_method             : string       Method: "uniform", "re_threshold", "re_w_threshold".
@@ -66,9 +58,9 @@ function options = model_initialize_parameters(options)
 %    .black_carbon_snow             : double       BC concentration in snow [ppm].
 %    .black_carbon_ice              : double       BC concentration in ice [ppm].
 %    .cloud_fraction                : double       Cloud fraction (0-1) for GreuellKonzelmann method.
-%    .albedo_wet_snow_t0            : double       Time scale [d] for wet snow (BougamontBamber).
-%    .albedo_dry_snow_t0            : double       Time scale [d] for dry snow (BougamontBamber).
-%    .albedo_K                      : double       Temperature coef. time scale [d] (BougamontBamber).
+%    .albedo_wet_snow_t0            : double       Time scale [d] for wet snow (Bougamont2005).
+%    .albedo_dry_snow_t0            : double       Time scale [d] for dry snow (Bougamont2005).
+%    .albedo_K                      : double       Temperature coef. time scale [d] (Bougamont2005).
 %
 %    --- OUTPUT CONTROLS ---
 %    .output_frequency              : string       Output resolution: "daily", "monthly", or "all".
@@ -85,6 +77,10 @@ function options = model_initialize_parameters(options)
 %
 %    * See arguments block below for full list of valid defaults and ranges *
 %
+%% Outputs
+%
+%  ModelParam                       : struct       Validated structure with all necessary model parameters populated.
+%
 %% Examples
 %
 %   % All defaults: 
@@ -95,10 +91,31 @@ function options = model_initialize_parameters(options)
 %                                                ice_density=920,...
 %                                       densification_method="Ligtenberg");
 %
+%   % Not sure what your options are? Try entering "help" as the selection: 
+%   model_initialize_parameters(densification_method="options")
+%     Error using model_initialize_parameters (line 131)
+%     model_initialize_parameters(densification_method="options")
+%                                                   ↑
+%     Invalid value for 'densification_method' argument. Value must be a member of this set:
+%         'HerronLangway'
+%         'Anthern'
+%         'Ligtenberg' 
 %
-%% Outputs
+%% Details
+% This function utilizes MATLAB's argument validation framework to parse,
+% validate, and set defaults for the GEMB model parameters. It allows the user
+% to configure specific physical parameterizations and numerical settings.
 %
-%  ModelParam                       : struct       Validated structure with all necessary model parameters populated.
+% Key Configuration Areas:
+% 1. Initialization: Sets spin-up cycles and run identifiers.
+% 2. Densification & Mass: Selects firn compaction models, fresh snow density, 
+%    ice density, and rain/snow temperature thresholds.
+% 3. Energy Balance: Configures longwave emissivity, thermal conductivity, 
+%    surface roughness ratios, and detailed albedo/shortwave penetration schemes.
+% 4. Melt & Water: Sets irreducible water saturation for the snowpack.
+% 5. Grid Geometry: Defines the vertical discretization, including the 
+%    high-resolution surface capture zone and deep layer stretching.
+% 6. Output: Controls temporal resolution and array padding.
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -141,7 +158,7 @@ arguments
     % ------------------------- Greenland ------------------------
     %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0, firn & bare ice
     %   "Gre_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
-    %   "Gre_RACMO_GB_SW1"   : ismember(albedo_method,["GreuellKonzelmann","BougamontBamber"]) && sw_absorption_method>0
+    %   "Gre_RACMO_GB_SW1"   : ismember(albedo_method,["GreuellKonzelmann","Bougamont2005"]) && sw_absorption_method>0
     %   "Gre_KuipersMunneke" : Kuipers Munneke and others (2015) [semi-empirical], Greenland
     options.densification_coeffs_M01 (1,1) string {mustBeMember(options.densification_coeffs_M01, ...
         ["Ant_ERA5_GS_SW0", "Ant_ERA5v4_Paolo23", "Ant_ERA5_BF_SW1", "Ant_RACMO_GS_SW0", ...
@@ -160,8 +177,8 @@ arguments
     % density of glacier ice
     options.density_ice (1,1) double {mustBeInRange(options.density_ice, 800, 950)} = 910; % density of ice [kg m-3]
 
-    % temperature threshold [C] above which precipitation is rain 
-    options.rain_temperature_threshold (1,1) double {mustBeInRange(options.rain_temperature_threshold, -3, 3)} = 0;
+    % temperature threshold [K] above which precipitation is rain 
+    options.rain_temperature_threshold (1,1) double {mustBeInRange(options.rain_temperature_threshold, 270.15, 276.15)} = 273.15;
 
     %% LONGWAVE EMISSIVITY
     % Select method for calculating emissivity (default is "uniform")
@@ -207,9 +224,9 @@ arguments
     %   1-"GardnerSharp"     : effective grain radius (Gardner & Sharp, 2009)
     %   2-"BruneLeFebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with sw_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
     %   3-"GreuellKonzelmann": density and cloud amount (Greuell & Konzelmann, 1994)
-    %   4-"BougamontBamber"  : exponential time decay & wetness (Bougamont & Bamber, 2005)
+    %   4-"Bougamont2005"    : exponential time decay & wetness (Bougamont et al., 2005)
     options.albedo_method (1,1) string {mustBeMember(options.albedo_method, ...
-        ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"])} = "GardnerSharp";
+        ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "Bougamont2005"])} = "GardnerSharp";
     
     % Apply albedo_method method to all areas with densities below this value, or else apply direct input value from albedo_fixed, allowing albedo to be altered.
     % Default value is Inf.
@@ -237,7 +254,7 @@ arguments
     % -> only used for met station data and Greuell & Konzelmann, 1994 albedo
     options.cloud_fraction (1,1) double {mustBeInRange(options.cloud_fraction, 0, 1)} = 0.1; % average cloud amount
     
-    % ------------------------------- "BougamontBamber" --------------------------------
+    % ------------------------------- "Bougamont2005" --------------------------------
     % additional tuning parameters albedo as a funtion of age and water content
     % (Bougamont et al., 2005)
     options.albedo_wet_snow_t0 (1,1) double {mustBeInRange(options.albedo_wet_snow_t0, 5, 25)}  = 15; % time scale for wet snow (15-21.9) [d]

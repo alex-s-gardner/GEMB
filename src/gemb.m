@@ -79,7 +79,7 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 % Run a basic example: 
 %   
 %   % Initialize model parameters:
-%   ModelParam = model_initialize_parameters();
+%   ModelParam = model_initialize_parameters;
 %   
 %   ModelParam.output_frequency = "monthly"; 
 %   
@@ -121,6 +121,8 @@ arguments
     display_options.verbose         (1,1) logical = false
     display_options.display_waitbar (1,1) logical = true
 end
+
+assert(ModelParam.rain_temperature_threshold>=270.15 & ModelParam.rain_temperature_threshold<=276.15,'ModelParam.rain_temperature_threshold should be within three degrees of 273.15. Ensure you are using kelvin.')
 
 verbose = display_options.verbose;
 
@@ -412,14 +414,14 @@ function ClimateForcingStep = model_inputs_single_timestep(index, dt, ClimateFor
     
     
     % Location specifc parameters
-    ClimateForcingStep.Vz = ClimateForcing.Vz;
-    ClimateForcingStep.Tz = ClimateForcing.Tz;
+    ClimateForcingStep.Vz         = ClimateForcing.Vz;
+    ClimateForcingStep.Tz         = ClimateForcing.Tz;
     ClimateForcingStep.T_air_mean = ClimateForcing.T_air_mean;
-    ClimateForcingStep.V_mean = ClimateForcing.V_mean;
-    ClimateForcingStep.P_mean = ClimateForcing.P_mean;
-    ClimateForcingStep.elev = ClimateForcing.elev;
-    ClimateForcingStep.lat = ClimateForcing.lat;
-    ClimateForcingStep.lon = ClimateForcing.lon;
+    ClimateForcingStep.V_mean     = ClimateForcing.V_mean;
+    ClimateForcingStep.P_mean     = ClimateForcing.P_mean;
+    ClimateForcingStep.elev       = ClimateForcing.elev;
+    ClimateForcingStep.lat        = ClimateForcing.lat;
+    ClimateForcingStep.lon        = ClimateForcing.lon;
     
     % if we are provided with cc and cot values, extract for the timestep
     if numel(ModelParam.black_carbon_snow)>1

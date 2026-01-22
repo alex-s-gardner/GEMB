@@ -81,7 +81,7 @@ switch densification_coeffs_M01
     case "Gre_RACMO_GS_SW0"
         M01 = [1.2691, 0.1184, 1.9983, 0.2511];
 
-    %  ismember(albedo_method,["GreuellKonzelmann","BougamontBamber"]) && sw_absorption_method>0
+    %  ismember(albedo_method,["GreuellKonzelmann","Bougamont2005"]) && sw_absorption_method>0
     case "Gre_RACMO_GB_SW1"
         M01 = [1.7834, 0.1409, 1.9260, 0.1527];
    

@@ -56,6 +56,12 @@ function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC
 %
 %  a_diffuse  = surface albedo for diffuse radiation
 %
+%% References
+%
+% Bougamont, Marion, Jonathan L. Bamber, and Wouter Greuell. "A surface
+% mass balance model for the Greenland Ice Sheet." Journal of Geophysical 
+% Research: Earth Surface 110.F4 (2005). https://doi.org/10.1029/2005JF000348
+%
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
@@ -115,7 +121,7 @@ else
                 / (density_fresh_snow - ModelParam.density_ice) + ...
                 (0.05 * (ClimateForcingStep.cloud_fraction - 0.5));
 
-        case "BougamontBamber" % exponential time decay & wetness
+        case "Bougamont2005" % exponential time decay & wetness
 
             % change in albedo with time:
             %   (d_a) = (a - a_old)/(t0)
