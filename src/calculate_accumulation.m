@@ -83,7 +83,7 @@ if ClimateForcingStep.P > (0 + P_tolerance)
     % Determine initial mass
 
     % if snow
-    if ClimateForcingStep.T_air <= (ModelParam.rain_temperature_threshold + CtoK + T_tolerance)
+    if ClimateForcingStep.T_air <= (ModelParam.rain_temperature_threshold + T_tolerance)
         z_snow = ClimateForcingStep.P / density_new_snow;         % depth of snow
         dfall  = gdn_new_snow;
         sfall  = gsp_new_snow;

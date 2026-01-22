@@ -57,7 +57,7 @@
 %
 % 3. Energy Balance & Optical Properties:
 %    - Albedo schemes: "GardnerSharp", "GreuellKonzelmann", "BruneLeFebre",
-%      or "BougamontBamber".
+%      or "Bougamont2005".
 %    - Solar Penetration: sw_absorption_method toggles between surface-only (0)
 %      or subsurface extinction (1).
 %    - Thermal Conductivity: Options for "Sturm" or "Calonne" parameterizations.

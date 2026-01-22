@@ -103,7 +103,6 @@ V0 = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
 V0(V0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
 V0(V0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
 
-
 % precipitation [kg m⁻²]
 varname = "P";
 P0 = simulate_precipitation(dec_year, coeffs.(varname));
@@ -120,13 +119,13 @@ ClimateForcing.V0 = V0;
 ClimateForcing.P0 = P0;
 
 % Location specifc parameters
-ClimateForcing.Vz = location_parameters.Vz;
-ClimateForcing.Tz = location_parameters.Tz;
+ClimateForcing.Vz         = location_parameters.Vz;
+ClimateForcing.Tz         = location_parameters.Tz;
 ClimateForcing.T_air_mean = location_parameters.T_air_mean;
-ClimateForcing.V_mean = mean(ClimateForcing.V0);
-ClimateForcing.P_mean = location_parameters.P_mean;
-ClimateForcing.elev = location_parameters.elev;
-ClimateForcing.lat = location_parameters.lat;
-ClimateForcing.lon = location_parameters.lon;
+ClimateForcing.V_mean     = mean(ClimateForcing.V0);
+ClimateForcing.P_mean     = location_parameters.P_mean;
+ClimateForcing.elev       = location_parameters.elev;
+ClimateForcing.lat        = location_parameters.lat;
+ClimateForcing.lon        = location_parameters.lon;
 
 end

@@ -48,7 +48,7 @@ classdef test_albedo < matlab.unittest.TestCase
             tcase.MP.albedo_snow = 0.85;
             tcase.MP.albedo_ice = 0.48;
             
-            % BougamontBamber specific params
+            % Bougamont2005 specific params
             tcase.MP.albedo_wet_snow_t0 = 15;
             tcase.MP.albedo_dry_snow_t0 = 30;
             tcase.MP.albedo_K = 7;
@@ -142,8 +142,8 @@ classdef test_albedo < matlab.unittest.TestCase
         end
         
         function test_bougamont_bamber_decay(tcase)
-            % Test: BougamontBamber time decay
-            tcase.MP.albedo_method = "BougamontBamber";
+            % Test: Bougamont2005 time decay
+            tcase.MP.albedo_method = "Bougamont2005";
             
             % Cold snow (T < -10C), Dry (W=0)
             tcase.T(1) = 250; % -23 C
@@ -163,12 +163,12 @@ classdef test_albedo < matlab.unittest.TestCase
             da = (tcase.a_in(1) - tcase.MP.albedo_ice) / t0 * 1; % dt=1 day
             expected = tcase.a_in(1) - da;
             
-            tcase.verifyEqual(a_out(1), expected, 'AbsTol', 1e-5, 'BougamontBamber decay incorrect');
+            tcase.verifyEqual(a_out(1), expected, 'AbsTol', 1e-5, 'Bougamont2005 decay incorrect');
         end
         
         function test_bougamont_bamber_snowfall(tcase)
-            % Test: BougamontBamber albedo reset due to snowfall (via Condensation logic in albedo.m)
-            tcase.MP.albedo_method = "BougamontBamber";
+            % Test: Bougamont2005 albedo reset due to snowfall (via Condensation logic in albedo.m)
+            tcase.MP.albedo_method = "Bougamont2005";
             tcase.a_in(1) = 0.6; % Old snow
             tcase.EC = 5; % Significant condensation/deposition
             tcase.T(1) = 260; % Cold enough for solid deposition

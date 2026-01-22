@@ -20,7 +20,7 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 [**`model_initialize_column`**](model_initialize_column_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.
 
-**`model_initialize_parameters`** initializes and validates the model configuration options, setting default values for physics modules, grid geometry, and output controls.
+**[`model_initialize_parameters`](model_initialize_parameters_documentation.md)** initializes and validates the model configuration options, setting default values for physics modules, grid geometry, and output controls.
 
 ### Climate simulation and fitting functions:
 
@@ -87,6 +87,9 @@ With model parameters, climate forcing, and the initial state of the column defi
 **`thermal_conductivity`** computes the thermal conductivity profile for snow, firn, and ice based on density and temperature. [Currently only called by `calculate_temperature`.]
 
 **`turbulent_heat_flux`** computes sensible and latent heat fluxes using Monin-Obukhov similarity theory [Currently only called by `calculate_temperature`.]
+
+# List of variables 
+For a complete list of variables and descriptions, see [GEMB variables](GEMB_variables.md)
 
 # Author Information
 The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
