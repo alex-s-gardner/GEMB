@@ -110,7 +110,7 @@ ModelParam =
                    albedo_wet_snow_t0: 15
                    albedo_dry_snow_t0: 30
                              albedo_K: 7
-                     output_frequency: "monthly"
+                     output_frequency: "all"
                        output_padding: 1000
                           column_ztop: 10
                          column_dztop: 0.0500

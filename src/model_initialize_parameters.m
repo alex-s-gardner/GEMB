@@ -267,7 +267,7 @@ arguments
     %   - "daily"
     %   - "all"
     options.output_frequency (1,1) string {mustBeMember(options.output_frequency, ...
-        ["all", "monthly", "daily"])} = 'monthly';
+        ["all", "monthly", "daily"])} = 'all';
 
     % number of additional vertical levels in output initialization to accommodate changing grid size
     options.output_padding  (1,1) double {mustBeInteger, mustBeInRange(options.output_padding, 0, 10000)} = 1000;   
