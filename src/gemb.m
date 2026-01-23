@@ -78,14 +78,12 @@ function OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing,
 %% Example
 % Run a basic example: 
 %   
-%   % Initialize model parameters:
-%   ModelParam = model_initialize_parameters;
-%   
-%   ModelParam.output_frequency = "monthly"; 
-%   
 %   % Generate sample data: 
 %   time_step_hours = 3;
 %   ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
+%   
+%   % Initialize model parameters:
+%   ModelParam = model_initialize_parameters(output_frequency="daily");
 %   
 %   % Initialize grid:
 %   [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
@@ -330,7 +328,9 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
         case "daily"
             output_index = (date_vector(1:end-1,3) - date_vector(2:end,3)) ~= 0;
         case "all"
-            output_index = true(length(date_vector)-1);
+            output_index = true(numel(ClimateForcing.daten),1);
+        otherwise
+            error('ModelParam.output_frequency can only be "monthly", "daily", or "all".')
     end
     
     % single level time series
@@ -341,12 +341,12 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     n = sum(output_index);
     
     % Set single level time series to NaNs:
-    OutData.time = ClimateForcing.daten(output_index)';
-    
     for v = 1:length(varname.monolevel)
         OutData.(varname.monolevel{v}) = nan(1,n);
     end
     
+    OutData.time = ClimateForcing.daten(output_index)';
+
     % Time averages/totals:
     I = find(output_index);                      % save index
     for i = 1:n
