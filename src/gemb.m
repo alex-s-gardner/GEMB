@@ -308,7 +308,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     %  OutData        : struct       Structure for storing time-series outputs, initialized with NaNs.
     %                                Contains fields for monolevel (e.g., 'M', 'R') and profile (e.g., 'T', 'd') variables.
     %  OutCum         : struct       Structure for tracking cumulative values between outputs.
-    %                                Initialized to zero for fields like 'M_added', 'sw_net', 'Q_net'.
+    %                                Initialized to zero for fields like 'M_added', 'sw_net'.
     %
     %% Author Information
     % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -335,7 +335,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     
     % single level time series
     varname.monolevel = {'time', 'M', 'R', 'F', 'EC', 'sw_net', ...
-        'lw_net', 'shf', 'lhf', 'a1', 'Q_net', 're1', 'd1', 'm', ...
+        'lw_net', 'shf', 'lhf', 'a1', 're1', 'd1', 'm', ...
         'compaction_dens', 'compaction_melt', 'ps'};
     
     n = sum(output_index);
