@@ -32,7 +32,7 @@ jobs:
           source-folder: src
           
           # Looks for tests recursively inside the 'tests' folder
-          select-by-folder: tests
+          select-by-folder: test
           
           # Optional: Stop strictly on the first failure (saves time)
           strict: true
