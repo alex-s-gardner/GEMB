@@ -64,11 +64,12 @@ classdef test_accumulation < matlab.unittest.TestCase
             MP.density_ice = tcase.rho_ice;
             MP.albedo_snow = tcase.alb_snow;
             MP.albedo_method = tcase.alb_method;
+            MP.rain_temperature_threshold = 273.15 ;
             
             [t_out, dz_out, d_out, ~, ~, ~, ~, ~, ~, ra_out] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             
             tcase.verifyEqual(dz_out, tcase.dz);
             tcase.verifyEqual(d_out, tcase.d);
@@ -93,11 +94,12 @@ classdef test_accumulation < matlab.unittest.TestCase
             MP.density_ice = tcase.rho_ice;
             MP.albedo_snow = tcase.alb_snow;
             MP.albedo_method = tcase.alb_method;
+            MP.rain_temperature_threshold = 273.15 ;
             
             [t_out, dz_out, d_out, ~, ~, gdn_out, gsp_out, a_out, ~, ~] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             
             % Check vector growth
             tcase.verifyEqual(length(dz_out), tcase.n + 1, 'Large snow should add a layer');
@@ -131,13 +133,14 @@ classdef test_accumulation < matlab.unittest.TestCase
             MP.density_ice = tcase.rho_ice;
             MP.albedo_snow = tcase.alb_snow;
             MP.albedo_method = tcase.alb_method;
+            MP.rain_temperature_threshold = 273.15 ;
             
             old_mass = tcase.d(1) * tcase.dz(1);
             
             [t_out, dz_out, d_out, ~, ~, ~, ~, a_out, ~, ~] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             
             % Verify no new layer
             tcase.verifyEqual(length(dz_out), tcase.n, 'Small snow should merge');
@@ -175,6 +178,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             MP.density_ice = tcase.rho_ice;
             MP.albedo_snow = tcase.alb_snow;
             MP.albedo_method = tcase.alb_method;
+            MP.rain_temperature_threshold = 273.15;
             
             % Constants from function
             lf = 0.3345e6;
@@ -185,7 +189,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             [t_out, dz_out, d_out, ~, ~, ~, ~, ~, ~, ra_out] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             
             % Rain Output flag
             tcase.verifyEqual(ra_out, CF.P);
@@ -221,6 +225,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             MP.density_ice = tcase.rho_ice;
             MP.albedo_snow = tcase.alb_snow;
             MP.albedo_method = tcase.alb_method;
+            MP.rain_temperature_threshold = 273.15 ;
             
             % Start with density near ice
             tcase.d(1) = 900; 
@@ -232,7 +237,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             [~, dz_out, d_out, ~, ~, ~, ~, ~, ~, ~] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             
             tcase.verifyEqual(d_out(1), tcase.rho_ice, 'AbsTol', 1e-10, 'Density should be capped at ice density');
             
@@ -256,13 +261,14 @@ classdef test_accumulation < matlab.unittest.TestCase
             MP.density_ice = tcase.rho_ice;
             MP.albedo_snow = tcase.alb_snow;
             MP.albedo_method = tcase.alb_method;
+            MP.rain_temperature_threshold = 273.15 ;
             
             % Method 1: Antarctica (350) -> "350kgm2"
             MP.new_snow_method = "350kgm2";
             [~, ~, d1, ~, ~, ~, ~, ~, ~, ~] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             tcase.verifyEqual(d1(1), 350, 'Method "350kgm2" should be 350');
             
             % Method 2: Greenland -> "Fausto"
@@ -270,7 +276,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             [~, ~, d2, ~, ~, ~, ~, ~, ~, ~] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             tcase.verifyEqual(d2(1), 315, 'Method "Fausto" should be 315');
             
             % Method 3: Kaspers -> "Kaspers"
@@ -280,7 +286,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             [~, ~, d3, ~, ~, ~, ~, ~, ~, ~] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             tcase.verifyEqual(d3(1), expected_3, 'AbsTol', 1e-5, 'Method "Kaspers" calculation incorrect');
             
             % Method 4: Kuipers Munneke -> "KuipersMunneke"
@@ -290,7 +296,7 @@ classdef test_accumulation < matlab.unittest.TestCase
             [~, ~, d4, ~, ~, ~, ~, ~, ~, ~] = calculate_accumulation(...
                 tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
                 tcase.gdn, tcase.gsp, tcase.a_in, tcase.a_diff_in, ...
-                CF, MP);
+                CF, MP, false);
             tcase.verifyEqual(d4(1), expected_4, 'AbsTol', 1e-5, 'Method "KuipersMunneke" calculation incorrect');
         end
     end

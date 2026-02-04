@@ -98,6 +98,8 @@ classdef test_thermo < matlab.unittest.TestCase
             tcase.MP.emissivity_re_large = 0.98; % Default fallback
             tcase.MP.ulw_delta = 0;
             tcase.MP.emissivity_re_threshold = 10;
+
+            tcase.MP.surface_roughness_effective_ratio = 0.1; 
             
             % calculate_temperature.m expects a string for the method
             tcase.MP.emissivity_method = "uniform"; 
