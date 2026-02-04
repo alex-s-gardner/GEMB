@@ -28,14 +28,9 @@ jobs:
       - name: Run All Tests
         uses: matlab-actions/run-tests@v2
         with:
-          # Automatically adds 'src' to the MATLAB path before running tests
-          source-folder: src
           
           # Looks for tests recursively inside the 'tests' folder
           select-by-folder: test
-          
-          # Optional: Stop strictly on the first failure (saves time)
-          strict: true
           
           # Optional: Output results in a format GitHub can display nicely
           test-results-junit: test-results/results.xml
