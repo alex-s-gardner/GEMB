@@ -4,8 +4,8 @@ function ClimateForcing = simulate_climate_forcing(set_id, time_step_hours)
 %
 %% Syntax
 %
-% ClimateForcing = simulate_climate_forcing(set_id)
-% ClimateForcing = simulate_climate_forcing(set_id, time_step_hours)
+%  ClimateForcing = simulate_climate_forcing(set_id)
+%  ClimateForcing = simulate_climate_forcing(set_id, time_step_hours)
 %
 %% Description
 %
@@ -27,21 +27,23 @@ function ClimateForcing = simulate_climate_forcing(set_id, time_step_hours)
 %
 %% Inputs
 %
-%  set_id              : integer      Identifier for the simulation parameter set to use (defined in simulation_parameter_sets.m).
+%  set_id                : integer      Identifier for the simulation parameter set to use (defined in simulation_parameter_sets.m).
 %
 %% Outputs
 %
-%  ClimateForcing      : struct       Structure containing generated climate data:
-%    .daten            : datenum      Time vector.
-%    .dsw0             : W m^-2       Downward shortwave radiation.
-%    .dlw0             : W m^-2       Downward longwave radiation.
-%    .T_air0           : K            Air temperature.
-%    .p_air0           : Pa           Air pressure.
-%    .rh0              : %            Relative humidity.
-%    .e_air0           : Pa           Vapor pressure.
-%    .V0               : m s^-1       Wind speed.
-%    .P0               : kg m^-2      Precipitation.
-%    .lat, .lon, .elev : double       Location metadata (latitude, longitude, elevation).
+%  ClimateForcing        : struct       Structure containing generated climate data:
+%    .dates              : datenum      Time vector.
+%    .shortwave_downward : W m^-2       Downward shortwave radiation.
+%    .longwave_downward  : W m^-2       Downward longwave radiation.
+%    .temperature_air    : K            Air temperature.
+%    .pressure_air       : Pa           Air pressure.
+%    .relative_humidity  : %            Relative humidity.
+%    .vapor_pressure     : Pa           Vapor pressure.
+%    .wind_speed         : m s^-1       Wind speed.
+%    .precipitation      : kg m^-2      Precipitation.
+%    .latitude           : degrees      Decimal degrees
+%    .longitude          : degrees      Decimal degrees
+%    .elevation          : meters              
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -63,69 +65,69 @@ end
 % initialize times and random seed
 dec_year = location_parameters.start_date:time_step:location_parameters.end_date+1;
 dec_year = dec_year(:);
-daten = decyear2datenum(dec_year);
-%% 
+dates = decyear2datenum(dec_year);
+
 rng(location_parameters.rand_seed);
 
 % simulate downward shortave radiation
-dsw0 = simulate_shortwave_irradiance(dec_year, location_parameters.lat);
+shortwave_downward  = simulate_shortwave_irradiance(dec_year, location_parameters.latitude);
 
 % simulate downward longwave radiation
-T_air0 = simulate_air_temperature(dec_year, location_parameters.lat, location_parameters.elev, ...
-    mean_offset = coeffs.T_air.mean_offset,...
-    lat_scale=coeffs.T_air.lat_scale ,...
-    daily_amp_scale=coeffs.T_air.daily_amp_scale,...
-    weather_sigma_scale=coeffs.T_air.weather_sigma_scale,...
-    weather_corr=coeffs.T_air.weather_corr);
+temperature_air     = simulate_air_temperature(dec_year, location_parameters.latitude, location_parameters.elevation, ...
+mean_offset         = coeffs.temperature_air.mean_offset,...
+lat_scale           = coeffs.temperature_air.lat_scale ,...
+daily_amp_scale     = coeffs.temperature_air.daily_amp_scale,...
+weather_sigma_scale = coeffs.temperature_air.weather_sigma_scale,...
+weather_corr        = coeffs.temperature_air.weather_corr);
 
 % screen level air temperature [K]
-p_air0 = simulate_air_pressure(dec_year, T_air0, location_parameters.lat, location_parameters.elev);
+pressure_air = simulate_air_pressure(dec_year, temperature_air, location_parameters.latitude, location_parameters.elevation);
 
 % screen level relative humidity [%]
-varname = "rh";
-rh0 = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
-rh0(rh0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
-rh0(rh0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
+varname = "relative_humidity";
+relative_humidity = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
+relative_humidity(relative_humidity<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
+relative_humidity(relative_humidity>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
 
 % screen level vapor pressure [Pa]
-e_air0 = simulate_vapor_pressure(T_air0, rh0);
+vapor_pressure = relative_humidity_to_vapor_pressure(temperature_air, relative_humidity);
 
 % downward logwave radiation [W m⁻²]
-varname = "dlw";
-dlw0 = simulate_longwave_irradiance(T_air0, e_air0);
-dlw0 = dlw0  + simulate_longwave_irradiance_delta(dec_year, coeffs.(varname));
-dlw0(dlw0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
-dlw0(dlw0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
+varname = "longwave_downward";
+longwave_downward = simulate_longwave_irradiance(temperature_air, vapor_pressure);
+longwave_downward = longwave_downward  + simulate_longwave_irradiance_delta(dec_year, coeffs.(varname));
+longwave_downward(longwave_downward<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
+longwave_downward(longwave_downward>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
 
 % screen level wind speed [m s⁻¹]
-varname = "V";
-V0 = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
-V0(V0<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
-V0(V0>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
+varname = "wind_speed";
+wind_speed = simulate_seasonal_daily_noise(dec_year, coeffs.(varname));
+wind_speed(wind_speed<coeffs.(varname).min_max(1)) = coeffs.(varname).min_max(1);
+wind_speed(wind_speed>coeffs.(varname).min_max(2)) = coeffs.(varname).min_max(2);
 
 % precipitation [kg m⁻²]
-varname = "P";
-P0 = simulate_precipitation(dec_year, coeffs.(varname));
+varname       = "precipitation";
+precipitation = simulate_precipitation(dec_year, coeffs.(varname));
 
 % populate structure
-ClimateForcing.daten = daten;
-ClimateForcing.dsw0 = dsw0;
-ClimateForcing.T_air0 = T_air0;
-ClimateForcing.p_air0 = p_air0;
-ClimateForcing.rh0 = rh0;
-ClimateForcing.e_air0 = e_air0;
-ClimateForcing.dlw0 = dlw0;
-ClimateForcing.V0 = V0;
-ClimateForcing.P0 = P0;
+ClimateForcing.dates              = dates;
+ClimateForcing.shortwave_downward = shortwave_downward;
+ClimateForcing.temperature_air    = temperature_air;
+ClimateForcing.pressure_air       = pressure_air;
+ClimateForcing.relative_humidity  = relative_humidity;
+ClimateForcing.vapor_pressure     = vapor_pressure;
+ClimateForcing.longwave_downward  = longwave_downward;
+ClimateForcing.wind_speed         = wind_speed;
+ClimateForcing.precipitation      = precipitation;
 
 % Location specifc parameters
-ClimateForcing.Vz         = location_parameters.Vz;
-ClimateForcing.Tz         = location_parameters.Tz;
-ClimateForcing.T_air_mean = location_parameters.T_air_mean;
-ClimateForcing.V_mean     = mean(ClimateForcing.V0);
-ClimateForcing.P_mean     = location_parameters.P_mean;
-ClimateForcing.elev       = location_parameters.elev;
-ClimateForcing.lat        = location_parameters.lat;
-ClimateForcing.lon        = location_parameters.lon;
+ClimateForcing.wind_observation_height        = location_parameters.wind_observation_height;
+ClimateForcing.temperature_observation_height = location_parameters.temperature_observation_height;
+ClimateForcing.temperature_air_mean           = location_parameters.temperature_air_mean;
+ClimateForcing.wind_speed_mean                = mean(ClimateForcing.wind_speed);
+ClimateForcing.precipitation_mean             = location_parameters.precipitation_mean;
+ClimateForcing.elevation                      = location_parameters.elevation;
+ClimateForcing.latitude                       = location_parameters.latitude;
+ClimateForcing.longitude                      = location_parameters.longitude;
 
 end

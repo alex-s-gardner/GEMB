@@ -40,7 +40,7 @@ year_part = floor(decyear);
 
 % 2. Calculate the start of the current year and the start of the next year
 % This automatically accounts for leap years.
-start_of_year = datenum(year_part, 1, 1);
+start_of_year      = datenum(year_part, 1, 1);
 start_of_next_year = datenum(year_part + 1, 1, 1);
 
 % 3. Determine the total number of days in this specific year

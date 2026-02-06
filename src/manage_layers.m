@@ -1,13 +1,13 @@
-function [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-    manage_layers(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
+function [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, mass_added, E_added] = ...
+    manage_layers(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ModelParam, verbose)
 % manage_layers adjusts the depth and number of vertical layers in the model
 % to ensure that the thickness of any single layer does not exceed thresholds
 % set for the minimum and maximum allowable layer thickness.
 %
 %% Syntax
 %
-% [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
-%    manage_layers(T, dz, d, water, re, gdn, gsp, a, a_diffuse, ModelParam, verbose)
+% [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, mass_added, E_added] = ...
+%    manage_layers(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ModelParam, verbose)
 %
 %% Description
 %
@@ -26,43 +26,43 @@ function [T, dz, d, water, re, gdn, gsp, a, a_diffuse, M_added, E_added] = ...
 %    bottom boundary as necessary and enforces the Dirichlet temperature 
 %    boundary condition.
 %
-% The function tracks any mass (M_added) or energy (E_added) introduced or 
+% The function tracks any mass (mass_added) or energy (E_added) introduced or 
 % removed during the bottom boundary adjustment to ensure closure of the 
 % mass and energy balance budgets.
 %
 %% Inputs
 %
-%  T                       : K            Grid cell temperature.
-%  dz                      : m            Grid cell thickness.
-%  d                       : kg m^-3      Grid cell density.
-%  water                   : kg m^-2      Water content.
-%  re                      : mm           Grain size (effective radius).
-%  gdn                     : unitless     Grain dendricity.
-%  gsp                     : unitless     Grain sphericity.
-%  a                       : fraction     Albedo.
-%  a_diffuse               : fraction     Diffuse albedo.
-%  ModelParam              : struct       Structure containing model parameters:
-%    .column_dzmin         : m            Minimum allowable grid spacing.
-%    .column_dzmax         : m            Maximum allowable grid spacing.
-%    .column_zmax          : m            Maximum depth of the total column.
-%    .column_zmin          : m            Minimum depth of the total column.
-%    .column_ztop          : m            Thickness of the upper portion of the grid with constant spacing.
-%    .column_zy            : unitless     Grid stretching parameter for the lower portion.
-%  verbose                 : logical      Flag to enable mass/energy conservation checks.
+%  temperature          : K            Grid cell temperature.
+%  dz                   : m            Grid cell thickness.
+%  density              : kg m^-3      Grid cell density.
+%  water                : kg m^-2      Water content.
+%  grain_radius         : mm           Grain size (effective radius).
+%  grain_dendricity     : unitless     Grain dendricity.
+%  grain_sphericity     : unitless     Grain sphericity.
+%  albedo               : fraction     Albedo.
+%  albedo_diffuse       : fraction     Diffuse albedo.
+%  ModelParam           : struct       Structure containing model parameters:
+%    .column_dzmin      : m            Minimum allowable grid spacing.
+%    .column_dzmax      : m            Maximum allowable grid spacing.
+%    .column_zmax       : m            Maximum depth of the total column.
+%    .column_zmin       : m            Minimum depth of the total column.
+%    .column_ztop       : m            Thickness of the upper portion of the grid with constant spacing.
+%    .column_zy         : unitless     Grid stretching parameter for the lower portion.
+%  verbose              : logical      Flag to enable mass/energy conservation checks.
 %
 %% Outputs
 %
-%  T            : K            Updated grid cell temperature.
-%  dz           : m            Updated grid cell thickness.
-%  d            : kg m^-3      Updated grid cell density.
-%  water        : kg m^-2      Updated water content.
-%  re           : mm           Updated grain size.
-%  gdn          : unitless     Updated grain dendricity.
-%  gsp          : unitless     Updated grain sphericity.
-%  a            : fraction     Updated albedo.
-%  a_diffuse    : fraction     Updated diffuse albedo.
-%  M_added      : kg m^-2      Mass added to (positive) or removed from (negative) the column bottom.
-%  E_added      : J m^-2       Energy added to (positive) or removed from (negative) the column bottom.
+%  temperature      : K            Updated grid cell temperature.
+%  dz               : m            Updated grid cell thickness.
+%  density          : kg m^-3      Updated grid cell density.
+%  water            : kg m^-2      Updated water content.
+%  grain_radius     : mm           Updated grain size.
+%  grain_dendricity : unitless     Updated grain dendricity.
+%  grain_sphericity : unitless     Updated grain sphericity.
+%  albedo           : fraction     Updated albedo.
+%  albedo_diffuse   : fraction     Updated diffuse albedo.
+%  mass_added       : kg m^-2      Mass added to (positive) or removed from (negative) the column bottom.
+%  E_added          : J m^-2       Energy added to (positive) or removed from (negative) the column bottom.
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -77,18 +77,18 @@ d_tolerance  = 1e-11; % tolerance for numerical comparison.
 
 % Specify constants:
 CtoK = 273.15;   % Celsius to Kelvin conversion
-CI   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
+C_ice   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
 LF   = 0.3345E6; % latent heat of fusion (J kg-1)
 
 % store initial mass [kg] and energy [J]
-M        = dz .* d;                       % grid cell mass [kg]
+M               = dz .* density;          % grid cell mass [kg]
 M_total_initial = sum(water) + sum(M);    % total mass [kg]
-E_total_initial = sum(M .* T * CI) + ...
-    sum(water .* (LF + CtoK * CI));       % total energy [J] = initial enegy of snow/ice + initial enegy of water
+E_total_initial = sum(M .* temperature * C_ice) + ...
+    sum(water .* (LF + CtoK * C_ice));    % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
 
-T_bottom = T(end);
-m        = length(T);
+T_bottom = temperature(end);
+m        = length(temperature);
 
 z_cumulative = cumsum(dz);
 
@@ -130,38 +130,38 @@ for i=1:m
 
         % Move the quantities to the target location. Quantities are
         % calculated as linearly weighted functions of mass:
-        m_new               = M(i) + M(i_target);
-        T(i_target)         = (T(i)         * M(i) + T(i_target)         * M(i_target)) / m_new;
-        a(i_target)         = (a(i)         * M(i) + a(i_target)         * M(i_target)) / m_new;
-        a_diffuse(i_target) = (a_diffuse(i) * M(i) + a_diffuse(i_target) * M(i_target)) / m_new;
+        m_new                    = M(i) + M(i_target);
+        temperature(i_target)    = (temperature(i)    * M(i) +    temperature(i_target) * M(i_target)) / m_new;
+        albedo(i_target)         = (albedo(i)         * M(i) +         albedo(i_target) * M(i_target)) / m_new;
+        albedo_diffuse(i_target) = (albedo_diffuse(i) * M(i) + albedo_diffuse(i_target) * M(i_target)) / m_new;
 
         % Use grain properties from lower cell:
-        re(i_target)  = re(i);
-        gdn(i_target) = gdn(i);
-        gsp(i_target) = gsp(i);
+        grain_radius(i_target)       = grain_radius(i);
+        grain_dendricity(i_target) = grain_dendricity(i);
+        grain_sphericity(i_target) = grain_sphericity(i);
 
         % Merge with underlying grid cell and delete old cell:
-        dz(i_target)     = dz(i) + dz(i_target);         % combine cell depths
-        d(i_target)      = m_new / dz(i_target);         % combine top densities
-        water(i_target)  = water(i) + water(i_target);   % combine liquid water
-        M(i_target)      = m_new;                        % combine top masses
+        dz(i_target)      = dz(i) + dz(i_target);         % combine cell depths
+        density(i_target) = m_new / dz(i_target);         % combine top densities
+        water(i_target)   = water(i) + water(i_target);   % combine liquid water
+        M(i_target)       = m_new;                        % combine top masses
     end
 end
 
 % Delete combined cells:
 water(delete_cell)             = [];
 dz(delete_cell)                = [];
-d(delete_cell)                 = [];
-T(delete_cell)                 = [];
-a(delete_cell)                 = [];
-re(delete_cell)                = [];
-gdn(delete_cell)               = [];
-gsp(delete_cell)               = [];
-a_diffuse(delete_cell)         = [];
+density(delete_cell)           = [];
+temperature(delete_cell)       = [];
+albedo(delete_cell)            = [];
+grain_radius(delete_cell)      = [];
+grain_dendricity(delete_cell)  = [];
+grain_sphericity(delete_cell)  = [];
+albedo_diffuse(delete_cell)    = [];
 column_dzmax2(delete_cell)     = [];
 
 % Calculate *new* length of cells:
-m = length(T);
+m = length(temperature);
 
 %% Split cells
 % * An early implementation of this code used a loop which is included in comments at the bottom of this function for posterity.
@@ -177,15 +177,15 @@ water(f) = water(f) /2;
 fs = sort([(1:m)';f]);
 
 % Recreate the variables with split cells:
-dz        = dz(fs);
-water     = water(fs);
-T         = T(fs);
-d         = d(fs);
-a         = a(fs);
-a_diffuse = a_diffuse(fs);
-re        = re(fs);
-gdn       = gdn(fs);
-gsp       = gsp(fs);
+dz               =               dz(fs);
+water            =            water(fs);
+temperature      =      temperature(fs);
+density          =          density(fs);
+albedo           =           albedo(fs);
+albedo_diffuse   =   albedo_diffuse(fs);
+grain_radius     =     grain_radius(fs);
+grain_dendricity = grain_dendricity(fs);
+grain_sphericity = grain_sphericity(fs);
 
 %% CORRECT FOR TOTAL MODEL DEPTH
 % WORKS FINE BUT HAS BEEN DISABLED FOR CONVIENCE OF MODEL OUTPUT
@@ -197,59 +197,59 @@ z_total = sum(dz);
 if z_total < (ModelParam.column_zmax - d_tolerance)
 
     % Mass and energy to be added:
-    M_added   = (dz(end) * d(end)) + water(end);
-    E_added   = T(end) * (dz(end) * d(end)) * CI + water(end) * (LF + CtoK * CI);
+    mass_added   = (dz(end) * density(end)) + water(end);
+    E_added   = temperature(end) * (dz(end) * density(end)) * C_ice + water(end) * (LF + CtoK * C_ice);
 
     % Add a grid cell of the same size and temperature to the bottom:
-    dz        = [   dz;     dz(end)       ];
-    T         = [    T;     T(end)        ];
-    water     = [    water; water(end)    ];
-    d         = [    d;     d(end)        ];
-    a         = [    a;     a(end)        ];
-    a_diffuse = [a_diffuse; a_diffuse(end)];
-    re        = [   re;     re(end)       ];
-    gdn       = [  gdn;     gdn(end)      ];
-    gsp       = [  gsp;     gsp(end)      ];
+    dz               = [              dz;               dz(end)];
+    temperature      = [     temperature;      temperature(end)];
+    water            = [           water;            water(end)];
+    density          = [         density;          density(end)];
+    albedo           = [          albedo;           albedo(end)];
+    albedo_diffuse   = [  albedo_diffuse;   albedo_diffuse(end)];
+    grain_radius     = [    grain_radius;     grain_radius(end)];
+    grain_dendricity = [grain_dendricity; grain_dendricity(end)];
+    grain_sphericity = [grain_sphericity; grain_sphericity(end)];
 
 elseif z_total > ModelParam.column_zmax+d_tolerance 
 
     % Mass and energy loss:
-    M_added   = -((dz(end)*d(end)) + water(end));
-    E_added   = -(T(end) * (dz(end)*d(end)) * CI) - water(end) * (LF+CtoK*CI);
+    mass_added   = -((dz(end)*density(end)) + water(end));
+    E_added   = -(temperature(end) * (dz(end)*density(end)) * C_ice) - water(end) * (LF+CtoK*C_ice);
 
     % Remove a grid cell from the bottom:
-    dz(end)        = [];
-    T(end)         = [];
-    water(end)     = [];
-    d(end)         = [];
-    a(end)         = [];
-    re(end)        = [];
-    gdn(end)       = [];
-    gsp(end)       = [];
-    a_diffuse(end) = [];
+    dz(end)               = [];
+    temperature(end)      = [];
+    water(end)            = [];
+    density(end)          = [];
+    albedo(end)           = [];
+    grain_radius(end)       = [];
+    grain_dendricity(end) = [];
+    grain_sphericity(end) = [];
+    albedo_diffuse(end)   = [];
 else
     % No mass or energy is added or removed:
-    M_added   = 0;
+    mass_added   = 0;
     E_added   = 0;
 end
 
 % The temperature of the bottom grid cell may have been modified when
 % layers were merged. After checking for energy conservation, set:
-%       T(end) = T_bottom
+%       temperature(end) = T_bottom
 % This is to satisfy the Constant Temperature (Dirichlet) boundary
 % condition. If this is not done then then thermal diffusion will blow up
-E_added   = E_added + ((T_bottom - T(end)) * (dz(end)*d(end)) * CI);
-T(end)    = T_bottom;
+E_added   = E_added + ((T_bottom - temperature(end)) * (dz(end)*density(end)) * C_ice);
+temperature(end)    = T_bottom;
 
 %% CHECK FOR MASS AND ENERGY CONSERVATION
 if verbose
     % Calculate final mass [kg] and energy [J]
-    M             = dz .* d;                % grid cell mass [kg]
+    M             = dz .* density;                % grid cell mass [kg]
     M_total_final = sum(water) + sum(M);    % total mass [kg]
-    E_total_final = sum(M .* T * CI) + ...
-        sum(water .* (LF + CtoK * CI));     % total energy [J] = initial enegy of snow/ice + initial enegy of water
+    E_total_final = sum(M .* temperature * C_ice) + ...
+        sum(water .* (LF + CtoK * C_ice));     % total energy [J] = initial enegy of snow/ice + initial enegy of water
 
-    M_delta = M_total_initial - M_total_final + M_added;
+    M_delta = M_total_initial - M_total_final + mass_added;
     E_delta = E_total_initial - E_total_final + E_added;
 
     if (abs(M_delta) > 1E-3) || (abs(E_delta) > 1E-3)

@@ -1,10 +1,10 @@
-function K = thermal_conductivity(T, d, ModelParam)
+function K = thermal_conductivity(temperature, density, ModelParam)
 % thermal_conductivity computes the thermal conductivity profile for snow, 
 % firn, and ice based on density and temperature.
 %
 %% Syntax
 %
-% K = thermal_conductivity(T, d, ModelParam)
+% K = thermal_conductivity(temperature, density, ModelParam)
 %
 %% Description
 %
@@ -16,23 +16,23 @@ function K = thermal_conductivity(T, d, ModelParam)
 % 1. Snow and Firn (density < density_ice): Thermal conductivity is calculated 
 %    as a function of density using empirical regressions. The user can select 
 %    between the formulations of:
-%    * Sturm et al. (1997): K = 0.138 - 1.01e-3*d + 3.233e-6*d^2.
-%    * Calonne et al. (2011): K = 0.024 - 1.23e-4*d + 2.5e-6*d^2.
+%    * Sturm et al. (1997): K = 0.138 - 1.01e-3*density + 3.233e-6*density^2.
+%    * Calonne et al. (2011): K = 0.024 - 1.23e-4*density + 2.5e-6*density^2.
 % 2. Glacier Ice (density >= density_ice): Thermal conductivity is dominated 
 %    by phonon transport and is calculated as a function of temperature:
-%    K = 9.828 * exp(-5.7e-3 * T).
+%    K = 9.828 * exp(-5.7e-3 * temperature).
 %
 %% Inputs
 %
-%  T                                      : K            Grid cell temperature (vector).
-%  d                                      : kg m^-3      Grid cell density (vector).
-%  ModelParam                             : struct       Model parameter structure:
-%    .density_ice                         : kg m^-3      Density threshold defining glacier ice.
-%    .thermal_conductivity_method         : string       Parameterization choice: "Sturm" or "Calonne".
+%  temperature                      : K            Grid cell temperature (vector).
+%  density                          : kg m^-3      Grid cell density (vector).
+%  ModelParam                       : struct       Model parameter structure:
+%    .density_ice                   : kg m^-3      Density threshold defining glacier ice.
+%    .thermal_conductivity_method   : string       Parameterization choice: "Sturm" or "Calonne".
 %
 %% Outputs
 %
-%  K                                      : W m^-1 K^-1  Vector of thermal conductivities.
+%  K                                : W m^-1 K^-1  Vector of thermal conductivities.
 %
 %% References
 % If you use GEMB, please cite the following:
@@ -57,32 +57,34 @@ function K = thermal_conductivity(T, d, ModelParam)
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 %% CONSTANTS & INITIALIZATION
+
 % Tolerance to prevent floating point errors at the density threshold
 d_tolerance  = 1e-11;
 
 % Get number of grid cells
-m = length(d);
+m = length(density);
 
 % Initialize conductivity vector with zeros
 K = zeros(m,1);
 
 %% IDENTIFY SNOW VS ICE
-% Create logical mask: True for snow/firn, False for ice
 
-sfIdx = d < ModelParam.density_ice - d_tolerance ;
+% Create logical mask: True for snow/firn, False for ice
+sfIdx = density < ModelParam.density_ice - d_tolerance ;
 
 %% CALCULATE CONDUCTIVITY FOR SNOW/FIRN
+
 % Use empirical density-based regressions
 switch ModelParam.thermal_conductivity_method
     case "Calonne"
         % Parameterization from Calonne et al. (2011)
         % Often used for a wider range of snow microstructures
-        K(sfIdx) = 0.024 - 1.23E-4 * d(sfIdx) + 2.5e-6 * (d(sfIdx).^2);
+        K(sfIdx) = 0.024 - 1.23E-4 * density(sfIdx) + 2.5e-6 * (density(sfIdx).^2);
         
     case "Sturm"
         % Parameterization from Sturm et al. (1997) [Default]
         % Standard regression for seasonal snow
-        K(sfIdx) = 0.138 - 1.01E-3 * d(sfIdx) + 3.233E-6 * (d(sfIdx).^2);
+        K(sfIdx) = 0.138 - 1.01E-3 * density(sfIdx) + 3.233E-6 * (density(sfIdx).^2);
 end
 
 %% CALCULATE CONDUCTIVITY FOR ICE
@@ -91,6 +93,6 @@ end
 % standard glaciological relations.
 % Note: ~sfIdx selects the inverse of the snow index (i.e., the ice cells)
 
-K(~sfIdx) = 9.828 * exp(-5.7E-3 * T(~sfIdx));
+K(~sfIdx) = 9.828 * exp(-5.7E-3 * temperature(~sfIdx));
 
 end

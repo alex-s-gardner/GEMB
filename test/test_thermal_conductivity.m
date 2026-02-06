@@ -28,12 +28,12 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
             % Formula: 0.138 - 1.01E-3*d + 3.233E-6*d^2
             
             tcase.MP.thermal_conductivity_method = "Sturm";
-            d_snow = 300;
-            t_in = 260; % Temperature shouldn't affect snow formula in this model
+            density_snow = 300;
+            temperature_in = 260; % Temperature shouldn't affect snow formula in this model
             
-            k_out = thermal_conductivity(t_in, d_snow, tcase.MP);
+            k_out = thermal_conductivity(temperature_in, density_snow, tcase.MP);
             
-            expected = 0.138 - 1.01e-3 * d_snow + 3.233e-6 * d_snow^2;
+            expected = 0.138 - 1.01e-3 * density_snow + 3.233e-6 * density_snow^2;
             
             tcase.verifyEqual(k_out, expected, 'AbsTol', 1e-8, ...
                 'Method "Sturm" should follow Sturm parameterization for snow');
@@ -44,12 +44,12 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
             % Formula: 0.024 - 1.23E-4*d + 2.5e-6*d^2
             
             tcase.MP.thermal_conductivity_method = "Calonne";
-            d_snow = 300;
-            t_in = 260;
+            density_snow = 300;
+            temperature_in = 260;
             
-            k_out = thermal_conductivity(t_in, d_snow, tcase.MP);
+            k_out = thermal_conductivity(temperature_in, density_snow, tcase.MP);
             
-            expected = 0.024 - 1.23e-4 * d_snow + 2.5e-6 * d_snow^2;
+            expected = 0.024 - 1.23e-4 * density_snow + 2.5e-6 * density_snow^2;
             
             tcase.verifyEqual(k_out, expected, 'AbsTol', 1e-8, ...
                 'Method "Calonne" should follow Calonne parameterization for snow');
@@ -61,18 +61,18 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
             % Should depend on T, not density (as long as d >= threshold)
             
             tcase.MP.thermal_conductivity_method = "Sturm"; % Method flag shouldn't change ice physics
-            d_ice = 917;
-            t_cold = 240;
-            t_warm = 270;
+            density_ice = 917;
+            temperature_cold = 240;
+            temperature_warm = 270;
             
             % Test Cold Ice
-            k_cold = thermal_conductivity(t_cold, d_ice, tcase.MP);
-            expected_cold = 9.828 * exp(-5.7e-3 * t_cold);
+            k_cold = thermal_conductivity(temperature_cold, density_ice, tcase.MP);
+            expected_cold = 9.828 * exp(-5.7e-3 * temperature_cold);
             tcase.verifyEqual(k_cold, expected_cold, 'AbsTol', 1e-8);
             
             % Test Warm Ice
-            k_warm = thermal_conductivity(t_warm, d_ice, tcase.MP);
-            expected_warm = 9.828 * exp(-5.7e-3 * t_warm);
+            k_warm = thermal_conductivity(temperature_warm, density_ice, tcase.MP);
+            expected_warm = 9.828 * exp(-5.7e-3 * temperature_warm);
             tcase.verifyEqual(k_warm, expected_warm, 'AbsTol', 1e-8);
             
             % Verify T dependence
@@ -83,16 +83,16 @@ classdef test_thermal_conductivity < matlab.unittest.TestCase
             % Test a vector containing both snow and ice
             tcase.MP.thermal_conductivity_method = "Sturm";
             
-            t_vec = [260; 250];
-            d_vec = [400; 920]; % 400=Snow, 920=Ice
+            temperature_vec = [260; 250];
+            density_vec = [400; 920]; % 400=Snow, 920=Ice
             
-            k_vec = thermal_conductivity(t_vec, d_vec, tcase.MP);
+            k_vec = thermal_conductivity(temperature_vec, density_vec, tcase.MP);
             
             % Expected Snow (Sturm)
-            exp_snow = 0.138 - 1.01e-3 * d_vec(1) + 3.233e-6 * d_vec(1)^2;
+            exp_snow = 0.138 - 1.01e-3 * density_vec(1) + 3.233e-6 * density_vec(1)^2;
             
             % Expected Ice (Temp dependent)
-            exp_ice = 9.828 * exp(-5.7e-3 * t_vec(2));
+            exp_ice = 9.828 * exp(-5.7e-3 * temperature_vec(2));
             
             tcase.verifyEqual(k_vec(1), exp_snow, 'AbsTol', 1e-8);
             tcase.verifyEqual(k_vec(2), exp_ice, 'AbsTol', 1e-8);

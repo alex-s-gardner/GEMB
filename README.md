@@ -29,35 +29,35 @@ The model is highly configurable via the `model_initialize_parameters` function.
     * Calibration coefficients for the Ligtenberg model can be specified for Antarctica or Greenland (e.g., `"Gre_RACMO_GS_SW0"`).
 
 2.  **Grid Geometry:**
-    * Vertical discretization is controlled by `column_ztop` (depth of high-resolution surface zone) and `column_zy` (stretching factor for deep layers).
+    * Vertical discretization is controlled by `column_ztop` (dvapor_pressureepth of high-resolution surface zone) and `column_zy` (stretching factor for deep layers).
     * Users define minimum (`column_dzmin`) and maximum (`column_dzmax`) layer thicknesses to ensure stability.
 
 3.  **Energy Balance & Optical Properties:**
     * **Albedo Schemes:** Options include `"GardnerSharp"`, `"GreuellKonzelmann"`, `"BruneLeFebre"`, or `"BougamontBamber"`.
-    * **Solar Penetration:** The `sw_absorption_method` toggles between surface-only (0) or subsurface extinction (1).
+    * **Solar Penetration:** The `shortwave_absorption_method` toggles between surface-only (0) or subsurface extinction (1).
     * **Thermal Conductivity:** Select between `"Sturm"` or `"Calonne"` parameterizations.
     * **Emissivity:** Configurable methods (0, 1, 2) and thresholds based on grain size.
 
 4.  **Initialization:**
     * Fresh snow density can be set via models like `"350kgm2"`, `"Fausto"`, or `"Kaspers"`.
-    * Spin-up cycles (`n_spinup_cycles`) allow the model to reach equilibrium before saving output.
+    * Spin-up cycles (`spinup_cycles`) allow the model to reach equilibrium before saving output.
 
 ## Climate Forcing Inputs
 
 GEMB requires high-frequency meteorological forcing data. The `simulate_climate_forcing` function generates synthetic data containing the following variables:
 
 * **Radiation:**
-    * Downward Shortwave (`dsw0`): Calculated based on solar geometry and location.
-    * Downward Longwave (`dlw0`): Derived from air temperature and vapor pressure, with adjustments for cloud cover.
+    * Downward Shortwave (`shortwave_downward`): Calculated based on solar geometry and location.
+    * Downward Longwave (`longwave_downward`): Derived from air temperature and vapor pressure, with adjustments for cloud cover.
 * **Thermodynamics:**
-    * Air Temperature (`T_air0`): Simulated time series.
-    * Air Pressure (`p_air0`): Calculated from elevation and temperature.
-    * Humidity: Relative humidity (`rh0`) and vapor pressure (`e_air0`).
+    * Air Temperature (`temperature_air`): Simulated time series.
+    * Air Pressure (`pressure_air`): Calculated from elevation and temperature.
+    * Humidity: Relative humidity (`relative_humidity`) and vapor pressure (`vapor_pressure`).
 * **Dynamics & Mass:**
-    * Wind Speed (`V0`): Stochastic generation with seasonal noise.
-    * Precipitation (`P0`): Accumulated mass input.
+    * Wind Speed (`wind_speed`): Stochastic generation with seasonal noise.
+    * Precipitation (`precipitation`): Accumulated mass input.
 * **Metadata:**
-    * Includes location (lat, lon, elev) and measurement heights (Vz, Tz).
+    * Includes location (`latitude`, `longitude`, `elevation`) and measurement heights (`wind_observation_height`, `temperature_observation_height`).
 
 ## Getting Started
 
@@ -79,13 +79,13 @@ ClimateForcing = simulate_climate_forcing("test_1");
 
 % 3. Initialize Grid
 % Set up the initial vertical column state (Temperature, Density, Water content, etc.)
-[T, dz, d, W, re, gdn, gsp, a, a_diffuse] = ...
+[temperature, dz, density, water, grain_size, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = ...
     model_initialize_column(ModelParam, ClimateForcing);
 
 % 4. Run GEMB
 % Execute the model. 'verbose' enables detailed logging.
 verbose = true;
-OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ...
+OutData = gemb(temperature, dz, density, water, grain_size, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ...
                ClimateForcing, ModelParam, verbose);
 ```
 ### Visualizing Results
@@ -94,19 +94,19 @@ Once the model run is complete, the results are stored in the `OutData` structur
 ```matlab
 % Example: Plotting Surface Mass Balance Components
 figure;
-plot(OutData.time, OutData.M, 'r', 'DisplayName', 'Melt');
+plot(OutData.dates, OutData.M, 'r', 'DisplayName', 'Melt');
 hold on;
-plot(OutData.time, OutData.R, 'b', 'DisplayName', 'Runoff');
+plot(OutData.dates, OutData.R, 'b', 'DisplayName', 'Runoff');
 legend;
 title('Modeled Surface Mass Balance Components');
 ylabel('Mass Flux (kg m^{-2})');
 xlabel('Time');
 
 % Example: Plotting Temperature Profile Evolution
-% OutData.T contains temperature profiles [depth x time]
+% OutData.temperature contains temperature profiles [depth x time]
 % Note: Using the initial depth profile for visualization purposes.
 figure;
-imagesc(OutData.time, cumsum(OutData.dz(:,1)), OutData.T); 
+imagesc(OutData.dates, cumsum(OutData.dz(:,1)), OutData.temperature); 
 colorbar;
 title('Firn Temperature Evolution');
 ylabel('Depth (m)');

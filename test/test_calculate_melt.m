@@ -1,17 +1,17 @@
-classdef test_melting < matlab.unittest.TestCase
+classdef test_calculate_melt < matlab.unittest.TestCase
     
     properties
         % Common inputs
         n = 5;
         t_vec
         dz
-        d
-        w
-        re
-        gdn
-        gsp
-        a
-        a_diffuse
+        density
+        water
+        grain_radius
+        grain_dendricity
+        grain_sphericity
+        albedo
+        albedo_diffuse
         ModelParam
         
         % Parameters
@@ -23,15 +23,15 @@ classdef test_melting < matlab.unittest.TestCase
     methods (TestMethodSetup)
         function setup_inputs(tcase)
             % Initialize standard profile (Cold, Dry Firn)
-            tcase.t_vec = 260 * ones(tcase.n, 1);
-            tcase.dz = 0.1 * ones(tcase.n, 1);
-            tcase.d = 400 * ones(tcase.n, 1);
-            tcase.w = zeros(tcase.n, 1);
-            tcase.re = 0.5 * ones(tcase.n, 1);
-            tcase.gdn = 0.5 * ones(tcase.n, 1);
-            tcase.gsp = 0.5 * ones(tcase.n, 1);
-            tcase.a = 0.8 * ones(tcase.n, 1);
-            tcase.a_diffuse = 0.8 * ones(tcase.n, 1);
+            tcase.t_vec            = 260 * ones(tcase.n, 1);
+            tcase.dz               = 0.1 * ones(tcase.n, 1);
+            tcase.density          = 400 * ones(tcase.n, 1);
+            tcase.water            = zeros(tcase.n, 1);
+            tcase.grain_radius     = 0.5 * ones(tcase.n, 1);
+            tcase.grain_dendricity = 0.5 * ones(tcase.n, 1);
+            tcase.grain_sphericity = 0.5 * ones(tcase.n, 1);
+            tcase.albedo           = 0.8 * ones(tcase.n, 1);
+            tcase.albedo_diffuse   = 0.8 * ones(tcase.n, 1);
             
             tcase.ModelParam.density_ice = 920;
             tcase.ModelParam.water_irreducible_saturation = 0.07;
@@ -53,28 +53,28 @@ classdef test_melting < matlab.unittest.TestCase
             % Scenario: T < 0C, W = 0. No melt, no refreeze.
             
             [t_out, ~, d_out, w_out, ~, ~, ~, ~, ~, m_tot, ~, r_tot, f_tot] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.ra, tcase.ModelParam, tcase.verbose);
             
             tcase.verifyEqual(m_tot, 0);
             tcase.verifyEqual(r_tot, 0);
             tcase.verifyEqual(f_tot, 0);
             tcase.verifyEqual(t_out, tcase.t_vec);
-            tcase.verifyEqual(d_out, tcase.d);
-            tcase.verifyEqual(w_out, tcase.w);
+            tcase.verifyEqual(d_out, tcase.density);
+            tcase.verifyEqual(w_out, tcase.water);
         end
         
         function test_pore_water_refreeze(tcase)
             % Scenario: Cold snow with liquid water. 
             % Water should freeze, releasing latent heat -> T increases.
             
-            tcase.w(1) = 5; % 5 kg water
-            mass_initial = tcase.d(1) * tcase.dz(1) + tcase.w(1);
+            tcase.water(1) = 5; % 5 kg water
+            mass_initial = tcase.density(1) * tcase.dz(1) + tcase.water(1);
             
             [t_out, dz_out, d_out, w_out, ~, ~, ~, ~, ~, ~, ~, ~, f_tot] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.ra, tcase.ModelParam, tcase.verbose);
             
             % Verify refreeze occurred
@@ -86,7 +86,7 @@ classdef test_melting < matlab.unittest.TestCase
             
             % Verify density increase (water becomes ice/snow matrix)
             mass_final = d_out(1) * dz_out(1) + w_out(1);
-            tcase.verifyTrue(d_out(1) > tcase.d(1), 'Density should increase');
+            tcase.verifyTrue(d_out(1) > tcase.density(1), 'Density should increase');
             
             % Simple mass check
             tcase.verifyEqual(mass_final, mass_initial, 'AbsTol', 1e-10, 'Mass conservation');
@@ -99,8 +99,8 @@ classdef test_melting < matlab.unittest.TestCase
             tcase.t_vec(1) = 280; % Hot surface
             
             [t_out, ~, ~, ~, ~, ~, ~, ~, ~, m_tot, m_surf, ~, ~] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.ra, tcase.ModelParam, tcase.verbose);
             
             tcase.verifyEqual(t_out(1), 273.15, 'Temperature should be clamped to freezing point');
@@ -116,16 +116,16 @@ classdef test_melting < matlab.unittest.TestCase
             
             % UPDATED: Extend ice layer to 2 cells (0.2m). 
             % melting.m requires ice_depth > 0.1m to trigger runoff logic.
-            tcase.d(2:3) = 830; 
+            tcase.density(2:3) = 830; 
              
             % CRITICAL FIX: Pre-saturate the top layer.
             % Without this, melt water is retained as Irreducible Water (Swi) 
             % and won't run off.
-            tcase.w(1) = 10; % Add pore water to ensure saturation
+            tcase.water(1) = 10; % Add pore water to ensure saturation
             
             [~, ~, ~, w_out, ~, ~, ~, ~, ~, ~, ~, r_tot, ~] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.ra, tcase.ModelParam, tcase.verbose);
             
             tcase.verifyTrue(r_tot > 0, 'Runoff should occur when saturated snow sits on thick ice');
@@ -145,8 +145,8 @@ classdef test_melting < matlab.unittest.TestCase
             tcase.t_vec(1) = 273.15 + 500; 
             
             [t_out, ~, d_out, ~, ~, ~, ~, ~, ~, ~, ~, ~, ~] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.ra, tcase.ModelParam, tcase.verbose);
             
             if length(d_out) < tcase.n
@@ -163,12 +163,12 @@ classdef test_melting < matlab.unittest.TestCase
             % Scenario: No melt (Cold), but W > Irreducible water content.
             % Water should drain (percolate/runoff) even without active melting.
             
-            tcase.w(1) = 20; % Very wet
+            tcase.water(1) = 20; % Very wet
             tcase.t_vec(:) = 273.15; % Isothermal at 0 to prevent immediate refreeze
             
             [~, ~, ~, w_out, ~, ~, ~, ~, ~, ~, ~, r_tot, ~] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.ra, tcase.ModelParam, tcase.verbose);
             
             % Water should leave top cell (percolate or run off)
@@ -185,20 +185,20 @@ classdef test_melting < matlab.unittest.TestCase
             % Generate actual melt
             tcase.t_vec(1) = 280; 
             % We need to know how much melt this generates to verify the subtraction.
-            % M_max = T_excess * d * dz * CI / LF;
+            % M_max = T_excess * density * dz * CI / LF;
             % 6.85 * 400 * 0.1 * 2102 / 334500 approx 1.7 kg.
             
             % Run without rain first to get baseline melt
             [~, ~, ~, ~, ~, ~, ~, ~, ~, m_tot_base, ~, ~, ~] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 0, tcase.ModelParam, tcase.verbose);
             
             % Run with rain input
             rain_input = 0.5;
             [~, ~, ~, ~, ~, ~, ~, ~, ~, m_tot_rain, ~, ~, ~] = ...
-                calculate_melt(tcase.t_vec, tcase.dz, tcase.d, tcase.w, tcase.re, ...
-                tcase.gdn, tcase.gsp, tcase.a, tcase.a_diffuse, ...
+                calculate_melt(tcase.t_vec, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
+                tcase.grain_dendricity, tcase.grain_sphericity, tcase.albedo, tcase.albedo_diffuse, ...
                 rain_input, tcase.ModelParam, tcase.verbose);
             
             % M_total with rain should be (M_total_base - rain_input)

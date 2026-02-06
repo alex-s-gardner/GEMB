@@ -1,7 +1,7 @@
-function dsw = simulate_shortwave_irradiance(decimal_year, latitude)
+function shortwave_downward = simulate_shortwave_irradiance(decimal_year, latitude)
 % simulate_shortwave_irradiance simulates clear sky shortwave irradiance.
 %
-%   dsw = shortwave_irradiance(decimal_year, latitude)
+%   shortwave_downward = shortwave_irradiance(decimal_year, latitude)
 %
 %   Inputs:
 %       decimal_year : Decimal fractional year (e.g., 2024.5).
@@ -10,7 +10,7 @@ function dsw = simulate_shortwave_irradiance(decimal_year, latitude)
 %       latitude     : Latitude in degrees (Positive for North).
 %
 %   Output:
-%       dsw          : Downwelling Shortwave Irradiance (W/m^2).
+%       shortwave_downward          : Downwelling Shortwave Irradiance (W/m^2).
 %                      (Value is 0 when the sun is below the horizon).
 %
 %% Author Information
@@ -55,7 +55,7 @@ delta = deg2rad(23.45 * sind((360 ./ 365.25) .* (284 + n)));
 omega = deg2rad(15 * (solar_hour - 12));
 
 % Cosine of Solar Zenith Angle (theta_z)
-% cos(z) = sin(lat)sin(delta) + cos(lat)cos(delta)cos(omega)
+% cos(z) = sin(latitude)sin(delta) + cos(latitude)cos(delta)cos(omega)
 cos_theta_z = (sin(phi) .* sin(delta)) + ...
               (cos(phi) .* cos(delta) .* cos(omega));
 
@@ -63,7 +63,7 @@ cos_theta_z = (sin(phi) .* sin(delta)) + ...
 % DSW = 1098 * cos(z) * exp(-0.057 / cos(z))
 
 % Initialize output vector
-dsw = zeros(size(decimal_year));
+shortwave_downward = zeros(size(decimal_year));
 
 % Find indices where sun is above horizon
 daylight_mask = cos_theta_z > 0;
@@ -71,7 +71,7 @@ daylight_mask = cos_theta_z > 0;
 if any(daylight_mask)
     ctz = cos_theta_z(daylight_mask);
     % Apply model only to daylight hours
-    dsw(daylight_mask) = 1098 .* ctz .* exp(-0.057 ./ ctz);
+    shortwave_downward(daylight_mask) = 1098 .* ctz .* exp(-0.057 ./ ctz);
 end
 
 end

@@ -1,16 +1,16 @@
-classdef test_thermo < matlab.unittest.TestCase
+classdef test_calculate_temperature < matlab.unittest.TestCase
     
     properties
         % Grid and State
         n = 10;
         t_vec
         dz
-        d
-        w_surf
-        re
+        density
+        water_surface
+        grain_radius
         
         % Fluxes
-        swf
+        shortwave_flux
         
         % Structures
         CF % ClimateForcingStep
@@ -27,7 +27,7 @@ classdef test_thermo < matlab.unittest.TestCase
             % 1. Mock thermal_conductivity
             % Returns a constant K = 0.5 W m-1 K-1
             fid = fopen('thermal_conductivity.m', 'w');
-            fprintf(fid, 'function K = thermal_conductivity(T, d, ~)\n');
+            fprintf(fid, 'function K = thermal_conductivity(T, density, ~)\n');
             fprintf(fid, '    K = 0.5 * ones(size(T));\n');
             fprintf(fid, 'end\n');
             fclose(fid);
@@ -35,9 +35,9 @@ classdef test_thermo < matlab.unittest.TestCase
             % 2. Mock turbulent_heat_flux
             % Returns zero fluxes to isolate radiative/diffusive testing
             fid = fopen('turbulent_heat_flux.m', 'w');
-            fprintf(fid, 'function [shf, lhf, L] = turbulent_heat_flux(~, ~, ~, ~, ~, ~)\n');
-            fprintf(fid, '    shf = 0;\n');
-            fprintf(fid, '    lhf = 0;\n');
+            fprintf(fid, 'function [heat_flux_sensible, heat_flux_latent, L] = turbulent_heat_flux(~, ~, ~, ~, ~, ~)\n');
+            fprintf(fid, '    heat_flux_sensible = 0;\n');
+            fprintf(fid, '    heat_flux_latent = 0;\n');
             fprintf(fid, '    L = 2.5e6;\n');
             fprintf(fid, 'end\n');
             fclose(fid);
@@ -73,32 +73,31 @@ classdef test_thermo < matlab.unittest.TestCase
     methods (TestMethodSetup)
         function setup_inputs(tcase)
             % Initialize common profile vectors
-            tcase.t_vec = 260 * ones(tcase.n, 1); % Cold profile
-            tcase.dz = 0.1 * ones(tcase.n, 1);    % 10cm layers
-            tcase.d = 400 * ones(tcase.n, 1);     % Firn density
-            tcase.w_surf = 0;
-            tcase.re = 0.5 * ones(tcase.n, 1);
+            tcase.t_vec         = 260 * ones(tcase.n, 1); % Cold profile
+            tcase.dz            = 0.1 * ones(tcase.n, 1);    % 10cm layers
+            tcase.density       = 400 * ones(tcase.n, 1);     % Firn density
+            tcase.water_surface = 0;
+            tcase.grain_radius    = 0.5 * ones(tcase.n, 1);
             
             % Initialize Fluxes (Zeroed)
-            tcase.swf = zeros(tcase.n, 1);
+            tcase.shortwave_flux = zeros(tcase.n, 1);
             
             % Initialize ClimateForcingStep (CF)
-            tcase.CF.dt = 3600; % 1 hour
-            tcase.CF.dlw = 0;
-            tcase.CF.T_air = 260;
-            tcase.CF.V = 5;
-            tcase.CF.e_air = 100;
-            tcase.CF.p_air = 100000;
-            tcase.CF.Vz = 2;
-            tcase.CF.Tz = 2;
+            tcase.CF.dt                                = 3600; % 1 hour
+            tcase.CF.longwave_downward                 = 0;
+            tcase.CF.temperature_air                   = 260;
+            tcase.CF.wind_speed                        = 5;
+            tcase.CF.vapor_pressure                    = 100;
+            tcase.CF.pressure_air                      = 100000;
+            tcase.CF.wind_observation_height           = 2;
+            tcase.CF.temperature_observation_height    = 2;
             
             % Initialize ModelParam (MP)
-            tcase.MP.density_ice = 917;
-            tcase.MP.emissivity = 0.98;
-            tcase.MP.emissivity_re_large = 0.98; % Default fallback
-            tcase.MP.ulw_delta = 0;
-            tcase.MP.emissivity_re_threshold = 10;
-
+            tcase.MP.density_ice                       = 917;
+            tcase.MP.emissivity                        = 0.98;
+            tcase.MP.emissivity_grain_radius_large     = 0.98; % Default fallback
+            tcase.MP.longwave_upward_delta             = 0;
+            tcase.MP.emissivity_grain_radius_threshold = 10;
             tcase.MP.surface_roughness_effective_ratio = 0.1; 
             
             % calculate_temperature.m expects a string for the method
@@ -115,15 +114,15 @@ classdef test_thermo < matlab.unittest.TestCase
     methods (Test)
         
         function test_steady_state(tcase)
-            % If T_surf = T_air and no radiation, T should remain roughly constant
+            % If T_surf = temperature_air and no radiation, T should remain roughly constant
             % (Assuming our mock turbulent flux is 0, and we set LW to balance)
             
             % Calculate blackbody radiation to balance LW out
             sb = 5.67e-8;
-            tcase.CF.dlw = sb * tcase.t_vec(1)^4 * tcase.MP.emissivity;
+            tcase.CF.longwave_downward = sb * tcase.t_vec(1)^4 * tcase.MP.emissivity;
             
-            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
-                tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.density, tcase.water_surface, tcase.grain_radius, ...
+                tcase.shortwave_flux, tcase.CF, tcase.MP, tcase.verbose);
             
             % Allow small diffusion drift
             tcase.verifyEqual(t_out(1), tcase.t_vec(1), 'AbsTol', 0.1, ...
@@ -132,20 +131,20 @@ classdef test_thermo < matlab.unittest.TestCase
         
         function test_solar_heating(tcase)
             % Apply strong shortwave radiation to top cell
-            tcase.swf(1) = 200; % 200 W/m2 absorbed in top layer
+            tcase.shortwave_flux(1) = 200; % 200 W/m2 absorbed in top layer
             
             % Balance the outgoing Longwave first so surface doesn't cool
             sb = 5.67e-8;
-            tcase.CF.dlw = sb * tcase.t_vec(1)^4 * tcase.MP.emissivity;
+            tcase.CF.longwave_downward = sb * tcase.t_vec(1)^4 * tcase.MP.emissivity;
             
-            [t_out, ~, shf, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
-                tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
+            [t_out, ~, heat_flux_sensible, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.density, tcase.water_surface, tcase.grain_radius, ...
+                tcase.shortwave_flux, tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyTrue(t_out(1) > tcase.t_vec(1), ...
                 'Top layer should warm up with SW input (given balanced LW)');
             
-            % Verify internal mock works (shf should be 0)
-            tcase.verifyEqual(shf, 0, 'Mocked turbulent flux should return 0');
+            % Verify internal mock works (heat_flux_sensible should be 0)
+            tcase.verifyEqual(heat_flux_sensible, 0, 'Mocked turbulent flux should return 0');
         end
         
         function test_thermal_diffusion(tcase)
@@ -160,11 +159,11 @@ classdef test_thermo < matlab.unittest.TestCase
             
             % Turn off emissivity to prevent radiative cooling at surface
             tcase.MP.emissivity = 0;
-            tcase.CF.dlw = 0;
-            tcase.CF.T_air = 250;
+            tcase.CF.longwave_downward = 0;
+            tcase.CF.temperature_air = 250;
             
-            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
-                tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.density, tcase.water_surface, tcase.grain_radius, ...
+                tcase.shortwave_flux, tcase.CF, tcase.MP, tcase.verbose);
             
             % Top should cool down (giving heat to layer 2)
             tcase.verifyTrue(t_out(1) < 273, 'Hot top layer should cool via diffusion');
@@ -178,11 +177,11 @@ classdef test_thermo < matlab.unittest.TestCase
             verbose_on = true;
             
             % Add some SW flux
-            tcase.swf(1) = 50;
+            tcase.shortwave_flux(1) = 50;
             
             try
-                calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
-                    tcase.swf, tcase.CF, tcase.MP, verbose_on);
+                calculate_temperature(tcase.t_vec, tcase.dz, tcase.density, tcase.water_surface, tcase.grain_radius, ...
+                    tcase.shortwave_flux, tcase.CF, tcase.MP, verbose_on);
             catch ME
                 tcase.verifyFail(['Energy conservation check failed with error: ' ME.message]);
             end
@@ -192,8 +191,8 @@ classdef test_thermo < matlab.unittest.TestCase
             % Test bottom boundary condition (Fixed T)
             tcase.t_vec(end) = 240; % Distinct bottom temp
             
-            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
-                tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.density, tcase.water_surface, tcase.grain_radius, ...
+                tcase.shortwave_flux, tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyEqual(t_out(end), 240, 'Bottom temperature should be fixed (Dirichlet BC)');
         end
@@ -205,8 +204,8 @@ classdef test_thermo < matlab.unittest.TestCase
             
             tcase.CF.dt = 86400; % 1 day step
             
-            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.d, tcase.w_surf, tcase.re, ...
-                tcase.swf, tcase.CF, tcase.MP, tcase.verbose);
+            [t_out, ~, ~, ~, ~] = calculate_temperature(tcase.t_vec, tcase.dz, tcase.density, tcase.water_surface, tcase.grain_radius, ...
+                tcase.shortwave_flux, tcase.CF, tcase.MP, tcase.verbose);
             
             tcase.verifyFalse(any(isnan(t_out)), 'Solution should not explode (NaN) given large timestep');
         end

@@ -1,4 +1,4 @@
-classdef test_model_initialize_grid < matlab.unittest.TestCase
+classdef test_model_initialize_column < matlab.unittest.TestCase
     
     properties
         % Default ModelParam structure
@@ -16,10 +16,10 @@ classdef test_model_initialize_grid < matlab.unittest.TestCase
             end
             
             % Initialize default parameters
-            tcase.MP.column_ztop = 10;
+            tcase.MP.column_ztop  = 10;
             tcase.MP.column_dztop = 0.05;
-            tcase.MP.column_zmax = 20;
-            tcase.MP.column_zy = 1.0;
+            tcase.MP.column_zmax  = 20;
+            tcase.MP.column_zy    = 1.0;
         end
     end
     
@@ -27,16 +27,17 @@ classdef test_model_initialize_grid < matlab.unittest.TestCase
         
         function test_standard_grid_creation(tcase)
             % Test a standard configuration
-            tcase.MP.column_ztop = 10;
+            tcase.MP.column_ztop  = 10;
             tcase.MP.column_dztop = 0.05;
-            tcase.MP.column_zmax = 20;
-            tcase.MP.column_zy = 1.0; % No stretching
+            tcase.MP.column_zmax  = 20;
+            tcase.MP.column_zy    = 1.0; % No stretching
             
             ModelParam = model_initialize_parameters(column_ztop=tcase.MP.column_ztop,...
-                column_dztop=tcase.MP.column_dztop,...
-                column_zmax=tcase.MP.column_zmax,...
-                column_zy=tcase.MP.column_zy);
-            ClimateForcing.T_air_mean = 253.15; % -20 C
+            column_dztop=tcase.MP.column_dztop,...
+            column_zmax=tcase.MP.column_zmax,...
+            column_zy=tcase.MP.column_zy);
+            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+
             [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
             z_center = dz2z(dz); 
 
@@ -47,7 +48,8 @@ classdef test_model_initialize_grid < matlab.unittest.TestCase
             
             % Verify total depth
             total_depth = sum(dz);
-            tolerance = 1e-10;
+            
+            tolerance = 1e-10; 
             tcase.verifyTrue(total_depth >= (tcase.MP.column_zmax-tolerance), 'Total depth must reach or exceed z_max');
 
             % Verify z_center dimensions
@@ -58,16 +60,17 @@ classdef test_model_initialize_grid < matlab.unittest.TestCase
         
         function test_grid_stretching(tcase)
             % Test that column_zy actually stretches the grid below ztop
-            tcase.MP.column_ztop = 10;
+            tcase.MP.column_ztop  = 10;
             tcase.MP.column_dztop = 0.05;
-            tcase.MP.column_zmax = 20;
-            tcase.MP.column_zy = 1.5; 
+            tcase.MP.column_zmax  = 20;
+            tcase.MP.column_zy    = 1.5; 
             
             ModelParam = model_initialize_parameters(column_ztop=tcase.MP.column_ztop,...
-                column_dztop=tcase.MP.column_dztop,...
-                column_zmax=tcase.MP.column_zmax,...
-                column_zy=tcase.MP.column_zy);
-            ClimateForcing.T_air_mean = 253.15; % -20 C
+            column_dztop=tcase.MP.column_dztop,...
+            column_zmax=tcase.MP.column_zmax,...
+            column_zy=tcase.MP.column_zy);
+            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+
             [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
             
             n_top = tcase.MP.column_ztop / tcase.MP.column_dztop;
@@ -88,24 +91,24 @@ classdef test_model_initialize_grid < matlab.unittest.TestCase
             tcase.MP.column_ztop = 10;
             tcase.MP.column_dztop = 3; % 10/3 is not integer
             
-            tcase.verifyError(@() model_initialize_grid(tcase.MP), ...
+            tcase.verifyError(@() model_initialize_parameters(column_ztop=tcase.MP.column_ztop,...
+            column_dztop=tcase.MP.column_dztop), ...
                 ?MException, ...
                 'Should throw assertion error if dz_top does not divide z_top evenly');
         end
         
         function test_small_dz_warning(tcase)
             % The function warns if dz_top < 0.05
-            tcase.MP.column_ztop = 0.1;
+            tcase.MP.column_ztop  = 0.1;
             tcase.MP.column_dztop = 0.01; % Triggers warning
-            tcase.MP.column_zmax = 1;
-            tcase.MP.column_zy = 1.0;
-
+            tcase.MP.column_zmax  = 1;
+            tcase.MP.column_zy    = 1.0;
+            
+            ClimateForcing.temperature_air_mean = 253.15; % -20 C
             ModelParam = model_initialize_parameters(column_ztop=tcase.MP.column_ztop,...
             column_dztop=tcase.MP.column_dztop,...
             column_zmax=tcase.MP.column_zmax,...
             column_zy=tcase.MP.column_zy);
-            ClimateForcing.T_air_mean = 253.15; % -20 C
-            
             tcase.verifyWarning(@() model_initialize_column(ModelParam, ClimateForcing), ...
                 '', ... 
                 'Should warn for very small dz_top');
@@ -113,23 +116,26 @@ classdef test_model_initialize_grid < matlab.unittest.TestCase
         
         function test_center_calculation_logic(tcase)
             % Verify the math: z_center = -cumsum(dz) + dz/2
-            tcase.MP.column_ztop = 2;
+            tcase.MP.column_ztop  = 2;
             tcase.MP.column_dztop = 0.05;
-            tcase.MP.column_zmax = 2;
-            tcase.MP.column_zy = 1;
+            tcase.MP.column_zmax  = 2;
+            tcase.MP.column_zy    = 1;
             
             % Grid should be [1; 1]
             % Depths: 1, 2. 
             % Centers: 0.5, 1.5 (negative)
             
             ModelParam = model_initialize_parameters(column_ztop=tcase.MP.column_ztop,...
-                column_dztop=tcase.MP.column_dztop,...
-                column_zmax=tcase.MP.column_zmax,...
-                column_zy=tcase.MP.column_zy);
+            column_dztop=tcase.MP.column_dztop,...
+            column_zmax=tcase.MP.column_zmax,...
+            column_zy=tcase.MP.column_zy);
             ModelParam.column_dztop = 1; % override the dztop value bc 1 would not get past model_initialize_parameters error checks.  
-            ClimateForcing.T_air_mean = 253.15; % -20 C
+
+            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+
             [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
             z_center = dz2z(dz); 
+
             
             expected_centers = [-0.5; -1.5];
             
@@ -139,17 +145,17 @@ classdef test_model_initialize_grid < matlab.unittest.TestCase
         
         function test_output_orientation(tcase)
             % Ensure outputs are column vectors as used in GEMB
-            tcase.MP.column_ztop = 10;
+            tcase.MP.column_ztop  = 10;
             tcase.MP.column_dztop = 0.05;
-            tcase.MP.column_zmax = 20;
-            tcase.MP.column_zy = 1.1;
-            
+            tcase.MP.column_zmax  = 20;
+            tcase.MP.column_zy    = 1.1;
             
             ModelParam = model_initialize_parameters(column_ztop=tcase.MP.column_ztop,...
-                column_dztop=tcase.MP.column_dztop,...
-                column_zmax=tcase.MP.column_zmax,...
-                column_zy=tcase.MP.column_zy);
-            ClimateForcing.T_air_mean = 253.15; % -20 C
+            column_dztop=tcase.MP.column_dztop,...
+            column_zmax=tcase.MP.column_zmax,...
+            column_zy=tcase.MP.column_zy);
+            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+
             [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
             z_center = dz2z(dz); 
             

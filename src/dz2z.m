@@ -16,8 +16,8 @@ function z_center = dz2z(dz)
 % initial temperature of the snow/firn/ice column. 
 %
 %   % Initialize parameters: 
-%   ModelParam = model_initialize_parameters();
-%   ClimateForcing.T_air_mean = 253.15; % -20 C
+%   ModelParam = model_initialize_parameters;
+%   ClimateForcing.temperature_air_mean = 253.15; % -20 C
 %  
 %   % Initialize Column: 
 %   [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
@@ -43,18 +43,16 @@ function z_center = dz2z(dz)
 %   ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 %   
 %   % Initialize grid:
-%   [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
+%   [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
 %   
 %   % Run GEMB: 
-%   OutData = gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam);
+%   OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam);
 %   
 %   % Get a 2D matrix of grid cell centers: 
 %   z_center = dz2z(OutData.dz);
 %   
-%   % As of the writing of this example, OutData.time is all NaN, so we
-%   will plot "time" as output timesteps and convert it to 2D so pcolor can
-%   plot it: 
-%   time_2D = repmat(1:numel(OutData.time),size(OutData.T,1),1);
+%   % Convert time to 2D so pcolor can plot it: 
+%   time_2D = repmat(OutData.dates,size(OutData.temperature,1),1);
 %   
 %   figure
 %   pcolor(time_2D,z_center,OutData.T)
