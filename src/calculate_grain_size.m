@@ -1,13 +1,13 @@
-function [re, gdn, gsp]  = calculate_grain_size(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam)
+function [grain_radius, grain_dendricity, grain_sphericity]  = calculate_grain_size(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, ClimateForcingStep, ModelParam)
 % calculate_grain_size models the evolution of effective snow grain size, dendricity, and sphericity.
 % 
 %% Syntax 
 % 
-%  [re, gdn, gsp] = calculate_grain_size(T, dz, d, water, re, gdn, gsp, ClimateForcingStep, ModelParam)
+%  [grain_radius, grain_dendricity, grain_sphericity] = calculate_grain_size(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, ClimateForcingStep, ModelParam)
 %
 %% Description
 % 
-% [re, gdn, gsp] = calculate_grain_size(...) calculates the metamorphism of snow grains
+% [grain_radius, grain_dendricity, grain_sphericity] = calculate_grain_size(...) calculates the metamorphism of snow grains
 % over a single time step. The model accounts for different physical processes
 % depending on the snow state:
 %
@@ -15,8 +15,8 @@ function [re, gdn, gsp]  = calculate_grain_size(T, dz, d, water, re, gdn, gsp, C
 % * Nondendritic Dry Snow: Evolves primarily due to temperature gradient metamorphism (faceting/rounding) using the Marbouty (1980) formulation.
 % * Wet Snow: Evolves via rapid grain growth mechanisms due to the presence of liquid water using the Brun (1989) formulation.
 %
-% The function updates the effective grain radius (re), dendricity (gdn), and 
-% sphericity (gsp) for every grid cell in the column.
+% The function updates the effective grain radius (grain_radius), dendricity (grain_dendricity), and 
+% sphericity (grain_sphericity) for every grid cell in the column.
 %
 % Note: This function only executes if ModelParam.albedo_method is set to 
 % "GardnerSharp" or "BruneLeFebre". If strictly empirical albedo models are 
@@ -24,23 +24,23 @@ function [re, gdn, gsp]  = calculate_grain_size(T, dz, d, water, re, gdn, gsp, C
 % 
 %% Inputs
 % 
-% * T                  : Grid cell temperature [K] (mx1 vector).
+% * temperature        : Grid cell temperature [K] (mx1 vector).
 % * dz                 : Grid cell thickness [m] (mx1 vector).
-% * d                  : Grid cell density [kg m^-3] (mx1 vector).
+% * density            : Grid cell density [kg m^-3] (mx1 vector).
 % * water              : Liquid water content [kg m^-2] (mx1 vector).
-% * re                 : Previous effective grain radius [mm] (mx1 vector).
-% * gdn                : Previous grain dendricity [0 to 1] (mx1 vector).
-% * gsp                : Previous grain sphericity [0 to 1] (mx1 vector).
+% * grain_radius       : Previous effective grain radius [mm] (mx1 vector).
+% * grain_dendricity   : Previous grain dendricity [0 to 1] (mx1 vector).
+% * grain_sphericity   : Previous grain sphericity [0 to 1] (mx1 vector).
 % * ClimateForcingStep : Structure containing forcing data for the current step:
-%                          .dt : Time step duration [s].
+%    .dt               : Time step duration [s].
 % * ModelParam         : Structure containing model configuration:
-%                          .albedo_method : String specifying the albedo scheme.
+%    .albedo_method    : String specifying the albedo scheme.
 % 
 %% Outputs 
 % 
-% * re  : Updated effective grain radius [mm] (mx1 vector).
-% * gdn : Updated grain dendricity [0 to 1] (mx1 vector).
-% * gsp : Updated grain sphericity [0 to 1] (mx1 vector).
+% * grain_radius     : Updated effective grain radius [mm] (mx1 vector).
+% * grain_dendricity : Updated grain dendricity [0 to 1] (mx1 vector).
+% * grain_sphericity : Updated grain sphericity [0 to 1] (mx1 vector).
 % 
 %% References
 % Formulations in this function are from the following: 
@@ -79,15 +79,15 @@ end
 
 %% Function
 
-gsz = re * 2;
+gsz = grain_radius * 2;
 
 % Convert ClimateForcingStep.dt from seconds to days
 ClimateForcingStep.dt = ClimateForcingStep.dt/86400;
 
-% Convert T from K to deg C
+% Convert temperature from K to deg C
 
 % Determine liquid-water content in terms
-lwc = water ./ (d .* dz) * 100;
+lwc = water ./ (density .* dz) * 100;
 
 % Set maximum water content by mass to 9 percent (Brun, 1980)
 lwc(lwc > (9 + water_tolerance)) = 9;
@@ -96,8 +96,8 @@ lwc(lwc > (9 + water_tolerance)) = 9;
 % returns the average gradient across the upper and lower grid cell
 
 % initialize
-dT = zeros(size(T));
-Ti = T;
+dT = zeros(size(temperature));
+Ti = temperature;
 
 % depth of grid point center from surface
 z_center = (cumsum(dz) - dz/2);
@@ -105,22 +105,22 @@ z_center = (cumsum(dz) - dz/2);
 % Take forward differences on left and right edges
 m = length(z_center);
 if m > 2
-    dT(1) = (T(3) - T(1))/(z_center(3)-z_center(1));
-    dT(m) = (T(m) - T(m-2))/(z_center(m)-z_center(m-2));
+    dT(1) = (temperature(3) - temperature(1))/(z_center(3)-z_center(1));
+    dT(m) = (temperature(m) - temperature(m-2))/(z_center(m)-z_center(m-2));
 elseif m > 1
-    dT(1) = (T(2) - T(1))/(z_center(2)-z_center(1));
-    dT(m) = (T(m) - T(m-1))/(z_center(m)-z_center(m-1));
+    dT(1) = (temperature(2) - temperature(1))/(z_center(2)-z_center(1));
+    dT(m) = (temperature(m) - temperature(m-1))/(z_center(m)-z_center(m-1));
 end
 
 % Take centered differences on interior points
 z_center      = z_center(3:end) - z_center(1:end-2);
-dT(2:end-1,1) = (T(3:end,1)-T(1:end-2,1))./z_center(:,1);
+dT(2:end-1,1) = (temperature(3:end,1)-temperature(1:end-2,1))./z_center(:,1);
 
 % take absolute value of temperature gradient
 dT = abs(dT);
 
 % index for dentricity > 0 & == 0
-G = gdn > (0 + gdn_tolerance);
+G = grain_dendricity > (0 + gdn_tolerance);
 J = ~G;
 
 %% DENDRITIC SNOW METAMORPHISM
@@ -129,22 +129,22 @@ J = ~G;
 % if there is snow dentricity > 0
 if sum(G) ~= 0
     % disp ('DENDRITIC DRY SNOW METAMORPHISM')
-    % index for dentricity > 0 and T gradients < 5 degC m-1 and >= 5 degC m-1
+    % index for dentricity > 0 and temperature gradients < 5 degC m-1 and >= 5 degC m-1
     H = (abs(dT) <= 5+T_tolerance)  & G & (water <= 0+water_tolerance); 
     I = (abs(dT)  > 5+T_tolerance)  & G & (water <= 0+water_tolerance);
     
     % determine coefficients
-    A = - 2E8 * exp(-6E3 ./ T(H)) * ClimateForcingStep.dt;
-    B =   1E9 * exp(-6E3 ./ T(H)) * ClimateForcingStep.dt;
-    C = (-2E8 * exp(-6E3 ./ T(I)) * ClimateForcingStep.dt) .* (abs(dT(I)) .^ 0.4);
+    A = - 2E8 * exp(-6E3 ./ temperature(H)) * ClimateForcingStep.dt;
+    B =   1E9 * exp(-6E3 ./ temperature(H)) * ClimateForcingStep.dt;
+    C = (-2E8 * exp(-6E3 ./ temperature(I)) * ClimateForcingStep.dt) .* (abs(dT(I)) .^ 0.4);
     
     % new dentricity and sphericity for dT < 5 degC m-1 
-    gdn(H) = gdn(H) + A;
-    gsp(H) = gsp(H) + B;
+    grain_dendricity(H) = grain_dendricity(H) + A;
+    grain_sphericity(H) = grain_sphericity(H) + B;
     
     % new dendricity and sphericity for dT >= 5 degC m-1 
-    gdn(I) = gdn(I) + C;
-    gsp(I) = gsp(I) + C;
+    grain_dendricity(I) = grain_dendricity(I) + C;
+    grain_sphericity(I) = grain_sphericity(I) + C;
     
     % WET SNOW METAMORPHISM
     
@@ -157,18 +157,18 @@ if sum(G) ~= 0
         D = (1/16) * (lwc(L) .^ 3) * ClimateForcingStep.dt;
         
         % new dendricity and sphericity for wet snow
-        gdn(L) = gdn(L) - D;
-        gsp(L) = gsp(L) + D;
+        grain_dendricity(L) = grain_dendricity(L) - D;
+        grain_sphericity(L) = grain_sphericity(L) + D;
     end
     
     % dendricity and sphericity can not be > 1 or < 0
-    gdn(gdn <= 0+gdn_tolerance ) = 0;
-    gsp(gsp <= 0+gdn_tolerance ) = 0;
-    gdn(gdn >= 1-gdn_tolerance ) = 1;
-    gsp(gsp >= 1-gdn_tolerance ) = 1;
+    grain_dendricity(grain_dendricity <= 0+gdn_tolerance ) = 0;
+    grain_sphericity(grain_sphericity <= 0+gdn_tolerance ) = 0;
+    grain_dendricity(grain_dendricity >= 1-gdn_tolerance ) = 1;
+    grain_sphericity(grain_sphericity >= 1-gdn_tolerance ) = 1;
     
     % determine new grain size (mm)
-    gsz(G) = max(0.1*(gdn(G)/.99+(1.0-1.0*gdn(G)/.99).*(gsp(G)/.99*3.0+(1.0-gsp(G)/.99)*4.0)),gdn_tolerance *2);
+    gsz(G) = max(0.1*(grain_dendricity(G)/.99+(1.0-1.0*grain_dendricity(G)/.99).*(grain_sphericity(G)/.99*3.0+(1.0-grain_sphericity(G)/.99)*4.0)),gdn_tolerance *2);
 end
 
 % if there is snow dentricity == 0
@@ -180,27 +180,27 @@ if sum(J) ~= 0
     % decreases according to Equations (4). When sphericity
     % reaches 0, their size increases according to the functions
     % determined by Marbouty. (Brun et al., 1992)
-    P1 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & (abs(dT)  > 5+T_tolerance); 
-    P2 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & ((abs(dT) <= 5+T_tolerance)  & (water > 0+water_tolerance));
-    P3 = J & (gsp > gdn_tolerance)  & (gsp < 1-gdn_tolerance)  & ~P1 & ~P2;
+    P1 = J & (grain_sphericity > gdn_tolerance)  & (grain_sphericity < 1-gdn_tolerance)  & (abs(dT)  > 5+T_tolerance); 
+    P2 = J & (grain_sphericity > gdn_tolerance)  & (grain_sphericity < 1-gdn_tolerance)  & ((abs(dT) <= 5+T_tolerance)  & (water > 0+water_tolerance));
+    P3 = J & (grain_sphericity > gdn_tolerance)  & (grain_sphericity < 1-gdn_tolerance)  & ~P1 & ~P2;
     
-    F1 = (-2e8 .* exp(-6e3 ./ T(P1)) .* ClimateForcingStep.dt) .* abs(dT(P1)).^(.4);
+    F1 = (-2e8 .* exp(-6e3 ./ temperature(P1)) .* ClimateForcingStep.dt) .* abs(dT(P1)).^(.4);
     F2 = (1.0/16.0) * lwc(P2).^(3.0)  * ClimateForcingStep.dt;
-    F3 = 1e9 * exp(-6e3 ./ T(P3))     * ClimateForcingStep.dt;
+    F3 = 1e9 * exp(-6e3 ./ temperature(P3))     * ClimateForcingStep.dt;
     
-    gsp(P1) = gsp(P1) + F1;
-    gsp(P2) = gsp(P2) + F2;
-    gsp(P3) = gsp(P3) + F3;
+    grain_sphericity(P1) = grain_sphericity(P1) + F1;
+    grain_sphericity(P2) = grain_sphericity(P2) + F2;
+    grain_sphericity(P3) = grain_sphericity(P3) + F3;
     
     % sphericity can not be > 1 or < 0
-    gsp(gsp <= 0+gdn_tolerance) = 0;
-    gsp(gsp >= 1-gdn_tolerance) = 1;
+    grain_sphericity(grain_sphericity <= 0+gdn_tolerance) = 0;
+    grain_sphericity(grain_sphericity >= 1-gdn_tolerance) = 1;
     
     % DRY SNOW METAMORPHISM (Marbouty, 1980)
     % grouped model coefficinets from Marbouty, 1980: Figure 9
-    P   = J & (water <= 0+water_tolerance  | (gsp <= 0+gdn_tolerance  & abs(dT) > 5+T_tolerance)); 
+    P   = J & (water <= 0+water_tolerance  | (grain_sphericity <= 0+gdn_tolerance  & abs(dT) > 5+T_tolerance)); 
     dTi = dT;
-    Q   = Marbouty(Ti(P), d(P), dTi(P));
+    Q   = Marbouty(Ti(P), density(P), dTi(P));
     
     % Calculate grain growth
     gsz(P) = gsz(P) + Q * ClimateForcingStep.dt;
@@ -208,7 +208,7 @@ if sum(J) ~= 0
     % WET SNOW METAMORPHISM (Brun, 1989)
     
     % Index for nondendritic wet snow
-    K = J & ~((water <= 0+water_tolerance)  | ((gsp <= 0+gdn_tolerance)  & (abs(dT) > 5+T_tolerance)));
+    K = J & ~((water <= 0+water_tolerance)  | ((grain_sphericity <= 0+gdn_tolerance)  & (abs(dT) > 5+T_tolerance)));
     
     % check if snowpack is wet
     if sum(K) ~= 0
@@ -221,20 +221,20 @@ if sum(J) ~= 0
     end
     
     % grains with sphericity == 1 can not have grain sizes > 2 mm (Brun, 1992)
-    gsz(abs(gsp-1)<water_tolerance  & gsz > 2-water_tolerance ) = 2;
+    gsz(abs(grain_sphericity-1)<water_tolerance  & gsz > 2-water_tolerance ) = 2;
     
     % grains with sphericity == 0 can not have grain sizes > 5 mm (Brun, 1992)
-    gsz(abs(gsp-1)>=water_tolerance  & gsz > 5-water_tolerance ) = 5;
+    gsz(abs(grain_sphericity-1)>=water_tolerance  & gsz > 5-water_tolerance ) = 5;
 end
 
 % Convert grain size back to effective grain radius
-re = gsz/2;
+grain_radius = gsz/2;
 
 end
 
-function Q = Marbouty(T, d, dT)
+function Q = Marbouty(temperature, density, dT)
 % Marbouty calculates grain growth according to Fig. 9 of Marbouty, 1980
-% ------NO GRAIN GROWTH FOR d > 400 kg m-3 because (H is set to zero)------
+% ------NO GRAIN GROWTH FOR density > 400 kg m-3 because (H is set to zero)------
 % ---------------this is a major limitation of the model-------------------
 
 %% Initialize
@@ -242,31 +242,31 @@ function Q = Marbouty(T, d, dT)
 T_tolerance  = 1e-10;
 d_tolerance  = 1e-11;
 
-F    = zeros(size(T));
+F    = zeros(size(temperature));
 H    = F;
 G    = F;
 
 E    = 0.09;       % model time growth constant [mm d-1]
-T    = T - 273.15; % converts T from K to ºC
+temperature    = temperature - 273.15; % converts temperature from K to ºC
 dT   = dT/100.0;   % convert dT from degC/m to degC/cm
 
 %% Temperature coefficient F
 
-I    = T > -6+T_tolerance ;
-F(I) =  0.7 + ((T(I)/-6) * 0.3);
+I    = temperature > -6+T_tolerance ;
+F(I) =  0.7 + ((temperature(I)/-6) * 0.3);
 
-I    = T <= -6+T_tolerance  & T > -22+T_tolerance ;
-F(I) =  1 - ((T(I)+6)/-16 * 0.8);
+I    = temperature <= -6+T_tolerance  & temperature > -22+T_tolerance ;
+F(I) =  1 - ((temperature(I)+6)/-16 * 0.8);
 
-I    = T <= -22+T_tolerance  & T > -40+T_tolerance ;
-F(I) =  0.2 - ((T(I)+22)/-18 * 0.2);
+I    = temperature <= -22+T_tolerance  & temperature > -40+T_tolerance ;
+F(I) =  0.2 - ((temperature(I)+22)/-18 * 0.2);
 
 %% Density coefficient H
 
-H(d < 150-d_tolerance ) = 1;
+H(density < 150-d_tolerance ) = 1;
 
-I    = d >= 150-d_tolerance  & d < 400-d_tolerance ;
-H(I) = 1 - ((d(I)-150)/250);
+I    = density >= 150-d_tolerance  & density < 400-d_tolerance ;
+H(I) = 1 - ((density(I)-150)/250);
 
 %% Temperature gradient coefficient G
 

@@ -3,54 +3,53 @@
 
 # Syntax 
 ```matlab
-[T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
 ```
 
 # Description
-`[T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing)` uses inputs `ModelParam` from `model_initialize_parameters` and input structure `ClimateForcing` containing the field `T_air_mean`. Outputs are as follows: 
+`[T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing)` uses inputs `ModelParam` from `model_initialize_parameters` and input structure `ClimateForcing` containing the field `temperature_air_mean`. Outputs are as follows: 
 
 |Variable   |  Units | Description          |      Initial Value|
 |---|---|---|---|
-|`T`     | K |  temperature |  mean annual surface temperature |
+|`temperature`     | K |  temperature |  mean annual surface temperature |
 |`dz`    |   m  |thickness |                  array generated from model parameters |
-|`d`     | kg m^-3 | ice density   |             `ModelParam.density_ice` |
-|`W`     | kg m^-2 | old-snow water content  |   0|
-|`re`    | mm  |old-snow grain size   |     2.5|
-|`gdn` | fraction | old-snow grain dendricity | 0|
-|`gsp` | fraction | old-snow grain sphericity|  0|
-|`a` | fraction | surface albedo         |    `ModelParam.albedo_snow`|
-|`a_diffuse` | fraction | diffuse surface albedo  |   `ModelParam.albedo_snow` |
-
+|`density`     | kg m^-3 | ice density   |             `ModelParam.density_ice` |
+|`water`     | kg m^-2 | old-snow water content  |   0|
+|`grain_radius`    | mm  |old-snow grain size   |     2.5|
+|`grain_dendricity` | fraction | old-snow grain dendricity | 0|
+|`grain_sphericity` | fraction | old-snow grain sphericity|  0|
+|`albedo` | fraction | surface albedo         |    `ModelParam.albedo_snow`|
+|`albedo_diffuse` | fraction | diffuse surface albedo  |   `ModelParam.albedo_snow` |
 
 # Example
 Initialize a GEMB column based on default model parameters and a mean surface temperature of -20 C. 
 
 ```matlab
 % Initialize parameters: 
-ModelParam = model_initialize_parameters();
-ClimateForcing.T_air_mean = 253.15; % -20 C
+ModelParam = model_initialize_parameters;
+ClimateForcing.temperature_air_mean = 253.15; % -20 C
 
 % Initialize Column: 
-[T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
+[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
 ```
 
 Use MATLAB's built-in `whos` function to sizes of the arrays that were created by `model_initialize_column`:
 
 ```matlab
 >> whos
-Name                  Size            Bytes  Class     Attributes
+  Name                    Size            Bytes  Class     Attributes
 
-ClimateForcing        1x1               176  struct              
-ModelParam            1x1              7972  struct              
-T                   264x1              2112  double              
-W                   264x1              2112  double              
-a                   264x1              2112  double              
-a_diffuse           264x1              2112  double              
-d                   264x1              2112  double              
-dz                  264x1              2112  double              
-gdn                 264x1              2112  double              
-gsp                 264x1              2112  double              
-re                  264x1              2112  double              
+  ClimateForcing          1x1               176  struct              
+  ModelParam              1x1              7972  struct              
+  albedo                264x1              2112  double              
+  albedo_diffuse        264x1              2112  double              
+  density               264x1              2112  double              
+  dz                    264x1              2112  double              
+  grain_dendricity      264x1              2112  double              
+  grain_radius          264x1              2112  double              
+  grain_sphericity      264x1              2112  double              
+  temperature           264x1              2112  double              
+  water                 264x1              2112  double                         
 ```
 
 Above, we see that all of the variables creates by `model_initialize_column` are 264x1, representing a column of initial values. Use [`dz2z`](dz2z_documentation.md) to convert the column of `dz` values to grid cell centers and show the grid spacing alongside initial temperature:

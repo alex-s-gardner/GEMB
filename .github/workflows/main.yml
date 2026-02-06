@@ -29,9 +29,9 @@ jobs:
         uses: matlab-actions/run-tests@v2
         with:
           
-          # Looks for tests recursively inside the 'tests' folder
+          # Looks for tests recursively inside the 'test' folder
           select-by-folder: test
-          
+
           # Optional: Output results in a format GitHub can display nicely
           test-results-junit: test-results/results.xml
 

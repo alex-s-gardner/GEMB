@@ -33,7 +33,7 @@ omega_day = 2 * pi * 365.25;
 % Rebuild Design Matrix
 X = [ones(size(t)), ...=
      cos(omega_day * t), sin(omega_day * t), ...
-     cos(omega_yr * t), sin(omega_yr * t)];
+     cos(omega_yr  * t), sin(omega_yr  * t)];
 
 % Calculate pure signal
 y_deterministic = X * coeffs.beta;

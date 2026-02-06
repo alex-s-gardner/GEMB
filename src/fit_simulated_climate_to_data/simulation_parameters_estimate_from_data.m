@@ -52,71 +52,71 @@ inputs = load(fn);
 %% location and time parameters
 location_parameters.description = "parameters estimated using simulation_parameters_estimate_from_data.m as fit to original TEST_INPUT_1.mat data";
 
-location_parameters.lat = inputs.LP.lat;
-location_parameters.lon = inputs.LP.lon;
-location_parameters.elev = 700; %meters 
+location_parameters.latitude = inputs.LP.latitude;
+location_parameters.longitude = inputs.LP.longitude;
+location_parameters.elevation = 700; %meters 
 location_parameters.time_step = 1/(365.25*24); % fraction of a year
 location_parameters.start_date = 1994; % decimal year
 location_parameters.end_date = location_parameters.start_date + 31; % decimal year
 location_parameters.rand_seed = 42; % Sets the seed to a fixed number
 
-location_parameters.Vz = inputs.LP.Vz; % wind observation height above surface [m]
-location_parameters.Tz = inputs.LP.Tz; % temperature observation height above surface [m]
-location_parameters.T_air_mean = mean(inputs.T_air0); % average annual temerature [K]
-location_parameters.P_mean = mean(inputs.P0); % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
+location_parameters.wind_observation_height = inputs.LP.wind_observation_height; % wind observation height above surface [m]
+location_parameters.temperature_observation_height = inputs.LP.temperature_observation_height; % temperature observation height above surface [m]
+location_parameters.temperature_air_mean = mean(inputs.temperature_air); % average annual temerature [K]
+location_parameters.precipitation_mean = mean(inputs.precipitation); % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]
 
 dec_year = location_parameters.start_date: location_parameters.time_step:location_parameters.end_date+1;
-dec_year = dec_year(1:length(inputs.T_air0));
+dec_year = dec_year(1:length(inputs.temperature_air));
 dec_year = dec_year(:);
 rng(location_parameters.rand_seed)
 
 disp("%%  location and time parameters")
 disp("location_parameters.description = """ + location_parameters.description + """;")
-disp("location_parameters.lat = " + sprintf('%0.4f ', location_parameters.lat)+ "; % [º]")
-disp("location_parameters.lon = " + sprintf('%0.4f ', location_parameters.lon)+ "; % [º]")
-disp("location_parameters.elev = " + sprintf('%0.0f ', location_parameters.elev)+ "; % [m]")
+disp("location_parameters.latitude = " + sprintf('%0.4f ', location_parameters.latitude)+ "; % [º]")
+disp("location_parameters.longitude = " + sprintf('%0.4f ', location_parameters.longitude)+ "; % [º]")
+disp("location_parameters.elevation = " + sprintf('%0.0f ', location_parameters.elevation)+ "; % [m]")
 disp("location_parameters.start_date = " + sprintf('%0.2f ', location_parameters.start_date) + "; % [decimal year]")
 disp("location_parameters.end_date = " + sprintf('%0.2f ', location_parameters.end_date) + "; % [decimal year]")
 
-disp("location_parameters.Vz = " + sprintf('%0.1f ', location_parameters.Vz)+ "; % wind observation height above surface [m]")
-disp("location_parameters.Tz = " + sprintf('%0.1f ', location_parameters.Tz)+ "; % temperature observation height above surface [m]")
-disp("location_parameters.T_air_mean = " + sprintf('%0.1f ', location_parameters.T_air_mean)+ "; % average annual temerature [K]")
-disp("location_parameters.P_mean = " + sprintf('%0.1f ', location_parameters.P_mean)+ "; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]")
+disp("location_parameters.wind_observation_height = " + sprintf('%0.1f ', location_parameters.wind_observation_height)+ "; % wind observation height above surface [m]")
+disp("location_parameters.temperature_observation_height = " + sprintf('%0.1f ', location_parameters.temperature_observation_height)+ "; % temperature observation height above surface [m]")
+disp("location_parameters.temperature_air_mean = " + sprintf('%0.1f ', location_parameters.temperature_air_mean)+ "; % average annual temerature [K]")
+disp("location_parameters.precipitation_mean = " + sprintf('%0.1f ', location_parameters.precipitation_mean)+ "; % average annual accumulation rate of snow or ice [kg m⁻² yr⁻¹]")
 
 disp("location_parameters.time_step = " + sprintf('%0.4f ', location_parameters.time_step) + "; % [fraction of a year]")
 disp("location_parameters.rand_seed = " + sprintf('%0.0f ', 42) + "; % [seed for random number generator]")
 disp(" ")
 
 %% downward shortwave [W/m2]
-varname = "dsw";
+varname = "shortwave_downward";
 longname = varname2longname(varname);
-simulated.(varname) = simulate_shortwave_irradiance(dec_year, location_parameters.lat);
+simulated.(varname) = simulate_shortwave_irradiance(dec_year, location_parameters.latitude);
 figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% screen level air temperature [K]
-varname = "T_air";
+varname = "temperature_air";
 longname = varname2longname(varname);
 disp("%% " + longname)
-coeffs.(varname) = fit_air_temperature(dec_year, inputs.(varname + "0"), location_parameters.lat, location_parameters.elev);
-simulated.(varname ) = simulate_air_temperature(dec_year, location_parameters.lat, location_parameters.elev, coeffs.(varname));
+coeffs.(varname) = fit_air_temperature(dec_year, inputs.(varname + "0"), location_parameters.latitude, location_parameters.elevation);
+simulated.(varname ) = simulate_air_temperature(dec_year, location_parameters.latitude, location_parameters.elevation, coeffs.(varname));
 simulate_coeffs_disp(coeffs.(varname), "coeffs." +varname)
 figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% screen level air pressure [Pa]
-varname = "p_air";
+varname = "pressure_air";
 longname = varname2longname(varname);
-simulated.(varname)= simulate_air_pressure(dec_year, simulated.T_air, location_parameters.lat, location_parameters.elev);
+simulated.(varname)= simulate_air_pressure(dec_year, simulated.temperature_air, location_parameters.latitude, location_parameters.elevation);
 figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% screen level relative humidity
-varname = "rh";
+varname = "relative_humidity";
 min_max = [0, 100]';
 longname = varname2longname(varname);
 disp("%% " + longname)
-inputs.(varname + "0") = relative_humidity(inputs.e_air0, inputs.T_air0);
+inputs.(varname + "0") = relative_humidity(inputs.vapor_pressure, inputs.temperature_air);
 coeffs.(varname) = fit_seasonal_daily_noise(dec_year, inputs.(varname + "0"));
 coeffs.(varname).min_max = min_max;
 simulate_coeffs_disp(coeffs.(varname), "coeffs." + varname)
@@ -128,18 +128,18 @@ figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname));
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% screen level vapor pressure [Pa]
-varname = "e_air";
+varname = "vapor_pressure";
 longname = varname2longname(varname);
-simulated.(varname) = simulate_vapor_pressure(simulated.T_air, simulated.rh);
+simulated.(varname) = simulate_vapor_pressure(simulated.temperature_air, simulated.relative_humidity);
 figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname)); 
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% downward longwave [W/m2]
-varname = "dlw";
+varname = "longwave_downward";
 min_max = [0, Inf]';
 longname = varname2longname(varname);
 disp("%% " + longname)
-simulated.(varname) = simulate_longwave_irradiance(simulated.T_air, simulated.e_air);
+simulated.(varname) = simulate_longwave_irradiance(simulated.temperature_air, simulated.vapor_pressure);
 
 % account for cloud cover 
 coeffs.(varname) = fit_longwave_irradiance_delta(inputs.(varname + "0") - simulated.(varname));
@@ -153,7 +153,7 @@ figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname));plot(in
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% screen wind speed [m/s]
-varname = "V";
+varname = "wind_speed";
 min_max = [0, Inf]';
 longname = varname2longname(varname);
 disp("%% " + longname)
@@ -167,7 +167,7 @@ figure; plot(inputs.(varname + "0")); hold on; plot(simulated.(varname));
 ylabel(longname); legend(["observed", "simulated"]); hold off;
 
 %% Precipitation [kg m-2]
-varname = "P";
+varname = "precipitation";
 min_max = [0, Inf]';
 longname = varname2longname(varname);
 disp("%% " + longname)

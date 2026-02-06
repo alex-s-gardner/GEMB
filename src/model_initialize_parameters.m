@@ -23,7 +23,7 @@ function options = model_initialize_parameters(options)
 %
 %    --- GENERAL & INITIALIZATION ---
 %    .run_prefix                    : string       Unique run identifier (default: "default").
-%    .n_spinup_cycles               : integer      Number of spin-up cycles (default: 0).
+%    .spinup_cycles                 : integer      Number of spin-up cycles (default: 0).
 %
 %    --- DENSITY & DENSIFICATION ---
 %    .densification_method          : string       Model: "HerronLangway", "Anthern", "Ligtenberg".
@@ -35,8 +35,8 @@ function options = model_initialize_parameters(options)
 %    --- LONGWAVE EMISSIVITY & ROUGHNESS ---
 %    .emissivity_method             : string       Method: "uniform", "re_threshold", "re_w_threshold".
 %    .emissivity                    : double       Base longwave emissivity (0-1).
-%    .emissivity_re_large           : double       Emissivity for large grain sizes (0-1).
-%    .emissivity_re_threshold       : double       Grain radius threshold [mm] for emissivity switching.
+%    .emissivity_grain_radius_large   : double       Emissivity for large grain sizes (0-1).
+%    .emissivity_grain_radius_threshold: double       Grain radius threshold [mm] for emissivity switching.
 %    .surface_roughness_effective_ratio : double   Ratio of physical surface roughness to effective roughness.
 %
 %    --- THERMAL CONDUCTIVITY ---
@@ -48,11 +48,11 @@ function options = model_initialize_parameters(options)
 %    --- ALBEDO & RADIATION ---
 %    .albedo_method                 : string       Scheme: "GardnerSharp", "GreuellKonzelmann", etc.
 %    .albedo_density_threshold      : double       Density threshold [kg m^-3] below which albedo_method is applied (Default Inf).
-%    .sw_absorption_method          : double       0 (surface only) or 1 (subsurface penetration).
+%    .shortwave_absorption_method   : double       0 (surface only) or 1 (subsurface penetration).
 %    .albedo_snow                   : double       Albedo for fresh snow (0.5-0.95).
 %    .albedo_ice                    : double       Albedo for bare ice (0.2-0.6).
 %    .albedo_fixed                  : double       Fixed albedo used if albedo_method="None" or density > threshold.
-%    .dsw_diffuse                   : double       Downward diffusive shortwave flux [W m^-2].
+%    .shortwave_downward_diffuse    : double       Downward diffusive shortwave flux [W m^-2].
 %    .solar_zenith_angle            : double       Solar Zenith Angle [degrees].
 %    .cloud_optical_thickness       : double       Cloud Optical Thickness.
 %    .black_carbon_snow             : double       BC concentration in snow [ppm].
@@ -87,9 +87,9 @@ function options = model_initialize_parameters(options)
 %   ModelParam = model_initialize_parameters;
 %
 %   % Specify 3 spinup cycles, ice density of 920 kg/m3, and the Ligtenberg densification method: 
-%   ModelParam = model_initialize_parameters(n_spinup_cycles=3,...
-%                                                ice_density=920,...
-%                                       densification_method="Ligtenberg");
+%   ModelParam = model_initialize_parameters(spinup_cycles=3,...
+%                                              ice_density=920,...
+%                                     densification_method="Ligtenberg");
 %
 %   % Not sure what your options are? Try entering "help" as the selection: 
 %   model_initialize_parameters(densification_method="options")
@@ -134,7 +134,7 @@ arguments
     % spin-up
     % number of cycles of met data run before output is calculated.
     % set spinUp = 0 for no spin up
-    options.n_spinup_cycles (1,1) double {mustBeInteger, mustBeInRange(options.n_spinup_cycles, 0, 10000)} = 0;  
+    options.spinup_cycles (1,1) double {mustBeInteger, mustBeInRange(options.spinup_cycles, 0, 10000)} = 0;  
      
     %% DENSITY AND DENSIFICATION 
     % select densification model to use (default is "Anthern"):
@@ -150,15 +150,15 @@ arguments
     % Specify densification coefficients for Ligtenberg model. These 
     % coefficients have been calibrated to match observations (default is "Gre_RACMO_GS_SW0"):
     % ------------------------ Antarctic -------------------------
-    %   "Ant_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0
+    %   "Ant_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_absorption_method=0
     %   "Ant_ERA5v4_Paolo23" : ERA5 v4 (Paolo et al., 2023)
-    %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BruneLeFebre", sw_absorption_method=1
+    %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BruneLeFebre", shortwave_absorption_method=1
     %   "Ant_RACMO_GS_SW0"   : RACMO callibration, default (Gardner et al., 2023)
     %   "Ant_Ligtenberg"     : Ligtenberg and others (2011), Antarctica
     % ------------------------- Greenland ------------------------
-    %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", sw_absorption_method=0, firn & bare ice
+    %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_absorption_method=0, firn & bare ice
     %   "Gre_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
-    %   "Gre_RACMO_GB_SW1"   : ismember(albedo_method,["GreuellKonzelmann","Bougamont2005"]) && sw_absorption_method>0
+    %   "Gre_RACMO_GB_SW1"   : ismember(albedo_method,["GreuellKonzelmann","Bougamont2005"]) && shortwave_absorption_method>0
     %   "Gre_KuipersMunneke" : Kuipers Munneke and others (2015) [semi-empirical], Greenland
     options.densification_coeffs_M01 (1,1) string {mustBeMember(options.densification_coeffs_M01, ...
         ["Ant_ERA5_GS_SW0", "Ant_ERA5v4_Paolo23", "Ant_ERA5_BF_SW1", "Ant_RACMO_GS_SW0", ...
@@ -183,10 +183,10 @@ arguments
     %% LONGWAVE EMISSIVITY
     % Select method for calculating emissivity (default is "uniform")
     %   0-"uniform"       : uses "emissivity" for all snow/firn/ice surfaces
-    %   1-"re_threshold"  : uses "emissivity" for re <= emissivity_re_threshold 
-    %                       & "emissivity_re_large" for re > emissivity_re_threshold
-    %   2:"re_w_threshold": uses "emissivity" for (re <= emissivity_re_threshold & there is no liquid water at the surface) 
-    %                       & "emissivity_re_large" for (re > emissivity_re_threshold or when there is liquid water at the surface)
+    %   1-"re_threshold"  : uses "emissivity" for re <= emissivity_grain_radius_threshold 
+    %                       & "emissivity_grain_radius_large" for re > emissivity_grain_radius_threshold
+    %   2:"re_w_threshold": uses "emissivity" for (re <= emissivity_grain_radius_threshold & there is no liquid water at the surface) 
+    %                       & "emissivity_grain_radius_large" for (re > emissivity_grain_radius_threshold or when there is liquid water at the surface)
     options.emissivity_method (1,1) string {mustBeMember(options.emissivity_method, ...
         ["uniform", "re_threshold", "re_w_threshold"])} = "uniform";
 
@@ -194,15 +194,15 @@ arguments
     options.surface_roughness_effective_ratio (1,1) ...
         double {mustBeInRange(options.surface_roughness_effective_ratio, 0, 3)} = 0.10; % (Foken 2008)
 
-    % Specify longwave emissivity (emissivity_re_large only used for
+    % Specify longwave emissivity (emissivity_grain_radius_large only used for
     % "emissivity_method" == "re_threshold" or "re_w_threshold"
     % Default updated to 0.98 to satisfy range check [0, 1]
     options.emissivity (1,1) double {mustBeInRange(options.emissivity, 0, 1)} = 0.97;
-    options.emissivity_re_large (1,1) double {mustBeInRange(options.emissivity_re_large, 0, 1)} = 0.97;
+    options.emissivity_grain_radius_large (1,1) double {mustBeInRange(options.emissivity_grain_radius_large, 0, 1)} = 0.97;
     
     % Specify the effective grain radii (re) used when "emissivity_method" == "re_threshold" or "re_w_threshold"
     % Default value is a effective grain radius of 10 mm.
-    options.emissivity_re_threshold (1,1) double {mustBeInRange(options.emissivity_re_threshold, 0, 100)} = 10;
+    options.emissivity_grain_radius_threshold (1,1) double {mustBeInRange(options.emissivity_grain_radius_threshold, 0, 100)} = 10;
     
     %% THEMAL CONDUCTIVITY
     % select method for calculating thermal conductivity (default is "Sturm")
@@ -222,7 +222,7 @@ arguments
     % Select method of calculating albedo and subsurface absorption (default is "GardnerSharp")
     %   0-"None"             : direct input from albedo_fixed parameter, no use of albedo_density_threshold
     %   1-"GardnerSharp"     : effective grain radius (Gardner & Sharp, 2009)
-    %   2-"BruneLeFebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with sw_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
+    %   2-"BruneLeFebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with shortwave_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
     %   3-"GreuellKonzelmann": density and cloud amount (Greuell & Konzelmann, 1994)
     %   4-"Bougamont2005"    : exponential time decay & wetness (Bougamont et al., 2005)
     options.albedo_method (1,1) string {mustBeMember(options.albedo_method, ...
@@ -233,17 +233,17 @@ arguments
     options.albedo_density_threshold (1,1) double {mustBeGreaterThanOrEqual(options.albedo_density_threshold, 0)} = Inf;
     
     % apply all SW to top grid cell (0) or allow SW to penetrate surface (1)
-    % (default 0: if sw_absorption_method=1 and albedo_method=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
-    options.sw_absorption_method (1,1) double {mustBeMember(options.sw_absorption_method, [0,1])} = 0;
+    % (default 0: if shortwave_absorption_method=1 and albedo_method=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
+    options.shortwave_absorption_method (1,1) double {mustBeMember(options.shortwave_absorption_method, [0,1])} = 0;
 
     % for methods of calculating albedo see albedo function
     % --------------- "GardnerSharp" & "BruneLeFebre" ----------------------
-    options.albedo_snow (1,1) double {mustBeInRange(options.albedo_snow, 0.5, .95)}   = 0.85; % new snow albedo (0.64 - 0.89)
-    options.albedo_ice (1,1) double {mustBeInRange(options.albedo_ice, 0.2, .6)}      = 0.48; % range 0.27-0.58 for old snow
+    options.albedo_snow  (1,1) double {mustBeInRange(options.albedo_snow,  0.5, .95)} = 0.85; % new snow albedo (0.64 - 0.89)
+    options.albedo_ice   (1,1) double {mustBeInRange(options.albedo_ice,   0.2, .6 )} = 0.48; % range 0.27-0.58 for old snow
     options.albedo_fixed (1,1) double {mustBeInRange(options.albedo_fixed, 0.2, .95)} = 0.85; % Albedo forcing at every element.  Used only if albedo_method == 0, or density exceeds albedo_density_threshold
     
     % Default values, but these can also be set as time series forcing
-    options.dsw_diffuse (1,1) double {mustBeInRange(options.dsw_diffuse, 0, 1000)}                       = 0.0;  % downward diffusive shortwave radiation flux [W/m^2]
+    options.shortwave_downward_diffuse (1,1) double {mustBeInRange(options.shortwave_downward_diffuse, 0, 1000)}                       = 0.0;  % downward diffusive shortwave radiation flux [W/m^2]
     options.solar_zenith_angle (1,1) double {mustBeInRange(options.solar_zenith_angle, 0, 90)}           = 0.0;  % Solar Zenith Angle [degree]
     options.cloud_optical_thickness (1,1) double {mustBeInRange(options.cloud_optical_thickness, 0, 30)} = 0.0;  % Cloud Optical Thickness
     options.black_carbon_snow (1,1) double {mustBeInRange(options.black_carbon_snow, 0, 2)}              = 0.0;  % concentration of light absorbing carbon for snow [ppm]

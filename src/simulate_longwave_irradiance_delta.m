@@ -1,4 +1,4 @@
-function dlw_delta = simulate_longwave_irradiance_delta(dec_year, coeff)
+function longwave_downward_delta = simulate_longwave_irradiance_delta(dec_year, coeff)
 % simulate_longwave_irradiance_delta 
 % 
 %
@@ -24,7 +24,7 @@ function dlw_delta = simulate_longwave_irradiance_delta(dec_year, coeff)
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 n = length(dec_year);
-dlw_delta = zeros(n, 1);
+longwave_downward_delta = zeros(n, 1);
 
 % 1. Component Selection (1, 2, or 3)
 % Cumulative probability used for efficient multi-component sampling
@@ -42,7 +42,7 @@ for i = 1:n
     while val < coeff.prctile_bounds(1) || val > coeff.prctile_bounds(2)
          val = coeff.mu(idx) + coeff.sigma(idx) * randn();
     end
-    dlw_delta(i) = val;
+    longwave_downward_delta(i) = val;
 end
 
 end

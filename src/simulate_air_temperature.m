@@ -1,37 +1,37 @@
-function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
+function temperature_air = simulate_air_temperature(dec_year, latitude, elevation, coeffs)
 % simulate_air_temperature simulates air temp using fitted coefficients.
 %
 %% Syntax
 %
-%  T_air = simulate_air_temperature(dec_year, lat, elev)
-%  T_air = simulate_air_temperature(..., lat_scale=value)
-%  T_air = simulate_air_temperature(..., daily_amp_scale=value)
-%  T_air = simulate_air_temperature(..., weather_sigma_scale=value)
-%  T_air = simulate_air_temperature(..., weather_corr=value)
-%  T_air = simulate_air_temperature(..., mean_offset=value)
+%  temperature_air = simulate_air_temperature(dec_year, latitude, elevation)
+%  temperature_air = simulate_air_temperature(..., lat_scale=value)
+%  temperature_air = simulate_air_temperature(..., daily_amp_scale=value)
+%  temperature_air = simulate_air_temperature(..., weather_sigma_scale=value)
+%  temperature_air = simulate_air_temperature(..., weather_corr=value)
+%  temperature_air = simulate_air_temperature(..., mean_offset=value)
 %
 %% Description
 %
-% T_air = simulate_air_temperature(dec_year, lat, elev) simulates near-surface
-% air temperatures (K) as a function of decimal year dec_year, latitude lat,
-% and elevation elev (m). 
+% temperature_air = simulate_air_temperature(dec_year, latitude, elevation) simulates near-surface
+% air temperatures (K) as a function of decimal year dec_year, latitude latitude,
+% and elevation elevation (m). 
 %  
-% T_air = simulate_air_temperature(..., lat_scale=value) specifies scaling
+% temperature_air = simulate_air_temperature(..., lat_scale=value) specifies scaling
 % for annual seasonal amplitude. Must be positive. By default, lat_scale=1. 
 %  
-% T_air = simulate_air_temperature(..., daily_amp_scale=value) specifies
+% temperature_air = simulate_air_temperature(..., daily_amp_scale=value) specifies
 % scaling for diurnal amplitude. Must be positive. By default,
 % daily_amp_scale=1.
 %  
-% T_air = simulate_air_temperature(..., weather_sigma_scale=value)
+% temperature_air = simulate_air_temperature(..., weather_sigma_scale=value)
 % specifies scaling for weather noise magnitude. Must be positive. By 
 % default, weather_sigma_scale=1. 
 %  
-% T_air = simulate_air_temperature(..., weather_corr=value) specifies
+% temperature_air = simulate_air_temperature(..., weather_corr=value) specifies
 % day-to-day weather persistence in a range of 0 to 1. By default,
 % weather_corr=0.7.
 %  
-% T_air = simulate_air_temperature(..., mean_offset=value) specifies a mean
+% temperature_air = simulate_air_temperature(..., mean_offset=value) specifies a mean
 % temperature offset. By default, mean_offset=0. 
 %
 %% Example
@@ -41,10 +41,10 @@ function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
 % 
 %   dec_year = 2023:1/(365*24):2023.5; % hourly time array
 %  
-%   T_air = simulate_air_temperature(dec_year, 72.579583, 3207);
+%   temperature_air = simulate_air_temperature(dec_year, 72.579583, 3207);
 %  
 %   figure
-%   plot(dec_year,T_air,'DisplayName','Default options')
+%   plot(dec_year,temperature_air,'DisplayName','Default options')
 %   ylabel 'Air temperature (K)'
 %
 % In the figure above, air temperature increases from winter to summer,
@@ -80,8 +80,8 @@ function T_air = simulate_air_temperature(dec_year, lat, elev, coeffs)
 
 arguments
     dec_year                   (:,1) {mustBeNumeric} 
-    lat                        (:,1) {mustBeGreaterThanOrEqual(lat,-90),mustBeLessThanOrEqual(lat,90)} 
-    elev                       (:,1) {mustBeGreaterThanOrEqual(elev,0),mustBeLessThanOrEqual(elev,10e3)} 
+    latitude                        (:,1) {mustBeGreaterThanOrEqual(latitude,-90),mustBeLessThanOrEqual(latitude,90)} 
+    elevation                       (:,1) {mustBeGreaterThanOrEqual(elevation,0),mustBeLessThanOrEqual(elevation,10e3)} 
     coeffs.lat_scale           (1,1) {mustBePositive} = 1;
     coeffs.daily_amp_scale     (1,1) {mustBeGreaterThanOrEqual(coeffs.daily_amp_scale,0)} = 1;
     coeffs.weather_sigma_scale (1,1) {mustBePositive} = 1;
@@ -97,10 +97,10 @@ mean_offset         = coeffs.mean_offset;
 
 %% 2. Climatology (Mean Temp)
 
-phi = deg2rad(lat); 
+phi = deg2rad(latitude); 
 T_sea_level = 300 - 50 .* sin(phi).^2;
 LapseRate = 0.0065; 
-T_air_mean = T_sea_level - (elev .* LapseRate) + mean_offset;
+temperature_air_mean = T_sea_level - (elevation .* LapseRate) + mean_offset;
 
 %% 3. Seasonal Cycle (Annual Wave)
 
@@ -108,11 +108,11 @@ T_air_mean = T_sea_level - (elev .* LapseRate) + mean_offset;
 T_amp_annual = 3 + (22 .* abs(sin(phi)) * lat_scale);
 
 % Hemisphere Logic
-phase_shift_annual = zeros(size(lat));
-if isscalar(lat)
-    if lat > 0, phase_shift_annual = 0.5; end
+phase_shift_annual = zeros(size(latitude));
+if isscalar(latitude)
+    if latitude > 0, phase_shift_annual = 0.5; end
 else
-    phase_shift_annual(lat > 0) = 0.5;
+    phase_shift_annual(latitude > 0) = 0.5;
 end
 
 year_frac = dec_year - floor(dec_year);
@@ -124,7 +124,7 @@ seasonal_signal = cos(2*pi * (year_frac - phase_shift_annual));
 day_fraction = mod(dec_year * 365.25, 1);
 
 % B. Amplitude (Diurnal Temperature Range - DTR)
-DTR = 10 + (elev / 1000); 
+DTR = 10 + (elevation / 1000); 
 T_amp_daily = (DTR / 2) * daily_amp_scale;
 
 % C. Phase Shift (Peak at ~15:00 or 3 PM = 0.625)
@@ -160,7 +160,7 @@ weather_signal = interp1(1:num_days, daily_noise, user_day_indices, 'linear', 'e
 
 %% 6. Final Combination
 
-T_air = T_air_mean...
+temperature_air = temperature_air_mean...
    + (T_amp_annual .* seasonal_signal) ... % Annual Season
    + (T_amp_daily  .* diurnal_signal) ...  % Daily Cycle
    + weather_signal;                       % Random Weather

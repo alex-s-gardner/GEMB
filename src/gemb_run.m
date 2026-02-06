@@ -58,7 +58,7 @@
 % 3. Energy Balance & Optical Properties:
 %    - Albedo schemes: "GardnerSharp", "GreuellKonzelmann", "BruneLeFebre",
 %      or "Bougamont2005".
-%    - Solar Penetration: sw_absorption_method toggles between surface-only (0)
+%    - Solar Penetration: shortwave_absorption_method toggles between surface-only (0)
 %      or subsurface extinction (1).
 %    - Thermal Conductivity: Options for "Sturm" or "Calonne" parameterizations.
 %    - Emissivity: Configurable methods (0, 1, 2) and thresholds based on 
@@ -67,7 +67,7 @@
 % 4. Initialization:
 %    - Fresh snow density can be set via models like "350kgm2", "Fausto", 
 %      or "Kaspers".
-%    - Spin-up cycles (n_spinup_cycles) allow the model to reach equilibrium
+%    - Spin-up cycles (spinup_cycles) allow the model to reach equilibrium
 %      before saving output.
 %
 %--------------------------------------------------------------------------
@@ -77,22 +77,22 @@
 % simulate_climate_forcing function generates synthetic data containing:
 %
 % 1. Radiation:
-%    - Downward Shortwave (dsw0): Calculated based on solar geometry and 
+%    - Downward Shortwave (shortwave_downward): Calculated based on solar geometry and 
 %      location.
-%    - Downward Longwave (dlw0): Derived from air temperature and vapor 
+%    - Downward Longwave (longwave_downward): Derived from air temperature and vapor 
 %      pressure, with adjustments for cloud cover.
 %      
 % 2. Thermodynamics:
-%    - Air Temperature (T_air0): Simulated time series.
-%    - Air Pressure (p_air0): Calculated from elevation and temperature.
-%    - Humidity: Relative humidity (rh0) and vapor pressure (e_air0).
+%    - Air Temperature (temperature_air): Simulated time series.
+%    - Air Pressure (pressure_air): Calculated from elevation and temperature.
+%    - Humidity: Relative humidity (relative_humidity) and vapor pressure (vapor_pressure).
 %
 % 3. Dynamics & Mass:
-%    - Wind Speed (V0): Stochastic generation with seasonal noise.
-%    - Precipitation (P0): Accumulated mass input.
+%    - Wind Speed (wind_speed): Stochastic generation with seasonal noise.
+%    - Precipitation (precipitation): Accumulated mass input.
 %
 % 4. Metadata:
-%    - Includes location (lat, lon, elev) and measurement heights (Vz, Tz).
+%    - Includes location (latitude, longitude, elevation) and measurement heights (wind_observation_height, temperature_observation_height).
 %
 %--------------------------------------------------------------------------
 % WORKFLOW EXECUTION
@@ -105,7 +105,7 @@
 %   2. FORCING       : Load/Generate meteorological drivers (ClimateForcing).
 %                      -> simulate_climate_forcing()
 %
-%   3. INITIALIZATION: Establish initial column state (T, d, W, etc.).
+%   3. INITIALIZATION: Establish initial column state (temperature, density, water, etc.).
 %                      -> model_initialize_column()
 %
 %   4. SIMULATION    : Execute the core time-stepping loop.
@@ -133,25 +133,19 @@ switch run_id
 
         % [1] specify model parameters
         % [if data is not modified then it can be passed as an stucture]
-        ModelParam = ...
-            model_initialize_parameters();
-
-        % [2] Load in climate data 
-        %     CF              = Climate Forcing
-        %     time_step_hours = temporal resolution of simulated climate forcing [optional] 
+        ModelParam = model_initialize_parameters;
 
         time_step_hours = 3;
 
-        ClimateForcing = ...
-            simulate_climate_forcing(run_id, time_step_hours);
+        ClimateForcing = simulate_climate_forcing(run_id, time_step_hours);
 
         % [3] Initialize grid -or- load in data to restart a simulation
-        [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = ...
+        [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = ...
             model_initialize_column(ModelParam, ClimateForcing);
         
         % [4] Rum GEMB
         OutData = ...
-            gemb(T, dz, d, W, re, gdn, gsp, a, a_diffuse, ClimateForcing, ModelParam, verbose);
+            gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam, verbose);
         
         % [5] Save model output and model run settings
 

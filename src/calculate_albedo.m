@@ -1,4 +1,4 @@
-function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ...
+function [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, water, grain_radius, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ...
     ClimateForcingStep, ModelParam)
 % calculate_albedo calculates snow, firn and ice albedo as a function of:
 %   1 : effective grain radius (Gardner & Sharp, 2009)
@@ -8,7 +8,7 @@ function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC
 %
 %% Syntax
 %
-% [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC, M_surf, ClimateForcingStep, ModelParam)
+% [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, water, grain_radius, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ClimateForcingStep, ModelParam)
 %
 %% Description
 %
@@ -25,7 +25,7 @@ function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC
 %  or else apply direct input value, allowing albedo to be altered.
 %
 % Methods 1 & 2
-%  re                      = surface effective grain radius [mm]
+%  grain_radius                      = surface effective grain radius [mm]
 % Method 1, optional
 %  ClimateForcingStep.black_carbon_snow        = concentration of light absorbing carbon  [ppm1], default 0
 %  ClimateForcingStep.solar_zenith_angle       = solar zenith angle of the incident radiation [deg], default 0
@@ -34,7 +34,7 @@ function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC
 %  ClimateForcingStep.black_carbon_ice         = concentration of light absorbing carbon of first ice layer [ppm1], default 0
 %
 % Method 3
-%   d                                  = snow surface density [kg m-3]
+%   density                                  = snow surface density [kg m-3]
 %   ClimateForcingStep.cloud_fraction  = cloud amount
 %   ModelParam.albedo_ice              = albedo of ice
 %   ModelParam.albedo_snow             = albedo of fresh snow
@@ -42,11 +42,11 @@ function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC
 % Method 4
 %   ModelParam.albedo_ice           = albedo of ice
 %   ModelParam.albedo_snow          = albedo of fresh snow
-%   a                               = grid cell albedo from prevous time step;
-%   T                               = grid cell temperature [k]
+%   albedo                               = grid cell albedo from prevous time step;
+%   temperature                               = grid cell temperature [k]
 %   water                           = pore water [kg]
-%   ClimateForcingStep.P            = precipitation [mm w.e.] or [kg m-3]
-%   EC                              = surface evaporation (-) condensation (+) [kg m-2]
+%   ClimateForcingStep.precipitation            = precipitation [mm w.e.] or [kg m-3]
+%   evaporation_condensation                              = surface evaporation (-) condensation (+) [kg m-2]
 %   ModelParam.albedo_wet_snow_t0   = time scale for wet snow (15-21.9) [d]
 %   ModelParam.albedo_dry_snow_t0   = warm snow timescale [15] [d]
 %   ModelParam.albedo_K             = time scale temperature coef. (7) [d]
@@ -54,7 +54,7 @@ function [a, a_diffuse] = calculate_albedo(T, dz, d, water, re, a, a_diffuse, EC
 %
 %% Outputs
 %
-%  a_diffuse  = surface albedo for diffuse radiation
+%  albedo_diffuse  = surface albedo for diffuse radiation
 %
 %% References
 %
@@ -85,14 +85,14 @@ albedo_snow_min     = 0.65;        % minimum snow albedo, from Alexander 2014
 
 %% Function
 
-if (ModelParam.albedo_method == "None") || ((ModelParam.albedo_density_threshold - d(1)) < d_tolerance)
-    a(1) = ModelParam.albedo_fixed;
+if (ModelParam.albedo_method == "None") || ((ModelParam.albedo_density_threshold - density(1)) < d_tolerance)
+    albedo(1) = ModelParam.albedo_fixed;
 else
     switch ModelParam.albedo_method
         case "GardnerSharp" % function of effective grain radius
             % ClimateForcingStep.black_carbon_snow, IssmDouble ClimateForcingStep.black_carbon_ice, IssmDouble ClimateForcingStep.solar_zenith_angle, IssmDouble ClimateForcingStep.cloud_optical_thickness, int m
-            a(1)         = albedo_gardner(re, dz, d, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice,  ClimateForcingStep.solar_zenith_angle, ClimateForcingStep.cloud_optical_thickness);
-            a_diffuse(1) = albedo_gardner(re, dz, d, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice, 50.0, ClimateForcingStep.cloud_optical_thickness);
+            albedo(1)         = albedo_gardner(grain_radius, dz, density, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice,  ClimateForcingStep.solar_zenith_angle, ClimateForcingStep.cloud_optical_thickness);
+            albedo_diffuse(1) = albedo_gardner(grain_radius, dz, density, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice, 50.0, ClimateForcingStep.cloud_optical_thickness);
 
         case "BruneLeFebre" % function of effective grain radius
             % Spectral fractions  (Lefebre et al., 2003)
@@ -100,7 +100,7 @@ else
             sF = [0.606 0.301 0.093];
 
             % convert effective radius to grain size in meters
-            gsz = (re(1) * 2.) / 1000.;
+            gsz = (grain_radius(1) * 2.) / 1000.;
 
             % spectral range:
             % 0.3 - 0.8um
@@ -111,12 +111,12 @@ else
             a3 = max(0.127, 0.88 + 346.3 * gsz - 32.31 * gsz^0.5);
 
             % broadband surface albedo
-            a(1) = sF * [a1; a2; a3];
+            albedo(1) = sF * [a1; a2; a3];
 
-        case "GreuellKonzelmann" % a as a function of density
+        case "GreuellKonzelmann" % albedo as a function of density
 
             % calculate albedo
-            a(1) = ModelParam.albedo_ice + (d(1) - ModelParam.density_ice) * ...
+            albedo(1) = ModelParam.albedo_ice + (density(1) - ModelParam.density_ice) * ...
                 (ModelParam.albedo_snow - ModelParam.albedo_ice) ...
                 / (density_fresh_snow - ModelParam.density_ice) + ...
                 (0.05 * (ClimateForcingStep.cloud_fraction - 0.5));
@@ -124,13 +124,13 @@ else
         case "Bougamont2005" % exponential time decay & wetness
 
             % change in albedo with time:
-            %   (d_a) = (a - a_old)/(t0)
+            %   (d_a) = (albedo - a_old)/(t0)
             % where: t0 = timescale for albedo decay
 
             ClimateForcingStep.dt = ClimateForcingStep.dt / 86400;    % convert from [s] to [d]
 
             % initialize variables
-            t0 = zeros(size(a));
+            t0 = zeros(size(albedo));
 
             % specify constants
             % a_wet = 0.15;        % water albedo (0.15)
@@ -144,7 +144,7 @@ else
 
             % determine timescale for albedo decay
             t0(water > 0+water_tolerance ) = ModelParam.albedo_wet_snow_t0;                                % wet snow timescale
-            TC                     = T - CtoK;                                                     % change T from K to °C
+            TC                     = temperature - CtoK;                                                     % change temperature from K to °C
             t0warm                 = abs(TC) * ModelParam.albedo_K + ModelParam.albedo_dry_snow_t0;% 'warm' snow timescale
 
             t0(abs(water)<water_tolerance  & TC >= -10-T_tolerance ) = ...
@@ -153,47 +153,47 @@ else
                 + ModelParam.albedo_dry_snow_t0;                             % 'cold' snow timescale
 
             % calculate new albedo
-            d_a = (a - ModelParam.albedo_ice) ./ t0 * ClimateForcingStep.dt; % change in albedo
-            a   = a - d_a;                                                   % new albedo
+            d_a = (albedo - ModelParam.albedo_ice) ./ t0 * ClimateForcingStep.dt; % change in albedo
+            albedo   = albedo - d_a;                                                   % new albedo
 
             % modification of albedo due to thin layer of snow or solid
             % condensation (deposition) at the surface surface
 
             % check if condensation occurs & if it is deposited in solid phase
-            if ( EC > 0+d_tolerance  && TC(1) < 0-T_tolerance )
-                ClimateForcingStep.P = ClimateForcingStep.P + ...
-                    (EC/density_fresh_snow) * 1000;  % add cond to precip [mm]
+            if ( evaporation_condensation > 0+d_tolerance  && TC(1) < 0-T_tolerance )
+                ClimateForcingStep.precipitation = ClimateForcingStep.precipitation + ...
+                    (evaporation_condensation/density_fresh_snow) * 1000;  % add cond to precip [mm]
             end
 
-            a(1) = ModelParam.albedo_snow - (ModelParam.albedo_snow - a(1)) * ...
-                exp(-ClimateForcingStep.P./z_snow);
+            albedo(1) = ModelParam.albedo_snow - (ModelParam.albedo_snow - albedo(1)) * ...
+                exp(-ClimateForcingStep.precipitation./z_snow);
 
     end
 
     %If we do not have fresh snow
     if ismember(ModelParam.albedo_method,["GardnerSharp","BruneLeFebre"]) && ...
-            ((ModelParam.albedo_density_threshold - d(1)) >= d_tolerance)
+            ((ModelParam.albedo_density_threshold - density(1)) >= d_tolerance)
 
         % In a snow layer < 10cm, account for mix of ice and snow,
-        % after ClimateForcingStep.P. Alexander et al., 2014
-        lice      = find([d; 999]>=density_phc-d_tolerance );
+        % after ClimateForcingStep.precipitation. Alexander et al., 2014
+        lice      = find([density; 999]>=density_phc-d_tolerance );
         depthsnow = sum(dz(1:(lice(1)-1)));
 
-        if (depthsnow <= (0.1+d_tolerance)) && (lice(1) <= length(d)) &&...
-                (d(lice(1)) >= (density_phc-d_tolerance))
+        if (depthsnow <= (0.1+d_tolerance)) && (lice(1) <= length(density)) &&...
+                (density(lice(1)) >= (density_phc-d_tolerance))
 
             aice = albedo_ice_max + (albedo_snow_min - albedo_ice_max) * ...
-                (d(lice(1)) - ModelParam.density_ice) / ...
+                (density(lice(1)) - ModelParam.density_ice) / ...
                 (density_phc - ModelParam.density_ice);
 
-            a(1) = aice + max(a(1) - aice,0.0) * (depthsnow/0.1);
+            albedo(1) = aice + max(albedo(1) - aice,0.0) * (depthsnow/0.1);
         end
 
-        if (d(1) >= density_phc-d_tolerance)
-            if (d(1) < ModelParam.density_ice-d_tolerance)                 % For continuity of albedo in firn i.e. ClimateForcingStep.P. Alexander et al., 2014
+        if (density(1) >= density_phc-d_tolerance)
+            if (density(1) < ModelParam.density_ice-d_tolerance)                 % For continuity of albedo in firn i.e. ClimateForcingStep.precipitation. Alexander et al., 2014
 
-                a(1) = albedo_ice_max + (albedo_snow_min - albedo_ice_max) * ...
-                    (d(1)-ModelParam.density_ice)/(density_phc-ModelParam.density_ice);
+                albedo(1) = albedo_ice_max + (albedo_snow_min - albedo_ice_max) * ...
+                    (density(1)-ModelParam.density_ice)/(density_phc-ModelParam.density_ice);
 
             else %surface layer is density of ice
 
@@ -202,8 +202,8 @@ else
                 %ModelParam.albedo_K is a scale factor (set to 200 kg m^-2)
                 %Msw(t) is the time-dependent accumulated amount of excessive surface meltwater
                 %  before run-off in kg m^-2 (melt per GEMB timestep, i.e. 3 hourly)
-                M    = M_surf + water(1);
-                a(1) = max(albedo_ice_min + (albedo_ice_max - albedo_ice_min) * exp(-1.0 * (M / 200.0)), albedo_ice_min);
+                M    = melt_surface + water(1);
+                albedo(1) = max(albedo_ice_min + (albedo_ice_max - albedo_ice_min) * exp(-1.0 * (M / 200.0)), albedo_ice_min);
             end
         end
     end
@@ -211,17 +211,17 @@ end
 
 %% Check for erroneous values
 
-if a(1) > (1 + T_tolerance)
+if albedo(1) > (1 + T_tolerance)
     warning ('albedo > 1.0')
-elseif a(1) < (0 - d_tolerance)
+elseif albedo(1) < (0 - d_tolerance)
     warning ('albedo is negative')
-elseif isnan(a(1))
+elseif isnan(albedo(1))
     error ('albedo == NAN')
 end
 
 end
 
-function a = albedo_gardner(re, dz, d, c1, c2, SZA, t)
+function albedo = albedo_gardner(grain_radius, dz, density, c1, c2, SZA, t)
 % albedo_gardner is a Matlab implementation of the snow and ice broadband albedo 
 % parameterization developed by Alex Gardner.
 % 
@@ -236,7 +236,7 @@ function a = albedo_gardner(re, dz, d, c1, c2, SZA, t)
 %% Inputs
 % 
 % ONE LAYER
-%   - re    : effective radius [mm] to calculate S1 and S2 (specific surface area of the snow or ice [cm^2 g-1])
+%   - grain_radius    : effective radius [mm] to calculate S1 and S2 (specific surface area of the snow or ice [cm^2 g-1])
 %   - c1    : concentration of light absorbing carbon  [ppmw]
 %   - c2    : concentration of light absorbing carbon of bottom ice layer [ppmw]
 %   - SZA   : solar zenith angle of the incident radiation [deg]
@@ -272,7 +272,7 @@ function a = albedo_gardner(re, dz, d, c1, c2, SZA, t)
 d_tolerance  = 1e-11;
 
 %convert effective radius to specific surface area [cm2 g-1]
-S1 = 3.0 / (0.091 * re(1));
+S1 = 3.0 / (0.091 * grain_radius(1));
 
 % effective solar zenith angle
 x = min((t./(3*cos(pi*SZA/180))).^0.5, 1);
@@ -287,14 +287,14 @@ dac = max(0.04 - as, ...
  
 % Two layer albedo parameterization
 %   do two layer calculation if there is more than 1 layer
-lice = find([d; 999]>=830-d_tolerance );
-z1   = sum(dz(1:(lice(1)-1)).*d(1:(lice(1)-1)));
+lice = find([density; 999]>=830-d_tolerance );
+z1   = sum(dz(1:(lice(1)-1)).*density(1:(lice(1)-1)));
 
-m=length(d);
+m=length(density);
 if (m > 0) && (lice(1) <= m) && (z1 > d_tolerance)
     
     % determine albedo values for bottom layer
-    S2 = 3.0 / (0.091 * re(lice(1)));
+    S2 = 3.0 / (0.091 * grain_radius(lice(1)));
 
     % pure snow albedo
     as2 = (1.48 - S2.^-0.07);
@@ -316,6 +316,6 @@ dasz = 0.53 * as .* (1 - (as + dac)) .* (1 - u) .^ 1.2;
 dat = (0.1 * t .* (as + dac).^ 1.3) ./ ((1 + 1.5*t).^as);
  
 %% Broadband albedo 
-a = as + dac + dasz + dat;
+albedo = as + dac + dasz + dat;
 
 end

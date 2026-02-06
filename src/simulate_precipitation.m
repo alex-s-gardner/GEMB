@@ -1,4 +1,4 @@
-function precip = simulate_precipitation(dec_year, coeffs)
+function precipitation = simulate_precipitation(dec_year, coeffs)
 % simulate_precipitation generates synthetic rainfall using fitted coeffs.
 %
 %   INPUTS:
@@ -6,7 +6,7 @@ function precip = simulate_precipitation(dec_year, coeffs)
 %       coeffs   - Struct from fit_precipitation
 %
 %   OUTPUT:
-%       precip - N x 1 vector of simulated precipitation
+%       precipitation - N x 1 vector of simulated precipitation
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -20,7 +20,7 @@ function precip = simulate_precipitation(dec_year, coeffs)
 dec_year = dec_year(:);
 
 n = length(dec_year);
-precip = zeros(n, 1);
+precipitation = zeros(n, 1);
 
 % 1. Reconstruct Time-Varying Parameters
 t_season = mod(dec_year, 1);
@@ -59,15 +59,15 @@ for i = 1:n
         is_raining = true;
         % Generate Amount (Gamma Distribution)
         % gamrnd(shape, scale)
-        precip(i) = gamrnd(Alpha_t(i), Beta_t(i));
+        precipitation(i) = gamrnd(Alpha_t(i), Beta_t(i));
         
         % Enforce threshold floor (optional, improves realism for trace amounts)
-        if precip(i) < coeffs.wet_threshold
-             precip(i) = coeffs.wet_threshold;
+        if precipitation(i) < coeffs.wet_threshold
+             precipitation(i) = coeffs.wet_threshold;
         end
     else
         is_raining = false;
-        precip(i) = 0;
+        precipitation(i) = 0;
     end
 end
 end

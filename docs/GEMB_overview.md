@@ -32,7 +32,7 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 **`fit_seasonal_daily_noise`** fits yearly/daily sinusoids and noise stats.
 
-**`relative_humidity`** calculates relative humidity from vapor pressure and temperature.
+**`vapor_pressure_to_relative_humidity`** calculates relative humidity from vapor pressure and temperature.
 
 **`simulate_air_pressure`** simulates screen-level atmospheric pressure.
 
@@ -52,7 +52,7 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 **`simulate_shortwave_irradiance`** simulates clear sky shortwave irradiance.
 
-**`simulate_vapor_pressure`** estimates actual vapor pressure from temperature and relative humidity.
+**`relative_humidity_to_vapor_pressure`** estimates actual vapor pressure from temperature and relative humidity.
 
 **`simulation_parameter_sets`** retrieves predefined parameter sets for climate forcing simulations.
 

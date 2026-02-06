@@ -1,18 +1,18 @@
-function coeffs = fit_precipitation(dec_year, precip, options)
+function coeffs = fit_precipitation(dec_year, precipitation, options)
 % fit_precipitation fits a seasonal Markov-Gamma model to hourly precipitation.
 %
 %% Syntax
 %
-%  coeffs = fit_precipitation(dec_year, precip)
-%  coeffs = fit_precipitation(dec_year, precip, wet_threshold=value)
+%  coeffs = fit_precipitation(dec_year, precipitation)
+%  coeffs = fit_precipitation(dec_year, precipitation, wet_threshold=value)
 %
 %% Description
 %
-% coeffs = fit_precipitation(dec_year, precip) returns structure coeffs
+% coeffs = fit_precipitation(dec_year, precipitation) returns structure coeffs
 % of harmonic coefficients for the model from Mx1 vector inputs dec_year of
-% decimal years (e.g., 2021.45) and precipitation precip (mm). 
+% decimal years (e.g., 2021.45) and precipitation (mm). 
 %
-% coeffs = fit_precipitation(dec_year, precip, wet_threshold=value) specifies a
+% coeffs = fit_precipitation(dec_year, precipitation, wet_threshold=value) specifies a
 % minimimum quantity (mm) to consider "wet". Default wet_threshold is 0.1.
 %
 %% Example 
@@ -42,7 +42,7 @@ function coeffs = fit_precipitation(dec_year, precip, options)
 
 arguments
     dec_year (:,1) {mustBeNumeric} 
-    precip (:,1) {mustBeNumeric} 
+    precipitation (:,1) {mustBeNumeric} 
     options.wet_threshold (1,1) {mustBeNumeric} = 0.1
 end
 
@@ -52,7 +52,7 @@ end
 t_season = mod(dec_year, 1);
 
 % Determine Wet/Dry states
-is_wet = precip >= options.wet_threshold;
+is_wet = precipitation >= options.wet_threshold;
 
 %% 2. Calculate Monthly Statistics (12 bins)
 % We bin by month to get robust estimates, then fit harmonics to the bins.
@@ -65,7 +65,7 @@ stats = zeros(12, 4); % Columns: [P01, P11, Alpha, Beta]
 for m = 1:12
     idx = (months == m);
     data_m = is_wet(idx);
-    precip_m = precip(idx);
+    precip_m = precipitation(idx);
     
     if sum(idx) < 2
         continue; 

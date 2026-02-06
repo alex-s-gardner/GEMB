@@ -1,54 +1,54 @@
-function [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+function [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
 % model_initialize_column initializes a GEMB column based on specified
 % model and climate forcing parameters.
 %
 %% Syntax 
 %
-%  [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+%  [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
 %
 %% Description
 %
-% [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+% [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
 % uses inputs ModelParam from model_initialize_parameters and input structure
-% ClimateForcing containing the field T_air_mean. Outputs are as follows: 
+% ClimateForcing containing the field temperature_air_mean. Outputs are as follows: 
 % 
-%    Variable     Units  Description                Initial Value
-%           T         K  temperature                mean annual surface temperature 
-%          dz         m  thickness                  array generated from model parameters
-%           d   kg m^-3  ice density                ModelParam.density_ice
-%           W   kg m^-2  old-snow water content     0
-%          re        mm  old-snow grain size        2.5
-%         gdn  fraction  old-snow grain dendricity  0
-%         gsp  fraction  old-snow grain sphericity  0
-%           a  fraction  surface albedo             ModelParam.albedo_snow
-%   a_diffuse  fraction  diffuse surface albedo     ModelParam.albedo_snow
+%    Variable          Units     Description                Initial Value
+%    temperature       K         temperature                mean annual surface temperature 
+%    dz                m         thickness                  array generated from model parameters
+%    density           kg m^-3   ice density                ModelParam.density_ice
+%    water             kg m^-2   old-snow water content     0
+%    grain_radius      mm        old-snow grain size        2.5
+%    grain_dendricity  fraction  old-snow grain dendricity  0
+%    grain_sphericity  fraction  old-snow grain sphericity  0
+%    albedo            fraction  surface albedo             ModelParam.albedo_snow
+%    albedo_diffuse    fraction  diffuse surface albedo     ModelParam.albedo_snow
 %   
 %% Example
 % Initialize a GEMB column based on default model parameters and a mean
 % surface temperature of -20 C. 
 % 
 %   % Initialize parameters: 
-%   ModelParam = model_initialize_parameters();
-%   ClimateForcing.T_air_mean = 253.15; % -20 C
+%   ModelParam = model_initialize_parameters;
+%   ClimateForcing.temperature_air_mean = 253.15; % -20 C
 %  
 %   % Initialize Column: 
-%   [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
+%   [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
 %
 %   % Inspect outputs: 
 %   whos
-%     Name                  Size            Bytes  Class     Attributes
-%   
-%     ClimateForcing        1x1               176  struct              
-%     ModelParam            1x1              7972  struct              
-%     T                   264x1              2112  double              
-%     W                   264x1              2112  double              
-%     a                   264x1              2112  double              
-%     a_diffuse           264x1              2112  double              
-%     d                   264x1              2112  double              
-%     dz                  264x1              2112  double              
-%     gdn                 264x1              2112  double              
-%     gsp                 264x1              2112  double              
-%     re                  264x1              2112  double              
+%   Name                    Size            Bytes  Class     Attributes
+% 
+%   ClimateForcing          1x1               176  struct              
+%   ModelParam              1x1              7972  struct              
+%   albedo                264x1              2112  double              
+%   albedo_diffuse        264x1              2112  double              
+%   density               264x1              2112  double              
+%   dz                    264x1              2112  double              
+%   grain_dendricity      264x1              2112  double              
+%   grain_radius          264x1              2112  double              
+%   grain_sphericity      264x1              2112  double              
+%   temperature           264x1              2112  double              
+%   water                 264x1              2112  double              
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -59,23 +59,23 @@ function [T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(Mod
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-assert(isscalar(ClimateForcing.T_air_mean),'Temperature ClimateForcing.T_air_mean must be a scalar.')
-assert(ClimateForcing.T_air_mean>0,'Temperature ClimateForcing.T_air_mean must exceed 0 K.')
-if ClimateForcing.T_air_mean<100
-    warning('Temperature ClimateForcing.T_air_mean should be in kelvin, but is below 100, suggesting an error. Confirm that the units are kelvin.')
+assert(isscalar(ClimateForcing.temperature_air_mean),'Temperature ClimateForcing.temperature_air_mean must be a scalar.')
+assert(ClimateForcing.temperature_air_mean>0,'Temperature ClimateForcing.temperature_air_mean must exceed 0 K.')
+if ClimateForcing.temperature_air_mean<100
+    warning('Temperature ClimateForcing.temperature_air_mean should be in kelvin, but is below 100, suggesting an error. Confirm that the units are kelvin.')
 end
 
 % initialze column variables 
-dz        = model_initialize_grid(ModelParam);
-m         = length(dz);
-T         = zeros(m,1) + ClimateForcing.T_air_mean; % initial grid cell temperature to the annual mean temperature [K]
-d         = zeros(m,1) + ModelParam.density_ice;    % density to that of ice [kg m-3]
-W         = zeros(m,1);                             % water content of zero [kg m-2]
-re        = zeros(m,1) + 2.5;                       % grain size of old snow [mm]
-gdn       = zeros(m,1);                             % grain dentricity of old snow
-gsp       = zeros(m,1);                             % grain sphericity of old snow
-a         = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]
-a_diffuse = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]  
+dz               = model_initialize_grid(ModelParam);
+m                = length(dz);
+temperature      = zeros(m,1) + ClimateForcing.temperature_air_mean; % initial grid cell temperature to the annual mean temperature [K]
+density          = zeros(m,1) + ModelParam.density_ice;    % density to that of ice [kg m-3]
+water            = zeros(m,1);                             % water content of zero [kg m-2]
+grain_radius     = zeros(m,1) + 2.5;                       % grain size of old snow [mm]
+grain_dendricity = zeros(m,1);                             % grain dentricity of old snow
+grain_sphericity = zeros(m,1);                             % grain sphericity of old snow
+albedo           = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]
+albedo_diffuse   = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]  
 
 end
 

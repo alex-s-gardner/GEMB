@@ -1,20 +1,20 @@
-function coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
+function coeffs = fit_air_temperature(dec_year, temperature_air, latitude, elevation)
 % fit_air_temperature estimates simulation coefficients from observed data.
 %
 %% Syntax
 % 
-%  coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
+%  coeffs = fit_air_temperature(dec_year, temperature_air, latitude, elevation)
 % 
 %% Description
 %
-% coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
+% coeffs = fit_air_temperature(dec_year, temperature_air, latitude, elevation)
 %
 %%
 %   INPUTS:
 %   dec_year - Vector of decimal years (e.g. 2024.0, 2024.002).
-%   T_air       - Vector of observed air temperatures in Kelvin [K].
-%   lat      - Latitude in degrees (scalar).
-%   elev     - Elevation in meters (scalar).
+%   temperature_air       - Vector of observed air temperatures in Kelvin [K].
+%   latitude      - Latitude in degrees (scalar).
+%   elevation     - Elevation in meters (scalar).
 %
 %   OUTPUT:
 %   coeffs   - Structure compatible with simulate_air_temperature.
@@ -33,21 +33,21 @@ function coeffs = fit_air_temperature(dec_year, T_air, lat, elev)
 %% 1. Input Sanitization
 
 dec_year = dec_year(:);
-T_air    = T_air(:);
+temperature_air    = temperature_air(:);
 
 % Constants from the simulation model
 BASE_SIGMA = 8.0; 
 LAPSE_RATE = 0.0065;
 
 %% 2. Calculate Mean Offset
-% The model calculates a theoretical mean based on lat/elev.
+% The model calculates a theoretical mean based on latitude/elevation.
 % We compare the observed mean to this theoretical mean.
 
-phi = deg2rad(lat); 
+phi = deg2rad(latitude); 
 T_sea_level_theoretical = 300 - 50 .* sin(phi).^2;
-T_mean_theoretical = T_sea_level_theoretical - (elev .* LAPSE_RATE);
+T_mean_theoretical = T_sea_level_theoretical - (elevation .* LAPSE_RATE);
 
-T_obs_mean = mean(T_air, 'omitnan');
+T_obs_mean = mean(temperature_air, 'omitnan');
 
 % RESULT 1: mean_offset
 coeffs.mean_offset = T_obs_mean - T_mean_theoretical;
@@ -55,13 +55,13 @@ coeffs.mean_offset = T_obs_mean - T_mean_theoretical;
 %% 3. Harmonic Analysis (Least Squares Fit)
 % We remove the mean and fit the Annual and Diurnal cosines.
 
-T_anomaly = T_air - T_obs_mean;
+T_anomaly = temperature_air - T_obs_mean;
 
 % A. Construct Annual Basis Function
 % Match simulation logic: cos(2*pi * (year_frac - phase))
 % Phase is 0.5 for North, 0 for South.
 phase_annual = 0;
-if lat > 0, phase_annual = 0.5; end
+if latitude > 0, phase_annual = 0.5; end
 
 year_frac = dec_year - floor(dec_year);
 basis_annual = cos(2*pi * (year_frac - phase_annual));
@@ -82,8 +82,8 @@ fitted_amp_daily  = betas(2);
 % We now solve the simulation equations for the scalar variables.
 
 % --- lat_scale ---
-% Model: Amp = 3 + (22 * |sin(lat)| * lat_scale)
-% Inverse: lat_scale = (fitted_amp - 3) / (22 * |sin(lat)|)
+% Model: Amp = 3 + (22 * |sin(latitude)| * lat_scale)
+% Inverse: lat_scale = (fitted_amp - 3) / (22 * |sin(latitude)|)
 denom_annual = 22 * abs(sin(phi));
 
 if denom_annual < 1e-4
@@ -98,7 +98,7 @@ coeffs.lat_scale = max(0, coeffs.lat_scale);
 
 % --- daily_amp_scale ---
 % Model: Amp = (DTR_base / 2) * daily_amp_scale
-dtr_base = 10 + (elev / 1000);
+dtr_base = 10 + (elevation / 1000);
 base_amp_daily = dtr_base / 2;
 
 coeffs.daily_amp_scale = fitted_amp_daily / base_amp_daily;

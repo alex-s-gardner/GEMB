@@ -1,16 +1,16 @@
-function p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
+function pressure_air = simulate_air_pressure(dec_year, temperature_air, latitude, elevation)
 % simulate_air_pressure simulates screen-level atmospheric pressure [Pa].
 %
-%   p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
+%   pressure_air = simulate_air_pressure(dec_year, temperature_air, latitude, elevation)
 %
 %   INPUTS:
 %   dec_year - Decimal year (e.g., 2024.5). Vector.
-%   T_air       - Near-surface air temperature in Kelvin [K]. Vector.
-%   lat      - Latitude in degrees.
-%   elev     - Elevation in meters.
+%   temperature_air       - Near-surface air temperature in Kelvin [K]. Vector.
+%   latitude      - Latitude in degrees.
+%   elevation     - Elevation in meters.
 %
 %   OUTPUT:
-%   p_air     - Screen-level air pressure in Pascals [Pa].
+%   pressure_air     - Screen-level air pressure in Pascals [Pa].
 %
 %   PHYSICS MODEL:
 %   1. Simulates Mean Sea Level Pressure (MSLP) as a stochastic process.
@@ -18,7 +18,7 @@ function p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
 %      - Weather: AR(1) "Red Noise" simulating High/Low pressure systems.
 %      - Variance: Scales with latitude (Storm tracks have higher variance).
 %   2. Calculates Local Pressure using the Hypsometric Equation.
-%      - Uses inputs 'elev' and 'T_air' to determine air column density.
+%      - Uses inputs 'elevation' and 'temperature_air' to determine air column density.
 %      - P_local = P_mslp * exp( -g*z / (R * T_column) )
 %
 %% Author Information
@@ -31,12 +31,19 @@ function p_air = simulate_air_pressure(dec_year, T_air, lat, elev)
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
 %% 1. Input Sanitization
-if ~isscalar(dec_year), dec_year = dec_year(:); end
-if ~isscalar(T_air), T_air = T_air(:); end
+
+% Columnate: 
+if ~isscalar(dec_year)
+    dec_year = dec_year(:); 
+end
+
+if ~isscalar(temperature_air)
+    temperature_air = temperature_air(:); 
+end
 
 % Ensure time and temp vectors match
-if length(T_air) ~= length(dec_year)
-    error('Input vectors dec_year and T_air must be the same length.');
+if length(temperature_air) ~= length(dec_year)
+    error('Input vectors dec_year and temperature_air must be the same length.');
 end
 
 %% 2. Simulate Mean Sea Level Pressure (MSLP) Weather Patterns
@@ -45,7 +52,7 @@ end
 % A. Define Weather Variance based on Latitude
 %    Tropics have stable pressure; Mid-latitudes (storm tracks) vary wildly.
 %    Low Lat (0): ~300 Pa sigma. High Lat (60): ~1200 Pa sigma.
-phi = deg2rad(lat);
+phi = deg2rad(latitude);
 sigma_pressure = 300 + (900 .* sin(phi).^2); % Pa
 
 % B. Generate Red Noise (AR1 Process)
@@ -78,18 +85,19 @@ P_msl = P_msl_std + weather_anomaly;
 %% 3. Calculate Local Station Pressure (Hypsometric Reduction)
 % We need to estimate the temperature of the air column between sea level
 % and the station elevation.
+
 % Approximation: T_column_avg = T_surface + (0.5 * Lapse_Rate * Elevation)
 LapseRate = 0.0065; % K/m
-T_column_avg = T_air + (0.5 * LapseRate * elev);
+T_column_avg = temperature_air + (0.5 * LapseRate * elevation);
 
 % Physical Constants
-g = 9.80665; % Gravity (m/s^2)
+g = 9.81; % Gravity (m/s^2)
 R = 287.05;  % Specific gas constant for dry air (J/kg*K)
 
 % Hypsometric Equation
 % P_local = P_msl * exp( -g*z / (R*T) )
-exponent = (-g * elev) ./ (R .* T_column_avg);
+exponent = (-g * elevation) ./ (R .* T_column_avg);
 
-p_air = P_msl .* exp(exponent);
+pressure_air = P_msl .* exp(exponent);
 
 end
