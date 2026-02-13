@@ -32,7 +32,6 @@ Below is a list of variables used by GEMB.
 | densification\_method                 | string            | Model: "HerronLangway", "Anthern", "Ligtenberg".                                                                                                 |
 | density                               | kg m<sup>-3</sup> | Column density.                                                                                                                                  |
 | density\_ice                          | kg m<sup>-3</sup> | Density of glacier ice.                                                                                                                          |
-| density\_surface                      | kg m<sup>-3</sup> |                                                                                                                                                  |
 | dz                                    | m                 | Layer thickness profile.                                                                                                                         |
 | elevation                             | m                 |                                                                                                                                                  |
 | emissivity                            | fraction          | Base longwave emissivity in the range of 0 to 1.                                                                                                 |
@@ -43,7 +42,6 @@ Below is a list of variables used by GEMB.
 | firn\_air\_content                    | m                 | Total height of all air in the firn column.                                                                                                      |
 | grain\_dendricity                     | fraction          | grain dendricity in the range of 0 to 1.                                                                                                         |
 | grain\_radius                         | mm                | Effective grain radius.                                                                                                                                                |
-| grain\_radius\_surface                | mm                |                                                                                                                                                  |
 | grain\_sphericity                     | fraction          | grain sphericity in the range of 0 to 1.                                                                                                         |
 | heat\_flux\_latent                    | W m<sup>-2</sup>  | Latent heat flux (positive toward surface).                                                                                                      |
 | heat\_flux\_sensible                  | W m<sup>-2</sup>  | Sensible heat flux (positive toward surface).                                                                                                    |
