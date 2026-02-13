@@ -3,11 +3,11 @@
 
 # Syntax 
 ```matlab
-[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+Profile = model_initialize_column(ModelParam, ClimateForcing)
 ```
 
 # Description
-`[T, dz, d, W, re, gdn, gsp, a, a_diffuse] = model_initialize_column(ModelParam, ClimateForcing)` uses inputs `ModelParam` from `model_initialize_parameters` and input structure `ClimateForcing` containing the field `temperature_air_mean`. Outputs are as follows: 
+`Profile = model_initialize_column(ModelParam, ClimateForcing)` uses inputs `ModelParam` from [`model_initialize_parameters`](model_initialize_parameters_documentation.md) and input structure `ClimateForcing` (which must contain at least `temperature_air_mean`). The output `Profile` is a table containing the following variables:  
 
 |Variable   |  Units | Description          |      Initial Value|
 |---|---|---|---|
@@ -30,41 +30,38 @@ ModelParam = model_initialize_parameters;
 ClimateForcing.temperature_air_mean = 253.15; % -20 C
 
 % Initialize Column: 
-[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+Profile = model_initialize_column(ModelParam, ClimateForcing);
 ```
 
-Use MATLAB's built-in `whos` function to sizes of the arrays that were created by `model_initialize_column`:
+Use MATLAB's built-in `head` function to view the top rows of the `Profile` table:
 
 ```matlab
->> whos
-  Name                    Size            Bytes  Class     Attributes
-
-  ClimateForcing          1x1               176  struct              
-  ModelParam              1x1              7972  struct              
-  albedo                264x1              2112  double              
-  albedo_diffuse        264x1              2112  double              
-  density               264x1              2112  double              
-  dz                    264x1              2112  double              
-  grain_dendricity      264x1              2112  double              
-  grain_radius          264x1              2112  double              
-  grain_sphericity      264x1              2112  double              
-  temperature           264x1              2112  double              
-  water                 264x1              2112  double                         
+>> head(Profile)
+    temperature     dz     density    water    grain_radius    grain_dendricity    grain_sphericity    albedo    albedo_diffuse
+    ___________    ____    _______    _____    ____________    ________________    ________________    ______    ______________
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+      253.15       0.05      910        0          2.5                0                   0             0.85          0.85                         
 ```
 
-Above, we see that all of the variables creates by `model_initialize_column` are 264x1, representing a column of initial values. Use [`dz2z`](dz2z_documentation.md) to convert the column of `dz` values to grid cell centers and show the grid spacing alongside initial temperature:
+Above, we see that all nine variables are 264x1, representing a column of initial values. Use [`dz2z`](dz2z_documentation.md) to convert the column of `dz` values to grid cell centers and show the grid spacing alongside initial temperature:
 
 ```matlab
-z = dz2z(dz); 
+z = dz2z(Profile.dz); 
 
 figure
 subplot(1,2,1)
-plot(dz,z,'o-')
+plot(Profile.dz,z,'o-')
 xlabel 'Vertical spacing (m)'
 ylabel 'Grid cell center height (m)'
 
 subplot(1,2,2)
-plot(T,z,'o-')
+plot(Profile.temperature,z,'o-')
 xlabel 'Initial temperature (K)'
 
 set(gcf,'Renderer','painters')

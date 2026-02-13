@@ -38,22 +38,22 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_zy=tcase.MP.column_zy);
             ClimateForcing.temperature_air_mean = 253.15; % -20 C
 
-            [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
-            z_center = dz2z(dz); 
+            Profile = model_initialize_column(ModelParam, ClimateForcing);
+            z_center = dz2z(Profile.dz); 
 
             % Verify top section
             n_top = tcase.MP.column_ztop / tcase.MP.column_dztop;
-            tcase.verifyEqual(dz(1:n_top), ones(n_top, 1) * tcase.MP.column_dztop, ...
+            tcase.verifyEqual(Profile.dz(1:n_top), ones(n_top, 1) * tcase.MP.column_dztop, ...
                 'Top portion of grid should have constant spacing');
             
             % Verify total depth
-            total_depth = sum(dz);
+            total_depth = sum(Profile.dz);
             
             tolerance = 1e-10; 
             tcase.verifyTrue(total_depth >= (tcase.MP.column_zmax-tolerance), 'Total depth must reach or exceed z_max');
 
             % Verify z_center dimensions
-            tcase.verifyEqual(length(z_center), length(dz), ...
+            tcase.verifyEqual(length(z_center), length(Profile.dz), ...
                 'z_center should have same length as dz');
 
         end
@@ -71,18 +71,18 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_zy=tcase.MP.column_zy);
             ClimateForcing.temperature_air_mean = 253.15; % -20 C
 
-            [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
+            Profile = model_initialize_column(ModelParam, ClimateForcing);
             
             n_top = tcase.MP.column_ztop / tcase.MP.column_dztop;
             
             % Check the first cell of the bottom section
             % It should be dz_top * column_zy
             expected_first_bottom = tcase.MP.column_dztop * tcase.MP.column_zy;
-            tcase.verifyEqual(dz(n_top + 1), expected_first_bottom, 'AbsTol', 1e-10, ...
+            tcase.verifyEqual(Profile.dz(n_top + 1), expected_first_bottom, 'AbsTol', 1e-10, ...
                 'First bottom cell should be stretched by column_zy');
             
             % Check subsequent stretching
-            tcase.verifyEqual(dz(n_top + 2), expected_first_bottom * tcase.MP.column_zy, 'AbsTol', 1e-10, ...
+            tcase.verifyEqual(Profile.dz(n_top + 2), expected_first_bottom * tcase.MP.column_zy, 'AbsTol', 1e-10, ...
                 'Subsequent bottom cells should continue geometric growth');
         end
         
@@ -133,8 +133,8 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
 
             ClimateForcing.temperature_air_mean = 253.15; % -20 C
 
-            [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
-            z_center = dz2z(dz); 
+            Profile = model_initialize_column(ModelParam, ClimateForcing);
+            z_center = dz2z(Profile.dz); 
 
             
             expected_centers = [-0.5; -1.5];
@@ -156,14 +156,14 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_zy=tcase.MP.column_zy);
             ClimateForcing.temperature_air_mean = 253.15; % -20 C
 
-            [~, dz] = model_initialize_column(ModelParam, ClimateForcing);
-            z_center = dz2z(dz); 
+            Profile = model_initialize_column(ModelParam, ClimateForcing);
+            z_center = dz2z(Profile.dz); 
             
-            tcase.verifyEqual(size(dz, 2), 1, 'dz should be a column vector');
-            tcase.verifyTrue(size(dz, 1) > 1, 'dz should have rows');
+            tcase.verifyEqual(size(Profile.dz, 2), 1, 'dz should be a column vector');
+            tcase.verifyTrue(size(Profile.dz, 1) > 1, 'dz should have rows');
             
             tcase.verifyEqual(size(z_center, 2), 1, 'z_center should be a column vector');
-            tcase.verifyEqual(size(z_center, 1), size(dz, 1), 'z_center and dz should have matching rows');
+            tcase.verifyEqual(size(z_center, 1), size(Profile.dz, 1), 'z_center and dz should have matching rows');
         end
     end
 end

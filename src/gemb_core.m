@@ -17,9 +17,9 @@ function [temperature, dz, density, water, grain_radius, grain_dendricity, grain
 
 if verbose
     % Specify constants:
-    CtoK = 273.15;   % Celsius to Kelvin conversion
-    C_ice   = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
-    LF   = 0.3345E6; % latent heat of fusion (J kg-1)
+    CtoK  = 273.15;   % Celsius to Kelvin conversion
+    C_ice = 2102;     % specific heat capacity of snow/ice (J kg-1 K-1)
+    LF    = 0.3345E6; % latent heat of fusion (J kg-1)
 
     M               = dz .* density;
     M_total_initial = sum(M) + sum(water);        % total mass [kg]

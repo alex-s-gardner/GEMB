@@ -1,16 +1,16 @@
-function [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+function Profile = model_initialize_column(ModelParam, ClimateForcing)
 % model_initialize_column initializes a GEMB column based on specified
 % model and climate forcing parameters.
 %
 %% Syntax 
 %
-%  [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
+%  Profile = model_initialize_column(ModelParam, ClimateForcing)
 %
 %% Description
 %
-% [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing)
-% uses inputs ModelParam from model_initialize_parameters and input structure
-% ClimateForcing containing the field temperature_air_mean. Outputs are as follows: 
+% Profile = model_initialize_column(ModelParam, ClimateForcing) uses inputs ModelParam from 
+% model_initialize_parameters and input structure ClimateForcing (which must contain at least
+% temperature_air_mean). The output Profile is a table containing the following variables: 
 % 
 %    Variable          Units     Description                Initial Value
 %    temperature       K         temperature                mean annual surface temperature 
@@ -32,24 +32,21 @@ function [temperature, dz, density, water, grain_radius, grain_dendricity, grain
 %   ClimateForcing.temperature_air_mean = 253.15; % -20 C
 %  
 %   % Initialize Column: 
-%   [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
+%   Profile = model_initialize_column(ModelParam, ClimateForcing);
 %
 %   % Inspect outputs: 
-%   whos
-%   Name                    Size            Bytes  Class     Attributes
-% 
-%   ClimateForcing          1x1               176  struct              
-%   ModelParam              1x1              7972  struct              
-%   albedo                264x1              2112  double              
-%   albedo_diffuse        264x1              2112  double              
-%   density               264x1              2112  double              
-%   dz                    264x1              2112  double              
-%   grain_dendricity      264x1              2112  double              
-%   grain_radius          264x1              2112  double              
-%   grain_sphericity      264x1              2112  double              
-%   temperature           264x1              2112  double              
-%   water                 264x1              2112  double              
-%
+%   >> head(Profile)
+%       temperature     dz     density    water    grain_radius    grain_dendricity    grain_sphericity    albedo    albedo_diffuse
+%       ___________    ____    _______    _____    ____________    ________________    ________________    ______    ______________
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
+%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85             
+%  
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
@@ -76,6 +73,8 @@ grain_dendricity = zeros(m,1);                             % grain dentricity of
 grain_sphericity = zeros(m,1);                             % grain sphericity of old snow
 albedo           = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]
 albedo_diffuse   = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]  
+
+Profile = table(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse);
 
 end
 
