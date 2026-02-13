@@ -22,14 +22,14 @@ ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 ModelParam = model_initialize_parameters(output_frequency="daily");
 
 % Initialize grid:
-[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_column(ModelParam, ClimateForcing);
 
 % Run GEMB: 
-OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam);
+OutData = gemb(Profile, ClimateForcing, ModelParam);
 
 % Get a time series of skin temperature: 
 temperature_skin = surface_timeseries(OutData.temperature); 
-% 
+
 % Create a datetime array to make it easy: 
 dates_datetime = datetime(OutData.dates,'convertfrom','datenum'); 
 

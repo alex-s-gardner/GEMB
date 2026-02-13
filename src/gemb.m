@@ -1,4 +1,4 @@
-function OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam, display_options)
+function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 % gemb runs the Glacier Energy and Mass Balance (GEMB) model by Gardner et al., 2023.
 %
 % GEMB calculates a 1-D surface glacier mass balance, includes detailed
@@ -26,7 +26,7 @@ function OutData = gemb(temperature, dz, density, water, grain_radius, grain_den
 %
 %% Syntax
 %
-%  OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam)
+%  OutData = gemb(Profile, ClimateForcing, ModelParam)
 %  OutData = gemb(..., verbose=true)
 %  OutData = gemb(..., display_waitbar=false)
 %
@@ -39,30 +39,31 @@ function OutData = gemb(temperature, dz, density, water, grain_radius, grain_den
 % forcing parameters descibed below. Input ModelParam is from the function
 % model_initialize_parameters.m. 
 %
-%   temperature              : Vector of initial layer temperatures [K].
-%   dz                       : Vector of initial layer thicknesses [m].
-%   density                  : Vector of initial layer densities [kg m^-3].
-%   water                    : Vector of initial layer water content [kg m^-2].
-%   grain_radius             : Vector of initial grain sizes (effective radius) [mm].
-%   grain_dendricity         : Vector of initial grain dendricity (0-1).
-%   grain_sphericity         : Vector of initial grain sphericity (0-1).
-%   albedo                   : Initial surface albedo (0-1).
-%   albedo_diffuse           : Initial diffuse albedo accumulator.
+%   Profile                  : Table containing initial column state variables. Must include:
+%     temperature            : Vector of initial layer temperatures [K].
+%     dz                     : Vector of initial layer thicknesses [m].
+%     density                : Vector of initial layer densities [kg m^-3].
+%     water                  : Vector of initial layer water content [kg m^-2].
+%     grain_radius           : Vector of initial grain sizes (effective radius) [mm].
+%     grain_dendricity       : Vector of initial grain dendricity (0-1).
+%     grain_sphericity       : Vector of initial grain sphericity (0-1).
+%     albedo                 : Initial surface albedo (0-1).
+%     albedo_diffuse         : Initial diffuse albedo accumulator.
 %   ClimateForcing           : Structure containing time-series meteorological data.
-%      .dates                : datenum      Time vector.
-%      .shortwave_downward   : W m^-2       Downward shortwave radiation.
-%      .longwave_downward    : W m^-2       Downward longwave radiation.
-%      .temperature_air      : K            Air temperature.
-%      .pressure_air         : Pa           Air pressure.
-%      .relative_humidity    : %            Relative humidity.
-%      .vapor_pressure       : Pa           Vapor pressure.
-%      .wind_speed           : m s^-1       Wind speed.
-%      .precipitation        : kg m^-2      Precipitation.
-%      .wind_observation_height         : 
-%      .temperature_observation_height         : 
-%      .temperature_air_mean : 
-%      .wind_speed_mean      : 
-%      .precipitation_mean   : 
+%     .dates                 : datenum      Time vector.
+%     .shortwave_downward    : W m^-2       Downward shortwave radiation.
+%     .longwave_downward     : W m^-2       Downward longwave radiation.
+%     .temperature_air       : K            Air temperature.
+%     .pressure_air          : Pa           Air pressure.
+%     .relative_humidity     : %            Relative humidity.
+%     .vapor_pressure        : Pa           Vapor pressure.
+%     .wind_speed            : m s^-1       Wind speed.
+%     .precipitation         : kg m^-2      Precipitation.
+%     .wind_observation_height         : 
+%     .temperature_observation_height         : 
+%     .temperature_air_mean  : 
+%     .wind_speed_mean       : 
+%     .precipitation_mean    : 
 %   ModelParam     : Structure containing model configuration parameters.
 %                    Must include 'run_prefix' and 'spinup_cycles'. See
 %                    model_initialize_parameters for more information.
@@ -78,20 +79,19 @@ function OutData = gemb(temperature, dz, density, water, grain_radius, grain_den
 %% Example
 % Run a basic example: 
 %   
+%   Initialize model parameters:
+%   ModelParam = model_initialize_parameters(output_frequency="daily");
+%    
 %   % Generate sample data: 
 %   time_step_hours = 3;
 %   ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 %   
-%   % Initialize model parameters:
-%   ModelParam = model_initialize_parameters(output_frequency="daily");
-%   
 %   % Initialize grid:
-%   [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
-%  
+%   Profile = model_initialize_column(ModelParam, ClimateForcing);
+%   
 %   % Run GEMB: 
-%   OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam);
-%   
-%   
+%   OutData = gemb(Profile, ClimateForcing, ModelParam);
+% 
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
@@ -105,15 +105,7 @@ function OutData = gemb(temperature, dz, density, water, grain_radius, grain_den
 %% Check Inputs 
 
 arguments 
-    temperature       (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
-    dz                (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
-    density           (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
-    water             (:,1) {mustBeNumeric,mustBeGreaterThanOrEqual(water,0)}
-    grain_radius      (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(grain_radius,0)}
-    grain_dendricity  (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(grain_dendricity,0)}
-    grain_sphericity  (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(grain_sphericity,0)}
-    albedo            (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(albedo,0)}
-    albedo_diffuse    (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(albedo_diffuse,0)}
+    Profile           (:,9) table {mustContainVariables(Profile, ["temperature", "dz", "density", "water", "grain_radius", "grain_dendricity", "grain_sphericity", "albedo", "albedo_diffuse"])}
     ClimateForcing    (1,1) struct {mustHaveFields(ClimateForcing, ["dates", "shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation","wind_observation_height","temperature_observation_height","temperature_air_mean","wind_speed_mean","precipitation_mean"])}
     ModelParam                      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "spinup_cycles","output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","shortwave_downward_diffuse","cloud_fraction","density_ice"])}
     display_options.verbose         (1,1) logical = false
@@ -123,6 +115,29 @@ end
 assert(ModelParam.rain_temperature_threshold>=270.15 & ModelParam.rain_temperature_threshold<=276.15,'ModelParam.rain_temperature_threshold should be within three degrees of 273.15. Ensure you are using kelvin.')
 
 verbose = display_options.verbose;
+
+% Convert table input to individual variables for backward compatibility with gemb_core and subfunctions. 
+temperature      = Profile.temperature;
+dz               = Profile.dz;
+density          = Profile.density;
+water            = Profile.water;
+grain_radius     = Profile.grain_radius;
+grain_dendricity = Profile.grain_dendricity;
+grain_sphericity = Profile.grain_sphericity;
+albedo           = Profile.albedo;
+albedo_diffuse   = Profile.albedo_diffuse;
+
+assert(all(temperature>0),'Temperature Profile must be in kelvin and exceed 0 K.')
+if any(temperature<100)
+    warning('Temperature Profile should be in kelvin, but some values are below 100, suggesting an error. Confirm that the units are kelvin.')
+end
+assert(all(dz>0),'Profile variable dz must be positive.')
+assert(all(water>=0),'Profile variable water must be greater than or equal to zero.')
+assert(all(grain_radius>=0),'Profile variable grain_radius must be greater than or equal to zero.')
+assert(all(grain_dendricity>=0) & all(grain_dendricity<=1),'Profile variable grain_dendricity must be in the range of 0 to 1.')
+assert(all(grain_sphericity>=0) & all(grain_dendricity<=1),'Profile variable grain_dendricity must be in the range of 0 to 1.')
+assert(all(albedo>=0) & all(albedo<=1),'Profile variable albedo must be in the range of 0 to 1.')
+assert(all(albedo_diffuse>=0) & all(albedo_diffuse<=1),'Profile variable albedo_diffuse must be in the range of 0 to 1.')
 
 %% Begin GEMB
 
@@ -142,8 +157,8 @@ if rem(dt,1) ~= 0
 end
 
 % initialize monolevel variables
-evaporation_condensation     = 0;                        % surface evaporation (-) condensation (+) [kg m-2]    
-melt_surface = 0;                        % initialize surface melt for albedo parameterization
+evaporation_condensation = 0;              % surface evaporation (-) condensation (+) [kg m-2]    
+melt_surface             = 0;              % initialize surface melt for albedo parameterization
 
 % pre calculate (this is a speed optimization for thermal)
 ModelParam.dt_divisors = fast_divisors(dt * 10000)/10000;
@@ -540,7 +555,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     OutCum.albedo_surface           = OutCum.albedo_surface + albedo_surface;
     
     OutCum.densification_from_compaction = OutCum.densification_from_compaction + densification_from_compaction;
-    OutCum.densification_from_melt = OutCum.densification_from_melt + densification_from_melt;
+    OutCum.densification_from_melt  = OutCum.densification_from_melt + densification_from_melt;
     OutCum.firn_air_content         = OutCum.firn_air_content + firn_air_content;
     
     % Increment the counter
@@ -632,7 +647,7 @@ function [OutData, OutCum] = ...
         end
         
         % Save vertical profiles
-        OutData.grain_radius(end-o:end,r)       = grain_radius;
+        OutData.grain_radius(end-o:end,r)     = grain_radius;
         OutData.density(end-o:end,r)          = density;
         OutData.temperature(end-o:end,r)      = temperature;
         OutData.water(end-o:end,r)            = water;
@@ -660,5 +675,14 @@ function mustHaveFields(s, requiredFields)
             error('InvalidInput:MissingField', ...
                 'Structure is missing the required field: %s', f);
         end
+    end
+end
+
+% Custom validation function
+function mustContainVariables(tab, requiredVars)
+    if ~all(ismember(requiredVars, tab.Properties.VariableNames))
+        eid = 'Table:MissingVariables';
+        msg = 'Input table must contain variables: ' + strjoin(requiredVars, ", ");
+        throwAsCaller(MException(eid, msg));
     end
 end

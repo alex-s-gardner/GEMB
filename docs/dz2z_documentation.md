@@ -19,13 +19,13 @@ ModelParam = model_initialize_parameters();
 ClimateForcing.temperature_air_mean = 253.15; % -20 C
   
 % Initialize Column: 
-[~, dz] = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_column(ModelParam, ClimateForcing);
 
 % Get height column corresponding to dz: 
-z_center = dz2z(dz);
+z_center = dz2z(Profile.dz);
 
 % Plot 
-plot(dz,z_center,'o-')
+plot(Profile.dz,z_center,'o-')
 xlabel 'Vertical grid spacing (m)' 
 ylabel 'Column height (m)' 
 ```
@@ -46,10 +46,10 @@ time_step_hours = 3;
 ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 
 % Initialize grid:
-[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_column(ModelParam, ClimateForcing);
 
 % Run GEMB: 
-OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam);
+OutData = gemb(Profile, ClimateForcing, ModelParam);
 
 % Get a 2D matrix of grid cell centers: 
 z_center = dz2z(OutData.dz);

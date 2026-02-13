@@ -55,10 +55,10 @@ Below is a list of variables used by GEMB.
 | new\_snow\_method                     | string            | Fresh snow density model (e.g., "350kgm2", "Fausto").                                                                                            |
 | output\_frequency                     | string            | Output resolution: "daily", "monthly", or "all".                                                                                                 |
 | output\_padding                       | integer value     | Extra vertical levels for grid resizing (default: 1000).                                                                                         |
-| precipitation                         | kg m<sup>-2</sup> | Mass of precipitation that falls within each time step.                                                                                                                                               |
-| precipitation\_mean                   | kg m<sup>-2</sup> |                                                                                                                                                  |
+| precipitation                         | kg m<sup>-2</sup> or mmwe | Mass of precipitation that falls within each time step.                                                                                                                                               |
+| precipitation\_mean                   | kg m<sup>-2</sup> | Climatologial mean precipitation per time step                                                                                                                                                 |
 | pressure\_air                         | Pa                | Air pressure                                                                                                                                     |
-| ps                                    |                   |                                                                                                                                                  |
+| Profile                               | table             | Table output by `model_initialize_column` and input into `gemb` containing nine variables that describe the initial state of the snow/firn/ice column.                                                                                                                                                 |
 | rain                                  | kg m<sup>-2</sup> | Rain mass.                                                                                                                                       |
 | rain\_temperature\_threshold          | K                 | Temperature threshold above which precipitation falls as rain.                                                                                   |
 | refreeze                              | kg m<sup>-2</sup> | Refrozen mass                                                                                                                                    |
@@ -74,7 +74,7 @@ Below is a list of variables used by GEMB.
 | surface\_roughness\_effective\_ratio  |                   | Ratio of physical surface roughness to effective roughness.                                                                                      |
 | temperature                           | K                 | Column temperature.                                                                                                                              |
 | temperature\_air                      | K                 | Air temperature.                                                                                                                                 |
-| temperature\_air\_mean                | K                 | Year-round mean air temperature.                                                                                                                 |
+| temperature\_air\_mean                | K                 | Climatologial average temperature.                                                                                                                |
 | temperature\_observation\_height      | m                 | Thermometer height.                                                                                                                              |
 | thermal\_conductivity\_method         | string            | Model: "Sturm" or "Calonne".                                                                                                                     |
 | valid\_profile\_length                |                   | Length of the vertical profile at the instant in time it was saved as output.                                                                    |
@@ -83,7 +83,7 @@ Below is a list of variables used by GEMB.
 | water\_irreducible\_saturation        | fraction          | Irreducible water content saturation fraction (0-0.2).                                                                                           |
 | wind\_observation\_height             | m                 | Height above the surface where wind is measured or modeled.                                                                                                                  |
 | wind\_speed                           | m s<sup>-1</sup>  | Wind speed.                                                                                                                                                 |
-| wind\_speed\_mean                     | m s<sup>-1</sup>  |                                                                                                                                                  |                                                                                                                                
+| wind\_speed\_mean                     | m s<sup>-1</sup>  | Climatological average wind speed.                                                                                                                                                 |                                                                                                                                
 
 
 # Author Information
