@@ -40,29 +40,29 @@ function OutData = gemb(temperature, dz, density, water, grain_radius, grain_den
 % model_initialize_parameters.m. 
 %
 %   temperature              : Vector of initial layer temperatures [K].
-%   dz             : Vector of initial layer thicknesses [m].
-%   density              : Vector of initial layer densities [kg m^-3].
-%   water              : Vector of initial layer water content [kg m^-2].
-%   grain_radius             : Vector of initial grain sizes (effective radius) [m].
-%   grain_dendricity            : Vector of initial grain dendricity (0-1).
-%   grain_sphericity            : Vector of initial grain sphericity (0-1).
-%   albedo              : Initial surface albedo (0-1).
-%   albedo_diffuse      : Initial diffuse albedo accumulator.
-%   ClimateForcing : Structure containing time-series meteorological data.
-%      .dates      : datenum      Time vector.
-%      .shortwave_downward : water m^-2       Downward shortwave radiation.
-%      .longwave_downward       : water m^-2       Downward longwave radiation.
-%      .temperature_air     : K            Air temperature.
-%      .pressure_air     : Pa           Air pressure.
-%      .relative_humidity        : %            Relative humidity.
-%      .vapor_pressure     : Pa           Vapor pressure.
-%      .wind_speed         : m s^-1       Wind speed.
-%      .precipitation         : kg m^-2      Precipitation.
+%   dz                       : Vector of initial layer thicknesses [m].
+%   density                  : Vector of initial layer densities [kg m^-3].
+%   water                    : Vector of initial layer water content [kg m^-2].
+%   grain_radius             : Vector of initial grain sizes (effective radius) [mm].
+%   grain_dendricity         : Vector of initial grain dendricity (0-1).
+%   grain_sphericity         : Vector of initial grain sphericity (0-1).
+%   albedo                   : Initial surface albedo (0-1).
+%   albedo_diffuse           : Initial diffuse albedo accumulator.
+%   ClimateForcing           : Structure containing time-series meteorological data.
+%      .dates                : datenum      Time vector.
+%      .shortwave_downward   : W m^-2       Downward shortwave radiation.
+%      .longwave_downward    : W m^-2       Downward longwave radiation.
+%      .temperature_air      : K            Air temperature.
+%      .pressure_air         : Pa           Air pressure.
+%      .relative_humidity    : %            Relative humidity.
+%      .vapor_pressure       : Pa           Vapor pressure.
+%      .wind_speed           : m s^-1       Wind speed.
+%      .precipitation        : kg m^-2      Precipitation.
 %      .wind_observation_height         : 
 %      .temperature_observation_height         : 
 %      .temperature_air_mean : 
-%      .wind_speed_mean     : 
-%      .precipitation_mean     : 
+%      .wind_speed_mean      : 
+%      .precipitation_mean   : 
 %   ModelParam     : Structure containing model configuration parameters.
 %                    Must include 'run_prefix' and 'spinup_cycles'. See
 %                    model_initialize_parameters for more information.
@@ -109,12 +109,12 @@ arguments
     dz                (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
     density           (:,1) {mustBeNumeric,mustBeReal,mustBePositive}
     water             (:,1) {mustBeNumeric,mustBeGreaterThanOrEqual(water,0)}
-    grain_radius        (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(grain_radius,0)}
+    grain_radius      (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(grain_radius,0)}
     grain_dendricity  (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(grain_dendricity,0)}
     grain_sphericity  (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(grain_sphericity,0)}
     albedo            (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(albedo,0)}
     albedo_diffuse    (:,1) {mustBeNumeric,mustBeReal,mustBeGreaterThanOrEqual(albedo_diffuse,0)}
-    ClimateForcing    (1,1) struct {mustHaveFields(ClimateForcing, ["dates", "shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "relative_humidity", "vapor_pressure", "wind_speed", "precipitation","wind_observation_height","temperature_observation_height","temperature_air_mean","wind_speed_mean","precipitation_mean"])}
+    ClimateForcing    (1,1) struct {mustHaveFields(ClimateForcing, ["dates", "shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation","wind_observation_height","temperature_observation_height","temperature_air_mean","wind_speed_mean","precipitation_mean"])}
     ModelParam                      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "spinup_cycles","output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","shortwave_downward_diffuse","cloud_fraction","density_ice"])}
     display_options.verbose         (1,1) logical = false
     display_options.display_waitbar (1,1) logical = true
@@ -123,6 +123,17 @@ end
 assert(ModelParam.rain_temperature_threshold>=270.15 & ModelParam.rain_temperature_threshold<=276.15,'ModelParam.rain_temperature_threshold should be within three degrees of 273.15. Ensure you are using kelvin.')
 
 verbose = display_options.verbose;
+
+% If user did not provide location information, set it to NaN:
+if ~isfield(ClimateForcing,'latitude')
+    ClimateForcing.latitude  = NaN; 
+end
+if ~isfield(ClimateForcing,'longitude')
+    ClimateForcing.longitude = NaN; 
+end
+if ~isfield(ClimateForcing,'elevation')
+    ClimateForcing.elevation = NaN; 
+end
 
 %% Begin GEMB
 
@@ -196,7 +207,7 @@ for simulation_iteration = 1:total_cycles
         % run GEMB for a single time interval
         [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, shortwave_net, heat_flux_sensible, ...
             heat_flux_latent, longwave_upward, rain, melt, runoff, refreeze, mass_added, ~, ...
-            densification_from_compaction, compaction_melt] = ...
+            densification_from_compaction, densification_from_melt] = ...
            gemb_core(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ...
             ClimateForcingStep, ModelParam, verbose);
 
@@ -218,7 +229,7 @@ for simulation_iteration = 1:total_cycles
 
             % grow cumulative output values
             OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
-                shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, compaction_melt, ...
+                shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
                 density, albedo, grain_radius, dz, ModelParam, OutCum);
 
             if output_index(date_ind)
@@ -337,7 +348,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     % single level time series
     varname.monolevel = {'dates', 'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'shortwave_net', ...
         'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'grain_radius_surface', 'density_surface', 'valid_profile_length', ...
-        'densification_from_compaction', 'compaction_melt', 'ps'};
+        'densification_from_compaction', 'densification_from_melt', 'ps'};
     
     n = sum(output_index);
     
@@ -370,7 +381,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     % Initialize cumulative output values:
     varname.cumulative = {'runoff', 'melt', 'refreeze', 'evaporation_condensation', 'rain', 'mass_added', 'shortwave_net', ...
         'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'grain_radius_surface', 'density_surface', 'densification_from_compaction', ...
-        'compaction_melt', 'firn_air_content'};
+        'densification_from_melt', 'firn_air_content'};
     
     % Set cumulative values zero:
     for v = 1:length(varname.cumulative)
@@ -462,14 +473,14 @@ function ClimateForcingStep = model_inputs_single_timestep(index, dt, ClimateFor
 end
 
 function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
-    shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, compaction_melt, ...
+    shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
     density, albedo, grain_radius, dz, ModelParam, OutCum)
     % model_cumulative_add updates cumulative variables for model output.
     %
     %% Syntax
     %
     % OutCum = model_cumulative_add(OutCum, melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
-    %    shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, longwave_upward, densification_from_compaction, compaction_melt, ...
+    %    shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, longwave_upward, densification_from_compaction, densification_from_melt, ...
     %    density, albedo, grain_radius, dz, ModelParam)
     %
     %% Description
@@ -498,7 +509,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     %  heat_flux_latent         : W m^-2       Latent heat flux.
     %  longwave_upward          : W m^-2       Upward longwave radiation.
     %  densification_from_compaction  : m      Compaction due to densification.
-    %  compaction_melt          : m            Compaction due to melt.
+    %  densification_from_melt          : m            Compaction due to melt.
     %  density                  : kg m^-3      Density profile.
     %  albedo                   : fraction     Albedo profile.
     %  grain_radius             : mm           Grain radius profile.
@@ -547,7 +558,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     OutCum.density_surface          = OutCum.density_surface + density_surface;
     
     OutCum.densification_from_compaction = OutCum.densification_from_compaction + densification_from_compaction;
-    OutCum.compaction_melt = OutCum.compaction_melt + compaction_melt;
+    OutCum.densification_from_melt = OutCum.densification_from_melt + densification_from_melt;
     OutCum.firn_air_content         = OutCum.firn_air_content + firn_air_content;
     
     % Increment the counter
@@ -613,7 +624,7 @@ function [OutData, OutCum] = ...
         
         % Define which variables are cumulative totals vs time-averages
         cumulative_vars = {'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'precipitation', 'rain', 'mass_added', ...
-                           'densification_from_compaction', 'compaction_melt'};
+                           'densification_from_compaction', 'densification_from_melt'};
         is_cumulative = ismember(varname, cumulative_vars);
         
         % Transfer data from OutCum to OutData

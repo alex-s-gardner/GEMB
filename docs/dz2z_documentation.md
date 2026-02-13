@@ -62,7 +62,6 @@ pcolor(time_2D,z_center,OutData.temperature)
 shading interp
 clim([250 270])
 ylabel 'Column height (m)'
-xlabel 'Time step'
 ylim([-10 1])
 cb = colorbar;
 ylabel(cb,'Temperature (K)')

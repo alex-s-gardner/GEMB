@@ -1,5 +1,5 @@
 function [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, shortwave_net, heat_flux_sensible, ...
-    heat_flux_latent, longwave_upward, rain, melt, runoff, refreeze, mass_added, E_added, densification_from_compaction, compaction_melt] = ...
+    heat_flux_latent, longwave_upward, rain, melt, runoff, refreeze, mass_added, E_added, densification_from_compaction, densification_from_melt] = ...
    gemb_core(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ...
     ClimateForcingStep, ModelParam, verbose)
 % gemb_core performs a single time-step of the GEMB model.
@@ -69,12 +69,12 @@ end
 
 % 8. Melt and wet compaction
 % Calculate water production melt [kg m-2], runoff [kg m-2], and resulting changes
-compaction_melt = sum(dz); % Track thickness before melt
+densification_from_melt = sum(dz); % Track thickness before melt
 
 [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, melt, melt_surface, runoff, refreeze] = ...
     calculate_melt(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, rain, ModelParam, verbose);
 
-compaction_melt = (compaction_melt - sum(dz)); % Calculate wet compaction
+densification_from_melt = (densification_from_melt - sum(dz)); % Calculate wet compaction
 
 % 9. Manage the layering to match user defined requirements
 [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, mass_added, E_added] = ...

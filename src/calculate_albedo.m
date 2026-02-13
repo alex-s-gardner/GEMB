@@ -40,17 +40,17 @@ function [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, w
 %   ModelParam.albedo_snow             = albedo of fresh snow
 %
 % Method 4
-%   ModelParam.albedo_ice           = albedo of ice
-%   ModelParam.albedo_snow          = albedo of fresh snow
-%   albedo                               = grid cell albedo from prevous time step;
-%   temperature                               = grid cell temperature [k]
-%   water                           = pore water [kg]
-%   ClimateForcingStep.precipitation            = precipitation [mm w.e.] or [kg m-3]
-%   evaporation_condensation                              = surface evaporation (-) condensation (+) [kg m-2]
-%   ModelParam.albedo_wet_snow_t0   = time scale for wet snow (15-21.9) [d]
-%   ModelParam.albedo_dry_snow_t0   = warm snow timescale [15] [d]
-%   ModelParam.albedo_K             = time scale temperature coef. (7) [d]
-%   ClimateForcingStep.dt           = time step of input data [s]
+%   ModelParam.albedo_ice            = albedo of ice
+%   ModelParam.albedo_snow           = albedo of fresh snow
+%   albedo                           = grid cell albedo from prevous time step;
+%   temperature                      = grid cell temperature [k]
+%   water                            = pore water [kg]
+%   ClimateForcingStep.precipitation = precipitation [mm w.e.] or [kg m-3]
+%   evaporation_condensation         = surface evaporation (-) condensation (+) [kg m-2]
+%   ModelParam.albedo_wet_snow_t0    = time scale for wet snow (15-21.9) [d]
+%   ModelParam.albedo_dry_snow_t0    = warm snow timescale [15] [d]
+%   ModelParam.albedo_K              = time scale temperature coef. (7) [d]
+%   ClimateForcingStep.dt            = time step of input data [s]
 %
 %% Outputs
 %

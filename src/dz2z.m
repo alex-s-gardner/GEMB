@@ -73,6 +73,8 @@ function z_center = dz2z(dz)
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+% 
+% See also surface_timeseries.
 
 arguments
     dz (:,:) 
@@ -80,27 +82,6 @@ end
 
 % The bottom of the top grid cell is located at -dz(first_finite_value), so
 % the center of the top grid cell is half a grid cell above that:
-z_center = -cumsum(dz,'omitnan') + get_first_finite_data(dz)/2; 
-
-end
-
-function first_finite_data = get_first_finite_data(A)
-% get_first_finite_data returns the top row of finite data in matrix A.
-% This function is needed because OutData.dz is a 2D matrix that may have
-% many rows of NaNs at the top
-
-% Create a logical mask of finite values
-mask = isfinite(A);
-
-% Use max to find the index of the first 'true' (1) in each column
-[has_finite, first_idx] = max(mask, [], 1);
-
-% Filter out columns that have no finite values at all
-first_idx(~has_finite) = NaN; 
-
-% Extract the values using linear indexing
-valid_cols = find(has_finite);
-first_finite_data = nan(1, size(A, 2));
-first_finite_data(valid_cols) = A(sub2ind(size(A), first_idx(valid_cols), valid_cols));
+z_center = -cumsum(dz,'omitnan') + surface_timeseries(dz)/2; 
 
 end
