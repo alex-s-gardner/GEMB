@@ -336,7 +336,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     
     % single level time series
     varname.monolevel = {'dates', 'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'shortwave_net', ...
-        'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'grain_radius_surface', 'density_surface', 'valid_profile_length', ...
+        'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'valid_profile_length', ...
         'densification_from_compaction', 'densification_from_melt', 'ps'};
     
     n = sum(output_index);
@@ -369,7 +369,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     
     % Initialize cumulative output values:
     varname.cumulative = {'runoff', 'melt', 'refreeze', 'evaporation_condensation', 'rain', 'mass_added', 'shortwave_net', ...
-        'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'grain_radius_surface', 'density_surface', 'densification_from_compaction', ...
+        'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'densification_from_compaction', ...
         'densification_from_melt', 'firn_air_content'};
     
     % Set cumulative values zero:
@@ -477,7 +477,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     %
     % It performs two main tasks:
     % 1. Calculates derived variables for the current state (e.g., firn_air_content, 
-    %    surface properties density_surface, albedo_surface, grain_radius_surface).
+    %    surface properties albedo_surface).
     % 2. Explicitly sums these values into the `OutCum` structure fields.
     %
     %% Inputs
@@ -516,9 +516,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
     
     % 1. Calculate derived variables for output
-    density_surface      = density(1);
     albedo_surface       = albedo(1);
-    grain_radius_surface = grain_radius(1);
     
     % Firn Air Content (firn_air_content) [m]
     % Defined as the integrated column thickness of air equivalent.
@@ -540,8 +538,6 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     OutCum.heat_flux_sensible       = OutCum.heat_flux_sensible + heat_flux_sensible;
     OutCum.heat_flux_latent         = OutCum.heat_flux_latent + heat_flux_latent;
     OutCum.albedo_surface           = OutCum.albedo_surface + albedo_surface;
-    OutCum.grain_radius_surface     = OutCum.grain_radius_surface + grain_radius_surface;
-    OutCum.density_surface          = OutCum.density_surface + density_surface;
     
     OutCum.densification_from_compaction = OutCum.densification_from_compaction + densification_from_compaction;
     OutCum.densification_from_melt = OutCum.densification_from_melt + densification_from_melt;
