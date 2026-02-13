@@ -60,7 +60,7 @@ time_step_hours = 3;
 ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 
 % Initialize grid:
-[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse = model_initialize_column(ModelParam, ClimateForcing);
+[temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = model_initialize_column(ModelParam, ClimateForcing);
 
 % Run GEMB: 
 OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam);

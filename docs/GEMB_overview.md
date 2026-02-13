@@ -22,6 +22,10 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 **[`model_initialize_parameters`](model_initialize_parameters_documentation.md)** initializes and validates the model configuration options, setting default values for physics modules, grid geometry, and output controls.
 
+**[`surface_timeseries`](surface_timeseries_documentation.md)** returns the top row of finite data in a column timeseries of GEMB output data.
+
+**[`dewpoint_to_vapor_pressure`](dewpoint_to_vapor_pressure_documentation.md)** converts dewpoint temperature to actual vapor pressure. 
+
 ### Climate simulation and fitting functions:
 
 **`fit_air_temperature`** estimates simulation coefficients from observed data.
@@ -90,6 +94,14 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 # List of variables 
 For a complete list of variables and descriptions, see [GEMB variables](GEMB_variables.md)
+
+# Climate Forcing Data 
+
+### Test Data
+We keep some test data that we use for examples in the documentation [here](https://chadagreene.com/GEMB_data/).
+
+### ERA5 time series
+If you would like to know where we got our example data and learn how you can some of your own, check out the [ERA5 time series data page](ERA5_time_series_data). 
 
 # Author Information
 The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
