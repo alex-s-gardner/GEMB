@@ -35,7 +35,7 @@ function options = model_initialize_parameters(options)
 %    --- LONGWAVE EMISSIVITY & ROUGHNESS ---
 %    .emissivity_method             : string       Method: "uniform", "re_threshold", "re_w_threshold".
 %    .emissivity                    : double       Base longwave emissivity (0-1).
-%    .emissivity_grain_radius_large   : double       Emissivity for large grain sizes (0-1).
+%    .emissivity_grain_radius_large : double       Emissivity for large grain sizes (0-1).
 %    .emissivity_grain_radius_threshold: double       Grain radius threshold [mm] for emissivity switching.
 %    .surface_roughness_effective_ratio : double   Ratio of physical surface roughness to effective roughness.
 %
@@ -55,8 +55,8 @@ function options = model_initialize_parameters(options)
 %    .shortwave_downward_diffuse    : double       Downward diffusive shortwave flux [W m^-2].
 %    .solar_zenith_angle            : double       Solar Zenith Angle [degrees].
 %    .cloud_optical_thickness       : double       Cloud Optical Thickness.
-%    .black_carbon_snow             : double       BC concentration in snow [ppm].
-%    .black_carbon_ice              : double       BC concentration in ice [ppm].
+%    .black_carbon_snow             : double       BC concentration in snow [ppm by weight].
+%    .black_carbon_ice              : double       BC concentration in ice [ppm by weight].
 %    .cloud_fraction                : double       Cloud fraction (0-1) for GreuellKonzelmann method.
 %    .albedo_wet_snow_t0            : double       Time scale [d] for wet snow (Bougamont2005).
 %    .albedo_dry_snow_t0            : double       Time scale [d] for dry snow (Bougamont2005).
@@ -246,8 +246,8 @@ arguments
     options.shortwave_downward_diffuse (1,1) double {mustBeInRange(options.shortwave_downward_diffuse, 0, 1000)}                       = 0.0;  % downward diffusive shortwave radiation flux [W/m^2]
     options.solar_zenith_angle (1,1) double {mustBeInRange(options.solar_zenith_angle, 0, 90)}           = 0.0;  % Solar Zenith Angle [degree]
     options.cloud_optical_thickness (1,1) double {mustBeInRange(options.cloud_optical_thickness, 0, 30)} = 0.0;  % Cloud Optical Thickness
-    options.black_carbon_snow (1,1) double {mustBeInRange(options.black_carbon_snow, 0, 2)}              = 0.0;  % concentration of light absorbing carbon for snow [ppm]
-    options.black_carbon_ice (1,1) double {mustBeInRange(options.black_carbon_ice, 0, 2)}                = 0.0;  % concentration of light absorbing carbon for ice [ppm]
+    options.black_carbon_snow (1,1) double {mustBeInRange(options.black_carbon_snow, 0, 2)}              = 0.0;  % concentration of light absorbing carbon for snow [ppmw]
+    options.black_carbon_ice (1,1) double {mustBeInRange(options.black_carbon_ice, 0, 2)}                = 0.0;  % concentration of light absorbing carbon for ice [ppmw]
     
     % ------------------------------- "GreuellKonzelmann" --------------------------------
     % radiation correction factor

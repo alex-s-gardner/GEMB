@@ -51,8 +51,8 @@ A complete list of GEMB variables and descriptions can be found [here](GEMB_vari
 .shortwave_downward_diffuse    : double       Downward diffusive shortwave flux [W m^-2].
 .solar_zenith_angle            : double       Solar Zenith Angle [degrees].
 .cloud_optical_thickness       : double       Cloud Optical Thickness.
-.black_carbon_snow             : double       BC concentration in snow [ppm].
-.black_carbon_ice              : double       BC concentration in ice [ppm].
+.black_carbon_snow             : double       BC concentration in snow [ppm by weight].
+.black_carbon_ice              : double       BC concentration in ice [ppm by weight].
 .cloud_fraction                : double       Cloud fraction (0-1) for GreuellKonzelmann method.
 .albedo_wet_snow_t0            : double       Time scale [d] for wet snow (Bougamont2005).
 .albedo_dry_snow_t0            : double       Time scale [d] for dry snow (Bougamont2005).

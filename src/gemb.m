@@ -124,17 +124,6 @@ assert(ModelParam.rain_temperature_threshold>=270.15 & ModelParam.rain_temperatu
 
 verbose = display_options.verbose;
 
-% If user did not provide location information, set it to NaN:
-if ~isfield(ClimateForcing,'latitude')
-    ClimateForcing.latitude  = NaN; 
-end
-if ~isfield(ClimateForcing,'longitude')
-    ClimateForcing.longitude = NaN; 
-end
-if ~isfield(ClimateForcing,'elevation')
-    ClimateForcing.elevation = NaN; 
-end
-
 %% Begin GEMB
 
 if verbose
@@ -430,10 +419,7 @@ function ClimateForcingStep = model_inputs_single_timestep(index, dt, ClimateFor
     ClimateForcingStep.temperature_air_mean           = ClimateForcing.temperature_air_mean;
     ClimateForcingStep.wind_speed_mean                = ClimateForcing.wind_speed_mean;
     ClimateForcingStep.precipitation_mean             = ClimateForcing.precipitation_mean;
-    ClimateForcingStep.elevation                      = ClimateForcing.elevation;
-    ClimateForcingStep.latitude                       = ClimateForcing.latitude;
-    ClimateForcingStep.longitude                      = ClimateForcing.longitude;
-    
+
     % if we are provided with cc and cot values, extract for the timestep
     if numel(ModelParam.black_carbon_snow)>1
         ClimateForcingStep.black_carbon_snow = ModelParam.black_carbon_snow(index);

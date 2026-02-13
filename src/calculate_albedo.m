@@ -27,11 +27,11 @@ function [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, w
 % Methods 1 & 2
 %  grain_radius                      = surface effective grain radius [mm]
 % Method 1, optional
-%  ClimateForcingStep.black_carbon_snow        = concentration of light absorbing carbon  [ppm1], default 0
+%  ClimateForcingStep.black_carbon_snow        = concentration of light absorbing carbon  [ppmw], default 0
 %  ClimateForcingStep.solar_zenith_angle       = solar zenith angle of the incident radiation [deg], default 0
 %  ClimateForcingStep.cloud_optical_thickness  = cloud optical thickness, default 0
 %  For TWO LAYER
-%  ClimateForcingStep.black_carbon_ice         = concentration of light absorbing carbon of first ice layer [ppm1], default 0
+%  ClimateForcingStep.black_carbon_ice         = concentration of light absorbing carbon of first ice layer [ppmw], default 0
 %
 % Method 3
 %   density                                  = snow surface density [kg m-3]

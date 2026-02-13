@@ -33,8 +33,8 @@ classdef test_calculate_albedo < matlab.unittest.TestCase
             
             % Initialize ClimateForcingStep Defaults
             tcase.CF.dt                      = 3600; % Time step [s]
-            tcase.CF.black_carbon_snow       = 0.1;  % ppm
-            tcase.CF.black_carbon_ice        = 0.1;  % ppm
+            tcase.CF.black_carbon_snow       = 0.1;  % ppmw
+            tcase.CF.black_carbon_ice        = 0.1;  % ppmw
             tcase.CF.solar_zenith_angle      = 60;   % degrees
             tcase.CF.cloud_optical_thickness = 1.0; 
             tcase.CF.cloud_fraction          = 0.5;
