@@ -234,7 +234,7 @@ for simulation_iteration = 1:total_cycles
             % grow cumulative output values
             OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
                 shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
-                density, albedo, grain_radius, dz, ModelParam, OutCum);
+                density, albedo, dz, ModelParam, OutCum);
 
             if output_index(date_ind)
 
@@ -475,14 +475,14 @@ end
 
 function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
     shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
-    density, albedo, grain_radius, dz, ModelParam, OutCum)
+    density, albedo, dz, ModelParam, OutCum)
     % model_cumulative_add updates cumulative variables for model output.
     %
     %% Syntax
     %
     % OutCum = model_cumulative_add(OutCum, melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
     %    shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, longwave_upward, densification_from_compaction, densification_from_melt, ...
-    %    density, albedo, grain_radius, dz, ModelParam)
+    %    density, albedo, dz, ModelParam)
     %
     %% Description
     %
@@ -513,7 +513,6 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     %  densification_from_melt          : m            Compaction due to melt.
     %  density                  : kg m^-3      Density profile.
     %  albedo                   : fraction     Albedo profile.
-    %  grain_radius             : mm           Grain radius profile.
     %  dz                       : m            Layer thickness profile.
     %  ModelParam               : struct       Model parameters (needs .density_ice).
     %
