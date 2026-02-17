@@ -510,7 +510,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     %  heat_flux_latent         : W m^-2       Latent heat flux.
     %  longwave_upward          : W m^-2       Upward longwave radiation.
     %  densification_from_compaction  : m      Compaction due to densification.
-    %  densification_from_melt          : m            Compaction due to melt.
+    %  densification_from_melt  : m            Compaction due to melt.
     %  density                  : kg m^-3      Density profile.
     %  albedo                   : fraction     Albedo profile.
     %  dz                       : m            Layer thickness profile.
