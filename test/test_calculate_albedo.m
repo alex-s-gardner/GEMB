@@ -104,15 +104,15 @@ classdef test_calculate_albedo < matlab.unittest.TestCase
         end
         
         function test_brune_lefebre(tcase)
-            % Test: BruneLeFebre method (spectral bands)
-            tcase.MP.albedo_method = "BruneLeFebre";
+            % Test: BrunLefebre method (spectral bands)
+            tcase.MP.albedo_method = "BrunLefebre";
             tcase.grain_radius(1) = 0.5; % 0.5 mm
             
             [a_out, ~] = calculate_albedo(tcase.temperature, tcase.dz, tcase.density, tcase.water, tcase.grain_radius, ...
                 tcase.albedo_in, tcase.albedo_diffuse_in, tcase.evaporation_condensation, tcase.melt_surface, tcase.CF, tcase.MP);
             
             % We verify it runs and changes the value from input
-            tcase.verifyNotEqual(a_out(1), tcase.albedo_in(1), 'BruneLeFebre should update albedo');
+            tcase.verifyNotEqual(a_out(1), tcase.albedo_in(1), 'BrunLefebre should update albedo');
             tcase.verifyTrue(a_out(1) > 0.6, 'Fine grain snow should have relatively high albedo');
         end
         

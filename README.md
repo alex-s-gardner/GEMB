@@ -33,7 +33,7 @@ The model is highly configurable via the `model_initialize_parameters` function.
     * Users define minimum (`column_dzmin`) and maximum (`column_dzmax`) layer thicknesses to ensure stability.
 
 3.  **Energy Balance & Optical Properties:**
-    * **Albedo Schemes:** Options include `"GardnerSharp"`, `"GreuellKonzelmann"`, `"BruneLeFebre"`, or `"BougamontBamber"`.
+    * **Albedo Schemes:** Options include `"GardnerSharp"`, `"GreuellKonzelmann"`, `"BrunLefebre"`, or `"BougamontBamber"`.
     * **Solar Penetration:** The `shortwave_absorption_method` toggles between surface-only (0) or subsurface extinction (1).
     * **Thermal Conductivity:** Select between `"Sturm"` or `"Calonne"` parameterizations.
     * **Emissivity:** Configurable methods (0, 1, 2) and thresholds based on grain size.

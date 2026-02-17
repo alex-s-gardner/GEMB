@@ -22,7 +22,7 @@ function shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radiu
 % using one of two methods:
 % * Density-Dependent Extinction: The extinction coefficient scales linearly 
 %   between snow and ice values based on density (Bassford, 2002 formulation).
-%   % * Spectral-Dependent Extinction (BruneLeFebre): Radiation is split into three 
+%   % * Spectral-Dependent Extinction (BrunLefebre): Radiation is split into three 
 %   spectral bands (UV/visible, near-IR, IR) with band-specific albedos and 
 %   grain-size dependent extinction coefficients (Lefebre et al., 2003).
 %
@@ -38,7 +38,7 @@ function shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radiu
 %     .shortwave_downward_diffuse  : W m^-2     Downward diffuse shortwave flux.
 %   ModelParam                     : struct     Model parameters:
 %     .shortwave_absorption_method : integer    0 (surface only) or 1 (subsurface penetration).
-%     .albedo_method               : string     Albedo scheme selection (e.g., "GardnerSharp", "BruneLeFebre").
+%     .albedo_method               : string     Albedo scheme selection (e.g., "GardnerSharp", "BrunLefebre").
 %     .density_ice                 : kg m^-3    Density of ice.
 % 
 %% Outputs
@@ -91,7 +91,7 @@ if (ModelParam.shortwave_absorption_method == 0) || ...
     
 else % sw radation is absorbed at depth within the glacier
     
-    if ModelParam.albedo_method == "BruneLeFebre"    % ModelParam.albedo_method = "brun_1992" function of effective radius (3 spectral bands)
+    if ModelParam.albedo_method == "BrunLefebre"    % ModelParam.albedo_method = "brun_1992" function of effective radius (3 spectral bands)
         
         % convert effective radius [mm] to grain size [m]
         gsz = (grain_radius * 2) / 1000;

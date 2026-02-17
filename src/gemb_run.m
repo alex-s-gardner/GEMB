@@ -56,7 +56,7 @@
 %      thicknesses to ensure stability.
 %
 % 3. Energy Balance & Optical Properties:
-%    - Albedo schemes: "GardnerSharp", "GreuellKonzelmann", "BruneLeFebre",
+%    - Albedo schemes: "GardnerSharp", "GreuellKonzelmann", "BrunLefebre",
 %      or "Bougamont2005".
 %    - Solar Penetration: shortwave_absorption_method toggles between surface-only (0)
 %      or subsurface extinction (1).
