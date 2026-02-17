@@ -152,7 +152,7 @@ arguments
     % ------------------------ Antarctic -------------------------
     %   "Ant_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_absorption_method=0
     %   "Ant_ERA5v4_Paolo23" : ERA5 v4 (Paolo et al., 2023)
-    %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BruneLeFebre", shortwave_absorption_method=1
+    %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BrunLefebre", shortwave_absorption_method=1
     %   "Ant_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
     %   "Ant_Ligtenberg"     : Ligtenberg and others (2011), Antarctica
     % ------------------------- Greenland ------------------------
@@ -222,11 +222,11 @@ arguments
     % Select method of calculating albedo and subsurface absorption (default is "GardnerSharp")
     %   0-"None"             : direct input from albedo_fixed parameter, no use of albedo_density_threshold
     %   1-"GardnerSharp"     : effective grain radius (Gardner & Sharp, 2009)
-    %   2-"BruneLeFebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with shortwave_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
+    %   2-"BrunLefebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with shortwave_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
     %   3-"GreuellKonzelmann": density and cloud amount (Greuell & Konzelmann, 1994)
     %   4-"Bougamont2005"    : exponential time decay & wetness (Bougamont et al., 2005)
     options.albedo_method (1,1) string {mustBeMember(options.albedo_method, ...
-        ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "Bougamont2005"])} = "GardnerSharp";
+        ["None", "GardnerSharp", "BrunLefebre", "GreuellKonzelmann", "Bougamont2005"])} = "GardnerSharp";
     
     % Apply albedo_method method to all areas with densities below this value, or else apply direct input value from albedo_fixed, allowing albedo to be altered.
     % Default value is Inf.
@@ -237,7 +237,7 @@ arguments
     options.shortwave_absorption_method (1,1) double {mustBeMember(options.shortwave_absorption_method, [0,1])} = 0;
 
     % for methods of calculating albedo see albedo function
-    % --------------- "GardnerSharp" & "BruneLeFebre" ----------------------
+    % --------------- "GardnerSharp" & "BrunLefebre" ----------------------
     options.albedo_snow  (1,1) double {mustBeInRange(options.albedo_snow,  0.5, .95)} = 0.85; % new snow albedo (0.64 - 0.89)
     options.albedo_ice   (1,1) double {mustBeInRange(options.albedo_ice,   0.2, .6 )} = 0.48; % range 0.27-0.58 for old snow
     options.albedo_fixed (1,1) double {mustBeInRange(options.albedo_fixed, 0.2, .95)} = 0.85; % Albedo forcing at every element.  Used only if albedo_method == 0, or density exceeds albedo_density_threshold
