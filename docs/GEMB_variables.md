@@ -29,7 +29,7 @@ Below is a list of variables used by GEMB.
 | densification\_coeffs\_M01            | string            | Coefficients for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").                                                                                    |
 | densification\_from\_compaction       | m                 | Compaction due to densification.                                                                                                                 |
 | densification\_from\_melt             | m                 | Compaction due to melt.                                                                                                                          |
-| densification\_method                 | string            | Model: "HerronLangway", "Anthern", "Ligtenberg".                                                                                                 |
+| densification\_method                 | string            | Model: "HerronLangway", "Arthern", "Ligtenberg".                                                                                                 |
 | density                               | kg m<sup>-3</sup> | Column density.                                                                                                                                  |
 | density\_ice                          | kg m<sup>-3</sup> | Density of glacier ice.                                                                                                                          |
 | dz                                    | m                 | Layer thickness profile.                                                                                                                         |
@@ -37,7 +37,7 @@ Below is a list of variables used by GEMB.
 | emissivity                            | fraction          | Base longwave emissivity in the range of 0 to 1.                                                                                                 |
 | emissivity\_grain\_radius\_large      | fraction          | Emissivity for large grain sizes, in the range of 0 to 1.                                                                                        |
 | emissivity\_grain\_radius\_threshold  | mm                | Grain radius threshold for emissivity switching.                                                                                                 |
-| emissivity\_method                    | string            | Method: "uniform", "re_threshold", "re_w_threshold".                                                                                             |
+| emissivity\_method                    | string            | Method: "uniform", "grain_radius_threshold", "grain_radius_w_threshold".                                                                                             |
 | evaporation\_condensation             | kg m<sup>-2</sup> | Cumulative mass of evaporation (positive) or condensation (negative).                                                                            |
 | firn\_air\_content                    | m                 | Total height of all air in the firn column.                                                                                                      |
 | grain\_dendricity                     | fraction          | grain dendricity in the range of 0 to 1.                                                                                                         |

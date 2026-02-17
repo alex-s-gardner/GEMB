@@ -1,12 +1,12 @@
-function shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radius, a_surface, a_diffuse_surface, ...
+function shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radius, albedo_surface, albedo_diffuse_surface, ...
     ClimateForcingStep, ModelParam)
 % calculate_shortwave_radiation distributes absorbed shortwave radiation vertically within snow/ice.
 %
 %% Syntax 
 % 
-% shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radius, a_surface, a_diffuse_surface, ...
+% shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radius, albedo_surface, albedo_diffuse_surface, ...
 %     ClimateForcingStep, ModelParam)
-%
+%  
 %% Description
 % 
 % This function calculates the vertical distribution of absorbed shortwave (solar) 
@@ -28,22 +28,22 @@ function shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radiu
 %
 %% Inputs
 % 
-%   dz                   : m            Grid cell thickness (vector).
-%   density              : kg m^-3      Grid cell density (vector).
-%   grain_radius         : mm           Grid cell effective grain radius (vector).
-%   a_surface            : fraction     Broadband surface albedo.
-%   a_diffuse_surface    : fraction     Diffuse surface albedo.
-%   ClimateForcingStep   : struct       Current time-step forcing data:
-%     .shortwave_downward               : W m^-2       Downward shortwave radiative flux.
-%     .shortwave_downward_diffuse       : W m^-2       Downward diffuse shortwave flux.
-%   ModelParam           : struct       Model parameters:
-%     .shortwave_absorption_method : integer   0 (surface only) or 1 (subsurface penetration).
-%     .albedo_method     : string    Albedo scheme selection (e.g., "GardnerSharp", "BruneLeFebre").
-%     .density_ice       : kg m^-3   Density of ice.
+%   dz                             : m          Grid cell thickness (vector).
+%   density                        : kg m^-3    Grid cell density (vector).
+%   grain_radius                   : mm         Grid cell effective grain radius (vector).
+%   albedo_surface                 : fraction   Broadband surface albedo.
+%   albedo_diffuse_surface         : fraction   Diffuse surface albedo.
+%   ClimateForcingStep             : struct     Current time-step forcing data:
+%     .shortwave_downward          : W m^-2     Downward shortwave radiative flux.
+%     .shortwave_downward_diffuse  : W m^-2     Downward diffuse shortwave flux.
+%   ModelParam                     : struct     Model parameters:
+%     .shortwave_absorption_method : integer    0 (surface only) or 1 (subsurface penetration).
+%     .albedo_method               : string     Albedo scheme selection (e.g., "GardnerSharp", "BruneLeFebre").
+%     .density_ice                 : kg m^-3    Density of ice.
 % 
 %% Outputs
 % 
-%   shortwave_flux                  : W m^-2       Vector of absorbed shortwave radiation flux for each grid cell.
+%   shortwave_flux                 : W m^-2     Vector of absorbed shortwave radiation flux for each grid cell.
 %
 %% Example 
 % 
@@ -83,10 +83,10 @@ if (ModelParam.shortwave_absorption_method == 0) || ...
 
     % calculate surface shortwave radiation fluxes [W m-2]
     if (ModelParam.albedo_method == "GardnerSharp") % ModelParam.albedo_method = "gardner_2009"
-        shortwave_flux(1) = (1.0 - a_surface) * max(0.0, (ClimateForcingStep.shortwave_downward - ClimateForcingStep.shortwave_downward_diffuse)) ...
-            +  (1.0 - a_diffuse_surface) * ClimateForcingStep.shortwave_downward_diffuse;
+        shortwave_flux(1) = (1.0 - albedo_surface) * max(0.0, (ClimateForcingStep.shortwave_downward - ClimateForcingStep.shortwave_downward_diffuse)) ...
+            +  (1.0 - albedo_diffuse_surface) * ClimateForcingStep.shortwave_downward_diffuse;
     else
-        shortwave_flux(1) = (1 - a_surface) * ClimateForcingStep.shortwave_downward;
+        shortwave_flux(1) = (1 - albedo_surface) * ClimateForcingStep.shortwave_downward;
     end
     
 else % sw radation is absorbed at depth within the glacier
@@ -144,16 +144,16 @@ else % sw radation is absorbed at depth within the glacier
         SWs = 0.36;
         
         % SWs and SWss coefficients need to be better constranted. Greuell
-        % and Konzelmann 1994 used SWs = 0.36 and SWss = 0.64 a_surface this the
+        % and Konzelmann 1994 used SWs = 0.36 and SWss = 0.64 albedo_surface this the
         % the % of SW radiation with wavelengths > and < 800 nm
         % respectively.  This, however, may not account for the fact that
         % the albedo of wavelengths > 800 nm has a much lower albedo.
         
         % calculate surface shortwave radiation fluxes [W m-2]
-        swf_s = SWs * (1 - a_surface) * ClimateForcingStep.shortwave_downward;
+        swf_s = SWs * (1 - albedo_surface) * ClimateForcingStep.shortwave_downward;
         
         % calculate surface shortwave radiation fluxes [W m-2]
-        swf_ss = (1-SWs) * (1 - a_surface) * ClimateForcingStep.shortwave_downward;
+        swf_ss = (1-SWs) * (1 - albedo_surface) * ClimateForcingStep.shortwave_downward;
         
         % SW allowed to penetrate into snowpack
         Bs = 10;    % snow SW extinction coefficient [m-1] (Bassford,2006)

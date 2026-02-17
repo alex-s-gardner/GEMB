@@ -30,7 +30,21 @@ or
          M1_550_offset M1_550_slope M1_830_offset M1_830_slope] 
 ```
 
-# Example 
+### Inputs
+The input string `densification_coeffs_M01` must be one of the following:
+
+* `"Gre_RACMO_GS_SW0"` (default) RACMO calibration by [Gardner et al., 2023](https://doi.org/10.5194/gmd-16-2277-2023).
+* `"Ant_ERA5_GS_SW0"` 
+* `"Ant_ERA5v4_Paolo23"` reference [Paolo et al., 2023](https://doi.org/10.5194/tc-17-3409-2023).
+* `"Ant_ERA5_BF_SW1"` 
+* `"Ant_RACMO_GS_SW0"` 
+* `"Ant_Ligtenberg"` reference [Ligtenberg et al., 2011](https://doi.org/10.5194/tc-5-809-2011). 
+* `"Gre_ERA5_GS_SW0"` 
+* `"Gre_RACMO_GB_SW1"` 
+* `"Gre_KuipersMunneke"` Semi-empirical model by [Kuipers Munneke et al., 2015](https://doi.org/10.5194/tc-9-2009-2015).
+* `""` 
+
+* # Example 
 Get the coefficients used in Gardner et al., 2023:
 
 ```matlab

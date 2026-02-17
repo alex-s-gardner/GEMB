@@ -98,17 +98,17 @@ classdef test_calculate_density < matlab.unittest.TestCase
         end
         
         function test_arthern(tcase)
-            % Test "Anthern" (Semi-empirical Arthern)
-            tcase.MP.densification_method = "Anthern";
+            % Test "Arthern" (Semi-empirical Arthern)
+            tcase.MP.densification_method = "Arthern";
             [~, density_out] = calculate_density(tcase.t_vec, tcase.dz, tcase.density, tcase.grain_radius, ...
                 tcase.CF, tcase.MP);
             
-            tcase.verifyTrue(all(density_out > tcase.density), 'Anthern should densify layers');
+            tcase.verifyTrue(all(density_out > tcase.density), 'Arthern should densify layers');
         end
         
         function test_arthern_b_physical(tcase)
-            % "AnthernB" uses grain radius (grain_radius) and overburden pressure
-            tcase.MP.densification_method = "AnthernB";
+            % "ArthernB" uses grain radius (grain_radius) and overburden pressure
+            tcase.MP.densification_method = "ArthernB";
             
             % Run standard
             [~, density_std] = calculate_density(tcase.t_vec, tcase.dz, tcase.density, tcase.grain_radius, ...
@@ -134,7 +134,7 @@ classdef test_calculate_density < matlab.unittest.TestCase
             
             if ~isempty(check_indices)
                 tcase.verifyTrue(all(diff(check_indices) > 0), ...
-                    'AnthernB: Larger grains should densify slower (excluding surface layer)');
+                    'ArthernB: Larger grains should densify slower (excluding surface layer)');
             end
         end
         

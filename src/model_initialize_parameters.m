@@ -26,14 +26,14 @@ function options = model_initialize_parameters(options)
 %    .spinup_cycles                 : integer      Number of spin-up cycles (default: 0).
 %
 %    --- DENSITY & DENSIFICATION ---
-%    .densification_method          : string       Model: "HerronLangway", "Anthern", "Ligtenberg".
+%    .densification_method          : string       Model: "HerronLangway", "Arthern", "Ligtenberg".
 %    .densification_coeffs_M01      : string       Coeffs for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").
 %    .new_snow_method               : string       Fresh snow density model (e.g., "350kgm2", "Fausto").
 %    .density_ice                   : double       Density of glacier ice [kg m^-3].
 %    .rain_temperature_threshold    : double       Temperature threshold [K] above which precipitation falls as rain.
 %
 %    --- LONGWAVE EMISSIVITY & ROUGHNESS ---
-%    .emissivity_method             : string       Method: "uniform", "re_threshold", "re_w_threshold".
+%    .emissivity_method             : string       Method: "uniform", "grain_radius_threshold", "grain_radius_w_threshold".
 %    .emissivity                    : double       Base longwave emissivity (0-1).
 %    .emissivity_grain_radius_large : double       Emissivity for large grain sizes (0-1).
 %    .emissivity_grain_radius_threshold: double       Grain radius threshold [mm] for emissivity switching.
@@ -98,7 +98,7 @@ function options = model_initialize_parameters(options)
 %                                                   ↑
 %     Invalid value for 'densification_method' argument. Value must be a member of this set:
 %         'HerronLangway'
-%         'Anthern'
+%         'Arthern'
 %         'Ligtenberg' 
 %
 %% Details
@@ -137,15 +137,15 @@ arguments
     options.spinup_cycles (1,1) double {mustBeInteger, mustBeInRange(options.spinup_cycles, 0, 10000)} = 0;  
      
     %% DENSITY AND DENSIFICATION 
-    % select densification model to use (default is "Anthern"):
+    % select densification model to use (default is "Arthern"):
     %   1-"HerronLangway" : empirical model of Herron and Langway (1980)
-    %   2-"Anthern"       : semi-empirical model of Anthern et al. (2010)
-    %   3-"AnthernB"      : DO NOT USE: physical model from Appendix B of Anthern et al. (2010)
+    %   2-"Arthern"       : semi-empirical model of Arthern et al. (2010)
+    %   3-"ArthernB"      : DO NOT USE: physical model from Appendix B of Arthern et al. (2010)
     %   4-"LiZwally"      : DO NOT USE: empirical model of Li and Zwally (2004)
     %   5-"Helsen"        : DO NOT USE: modified empirical model (4) by Helsen et al. (2008)
     %   6-"Ligtenberg"    : semi-empirical model of Ligtenberg et al. (2011)
     options.densification_method (1,1) string {mustBeMember(options.densification_method, ...
-        ["HerronLangway", "Anthern", "Ligtenberg"])} = "Anthern";
+        ["HerronLangway", "Arthern", "Ligtenberg"])} = "Arthern";
     
     % Specify densification coefficients for Ligtenberg model. These 
     % coefficients have been calibrated to match observations (default is "Gre_RACMO_GS_SW0"):
@@ -153,7 +153,7 @@ arguments
     %   "Ant_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_absorption_method=0
     %   "Ant_ERA5v4_Paolo23" : ERA5 v4 (Paolo et al., 2023)
     %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BruneLeFebre", shortwave_absorption_method=1
-    %   "Ant_RACMO_GS_SW0"   : RACMO callibration, default (Gardner et al., 2023)
+    %   "Ant_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
     %   "Ant_Ligtenberg"     : Ligtenberg and others (2011), Antarctica
     % ------------------------- Greenland ------------------------
     %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_absorption_method=0, firn & bare ice
@@ -183,24 +183,24 @@ arguments
     %% LONGWAVE EMISSIVITY
     % Select method for calculating emissivity (default is "uniform")
     %   0-"uniform"       : uses "emissivity" for all snow/firn/ice surfaces
-    %   1-"re_threshold"  : uses "emissivity" for re <= emissivity_grain_radius_threshold 
-    %                       & "emissivity_grain_radius_large" for re > emissivity_grain_radius_threshold
-    %   2:"re_w_threshold": uses "emissivity" for (re <= emissivity_grain_radius_threshold & there is no liquid water at the surface) 
-    %                       & "emissivity_grain_radius_large" for (re > emissivity_grain_radius_threshold or when there is liquid water at the surface)
+    %   1-"grain_radius_threshold"  : uses "emissivity" for grain_radius <= emissivity_grain_radius_threshold 
+    %                       & "emissivity_grain_radius_large" for grain_radius > emissivity_grain_radius_threshold
+    %   2:"grain_radius_w_threshold": uses "emissivity" for (grain_radius <= emissivity_grain_radius_threshold & there is no liquid water at the surface) 
+    %                       & "emissivity_grain_radius_large" for (grain_radius > emissivity_grain_radius_threshold or when there is liquid water at the surface)
     options.emissivity_method (1,1) string {mustBeMember(options.emissivity_method, ...
-        ["uniform", "re_threshold", "re_w_threshold"])} = "uniform";
+        ["uniform", "grain_radius_threshold", "grain_radius_w_threshold"])} = "uniform";
 
     % Set ratio of physical surface roughness to effective surface roughness [fraction] 
     options.surface_roughness_effective_ratio (1,1) ...
         double {mustBeInRange(options.surface_roughness_effective_ratio, 0, 3)} = 0.10; % (Foken 2008)
 
     % Specify longwave emissivity (emissivity_grain_radius_large only used for
-    % "emissivity_method" == "re_threshold" or "re_w_threshold"
+    % "emissivity_method" == "grain_radius_threshold" or "grain_radius_w_threshold"
     % Default updated to 0.98 to satisfy range check [0, 1]
     options.emissivity (1,1) double {mustBeInRange(options.emissivity, 0, 1)} = 0.97;
     options.emissivity_grain_radius_large (1,1) double {mustBeInRange(options.emissivity_grain_radius_large, 0, 1)} = 0.97;
     
-    % Specify the effective grain radii (re) used when "emissivity_method" == "re_threshold" or "re_w_threshold"
+    % Specify the effective grain radii used when "emissivity_method" == "grain_radius_threshold" or "grain_radius_w_threshold"
     % Default value is a effective grain radius of 10 mm.
     options.emissivity_grain_radius_threshold (1,1) double {mustBeInRange(options.emissivity_grain_radius_threshold, 0, 100)} = 10;
     
@@ -243,12 +243,12 @@ arguments
     options.albedo_fixed (1,1) double {mustBeInRange(options.albedo_fixed, 0.2, .95)} = 0.85; % Albedo forcing at every element.  Used only if albedo_method == 0, or density exceeds albedo_density_threshold
     
     % Default values, but these can also be set as time series forcing
-    options.shortwave_downward_diffuse (1,1) double {mustBeInRange(options.shortwave_downward_diffuse, 0, 1000)}                       = 0.0;  % downward diffusive shortwave radiation flux [W/m^2]
-    options.solar_zenith_angle (1,1) double {mustBeInRange(options.solar_zenith_angle, 0, 90)}           = 0.0;  % Solar Zenith Angle [degree]
-    options.cloud_optical_thickness (1,1) double {mustBeInRange(options.cloud_optical_thickness, 0, 30)} = 0.0;  % Cloud Optical Thickness
-    options.black_carbon_snow (1,1) double {mustBeInRange(options.black_carbon_snow, 0, 2)}              = 0.0;  % concentration of light absorbing carbon for snow [ppmw]
-    options.black_carbon_ice (1,1) double {mustBeInRange(options.black_carbon_ice, 0, 2)}                = 0.0;  % concentration of light absorbing carbon for ice [ppmw]
-    
+    options.shortwave_downward_diffuse (1,1) double {mustBeInRange(options.shortwave_downward_diffuse, 0, 1000)}  = 0.0;  % downward diffusive shortwave radiation flux [W/m^2]
+    options.solar_zenith_angle         (1,1) double {mustBeInRange(options.solar_zenith_angle, 0, 90)}            = 0.0;  % Solar Zenith Angle [degree]
+    options.cloud_optical_thickness    (1,1) double {mustBeInRange(options.cloud_optical_thickness, 0, 30)}       = 0.0;  % Cloud Optical Thickness
+    options.black_carbon_snow          (1,1) double {mustBeInRange(options.black_carbon_snow, 0, 2)}              = 0.0;  % concentration of light absorbing carbon for snow [ppmw]
+    options.black_carbon_ice           (1,1) double {mustBeInRange(options.black_carbon_ice, 0, 2)}               = 0.0;  % concentration of light absorbing carbon for ice [ppmw]
+     
     % ------------------------------- "GreuellKonzelmann" --------------------------------
     % radiation correction factor
     % -> only used for met station data and Greuell & Konzelmann, 1994 albedo
@@ -259,7 +259,7 @@ arguments
     % (Bougamont et al., 2005)
     options.albedo_wet_snow_t0 (1,1) double {mustBeInRange(options.albedo_wet_snow_t0, 5, 25)}  = 15; % time scale for wet snow (15-21.9) [d]
     options.albedo_dry_snow_t0 (1,1) double {mustBeInRange(options.albedo_dry_snow_t0, 20, 40)} = 30; % warm snow timescale (30) [d]
-    options.albedo_K (1,1) double {mustBeInRange(options.albedo_K, 2, 12)}                      = 7;  % time scale temperature coef. (7) [d]
+    options.albedo_K           (1,1) double {mustBeInRange(options.albedo_K, 2, 12)}            = 7;  % time scale temperature coef. (7) [d]
    
     %% MODEL OUTPUT
     % specify frequency to output data (density, grid length, and temperature)
@@ -274,7 +274,7 @@ arguments
 
     %% GRID INITIALIZATION
     % set depth of top grid cell structure (constant grid length) [m]
-    options.column_ztop (1,1) double {mustBeInRange(options.column_ztop, 0, 100)} = 10;
+    options.column_ztop  (1,1) double {mustBeInRange(options.column_ztop, 0, 100)} = 10;
     
     % set initial top vertical and min allowable grid spacings [m]
     options.column_dztop (1,1) double {mustBeInRange(options.column_dztop, 0, 0.2)} = 0.05;
@@ -282,10 +282,10 @@ arguments
     options.column_dzmax (1,1) double {mustBeInRange(options.column_dzmax, 0, 0.2)} = 0.05 + (0.05 / 2);
 
     % set initial/max and min model depth [m]
-    options.column_zmax (1,1) double {mustBeInRange(options.column_zmax, 0, 1000)} = 250;
-    options.column_zmin (1,1) double {mustBeInRange(options.column_zmin, 0, 1000)} = ceil(250/2 /10)*10;
+    options.column_zmax  (1,1) double {mustBeInRange(options.column_zmax, 0, 1000)} = 250;
+    options.column_zmin  (1,1) double {mustBeInRange(options.column_zmin, 0, 1000)} = ceil(250/2 /10)*10;
     
     % stretch grid cells below top_z by a [top_dz * y ^ (cells below top_z)]
-    options.column_zy (1,1) double {mustBeInRange(options.column_zy, 1, 2)} = 1.10;
+    options.column_zy    (1,1) double {mustBeInRange(options.column_zy, 1, 2)} = 1.10;
 end
 end
