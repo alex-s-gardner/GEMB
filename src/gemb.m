@@ -309,14 +309,14 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     %
     %% Inputs
     %
-    %  column_length  : integer      Number of vertical grid cells in the model column.
-    %  ClimateForcing : struct       Forcing data structure containing:
-    %    .dates       : datenum      Vector of time steps.
-    %    .temperature_air      : K            Air temperature.
-    %    .precipitation          : m w.e.       Precipitation.
-    %  ModelParam     : struct       Model parameters structure containing:
-    %    .output_frequency : string  Frequency of output ('daily', 'monthly', 'all').
-    %    .output_padding   : integer Extra buffer size for profile arrays.
+    %  column_length       : integer   Number of vertical grid cells in the model column.
+    %  ClimateForcing      : struct    Forcing data structure containing:
+    %    .dates            : datenum   Vector of time steps.
+    %    .temperature_air  : K         Air temperature.
+    %    .precipitation    : kg m^-2.  Precipitation.
+    %  ModelParam          : struct    Model parameters structure containing:
+    %    .output_frequency : string    Frequency of output ('daily', 'monthly', 'all').
+    %    .output_padding   : integer   Extra buffer size for profile arrays.
     %
     %% Outputs
     %
