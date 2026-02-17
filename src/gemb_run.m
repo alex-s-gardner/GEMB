@@ -44,7 +44,7 @@
 % function. Key configuration categories include:
 %
 % 1. Densification Physics:
-%    - Options include "HerronLangway" (empirical), "Anthern" (semi-empirical), 
+%    - Options include "HerronLangway" (empirical), "Arthern" (semi-empirical), 
 %      and "Ligtenberg" (semi-empirical).
 %    - Calibration coefficients for the Ligtenberg model can be specified for
 %      Antarctica or Greenland (e.g., "Gre_RACMO_GS_SW0").

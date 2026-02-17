@@ -51,7 +51,7 @@ function [temperature, longwave_upward, heat_flux_sensible, heat_flux_latent, gh
 %    .density_ice           : kg m^-3      Ice density (threshold for roughness changes).
 %    .surface_roughness_effective_ratio : - Ratio of scalar roughness (zT, zQ) to momentum roughness (z0).
 %    .dt_divisors           : -            Factors used to find stable time steps.
-%    .emissivity_method     : string       Method for calculating emissivity ("uniform", "re_threshold", etc.).
+%    .emissivity_method     : string       Method for calculating emissivity ("uniform", "grain_radius_threshold", etc.).
 %    .emissivity            : -            Base longwave emissivity.
 %    .emissivity_grain_radius_threshold : mm         Grain radius threshold for emissivity switching.
 %    .emissivity_grain_radius_large   : -            Emissivity for large grain sizes.
@@ -298,7 +298,7 @@ for i = 1:dt:ClimateForcingStep.dt
     % calculate cumulative evaporation (+)/condensation(-)
     EC_cumulative = EC_cumulative + evaporation_condensation;
 
-    % if emissivity_method == "re_w_threshold" then check if the surface is melting
+    % if emissivity_method == "grain_radius_w_threshold" then check if the surface is melting
     if emissivity_melt_switch
         if temperature(1) < (CtoK - T_tolerance)
             emissivity = ModelParam.emissivity;
@@ -317,7 +317,7 @@ for i = 1:dt:ClimateForcingStep.dt
         E_tolerance = 1e-3;
         if (abs(E_delta) > E_tolerance) || isnan(E_delta)
            
-            fprintf('inputs : T_surface = %0.4f K, water_surface = %0.4f kg m-2, re_surface = %0.04f mm, shortwave_flux = %0.4f W m-2, longwave_downwardf = %0.4f W m-2, ClimateForcingStep.temperature_air = %0.4f K, ClimateForcingStep.wind_speed = %0.4f m/s, ClimateForcingStep.vapor_pressure = %0.3f Pa, ClimateForcingStep.pressure_air = %0.4f Pa \n', ...
+            fprintf('inputs : T_surface = %0.4f K, water_surface = %0.4f kg m-2, grain_radius_surface = %0.04f mm, shortwave_flux = %0.4f W m-2, longwave_downwardf = %0.4f W m-2, ClimateForcingStep.temperature_air = %0.4f K, ClimateForcingStep.wind_speed = %0.4f m/s, ClimateForcingStep.vapor_pressure = %0.3f Pa, ClimateForcingStep.pressure_air = %0.4f Pa \n', ...
                               temperature(1)               , water_surface               , grain_radius(1)                 , sum(shortwave_flux)         , ClimateForcingStep.longwave_downward             , ClimateForcingStep.temperature_air          , ClimateForcingStep.wind_speed            , ClimateForcingStep.vapor_pressure           , ClimateForcingStep.pressure_air)
 
             fprintf('internals : sw = %0.10g J, longwave_downward = %0.10g J, longwave_upward = %0.10g J, thf = %0.10g J, ghf = %0.10g J \n', ...
@@ -342,22 +342,22 @@ evaporation_condensation = EC_cumulative;
 
 end
 
-function [emissivity, emissivity_melt_switch] = emissivity_initialize(re_surface, ModelParam)
+function [emissivity, emissivity_melt_switch] = emissivity_initialize(grain_radius_surface, ModelParam)
 gdn_tolerance  = 1e-10;
 switch ModelParam.emissivity_method
     case "uniform"
         emissivity = ModelParam.emissivity;
         emissivity_melt_switch = false;
-    case "re_threshold"
-        if re_surface <= (ModelParam.emissivity_grain_radius_threshold + gdn_tolerance)
+    case "grain_radius_threshold"
+        if grain_radius_surface <= (ModelParam.emissivity_grain_radius_threshold + gdn_tolerance)
             emissivity = ModelParam.emissivity;
         else
             emissivity = ModelParam.emissivity_grain_radius_large;
         end
         emissivity_melt_switch = false;
-    case "re_w_threshold"
+    case "grain_radius_w_threshold"
         
-        if re_surface <= (ModelParam.emissivity_grain_radius_threshold + gdn_tolerance) 
+        if grain_radius_surface <= (ModelParam.emissivity_grain_radius_threshold + gdn_tolerance) 
             % populate emissivity for first thermo interation then update
             emissivity = ModelParam.emissivity;
             emissivity_melt_switch = true;

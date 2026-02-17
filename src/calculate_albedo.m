@@ -25,16 +25,16 @@ function [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, w
 %  or else apply direct input value, allowing albedo to be altered.
 %
 % Methods 1 & 2
-%  grain_radius                      = surface effective grain radius [mm]
+%  grain_radius                               = surface effective grain radius [mm]
 % Method 1, optional
-%  ClimateForcingStep.black_carbon_snow        = concentration of light absorbing carbon  [ppmw], default 0
-%  ClimateForcingStep.solar_zenith_angle       = solar zenith angle of the incident radiation [deg], default 0
-%  ClimateForcingStep.cloud_optical_thickness  = cloud optical thickness, default 0
+%  ClimateForcingStep.black_carbon_snow       = concentration of light absorbing carbon  [ppmw], default 0
+%  ClimateForcingStep.solar_zenith_angle      = solar zenith angle of the incident radiation [deg], default 0
+%  ClimateForcingStep.cloud_optical_thickness = cloud optical thickness, default 0
 %  For TWO LAYER
-%  ClimateForcingStep.black_carbon_ice         = concentration of light absorbing carbon of first ice layer [ppmw], default 0
+%  ClimateForcingStep.black_carbon_ice        = concentration of light absorbing carbon of first ice layer [ppmw], default 0
 %
 % Method 3
-%   density                                  = snow surface density [kg m-3]
+%   density                            = snow surface density [kg m-3]
 %   ClimateForcingStep.cloud_fraction  = cloud amount
 %   ModelParam.albedo_ice              = albedo of ice
 %   ModelParam.albedo_snow             = albedo of fresh snow
@@ -61,7 +61,24 @@ function [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, w
 % Bougamont, Marion, Jonathan L. Bamber, and Wouter Greuell. "A surface
 % mass balance model for the Greenland Ice Sheet." Journal of Geophysical 
 % Research: Earth Surface 110.F4 (2005). https://doi.org/10.1029/2005JF000348
+% 
+% Brun, E., David, P., Sudul, M., and Brunot, G.: A numerical model to simulate snow-cover 
+% stratigraphy for operational avalanche forecasting, J. Glaciol., 38, 13–22, 1992. 
+% https://doi.org/10.3189/S0022143000009552
 %
+% Gardner, A. S. and Sharp, M. J.: A review of snow and ice albedo and the development of a new 
+% physically based broadband albedo parameterization, J. Geophys. Res., 115, F01009, 
+% https://doi.org/10.1029/2009JF001444, 2010. 
+%
+% Greuell, W. and Konzelmann, T.: Numerical modelling of the energy balance and the englacial 
+% temperature of the Greenland Ice Sheet, Calculations for the ETH-Camp location 
+% (West Greenland, 1155 m a.s.l.), Global Planet. Change, 9, 91–114, 1994. 
+% https://doi.org/10.1016/0921-8181(94)90010-8
+%
+% Lefebre, F., Gallée, H., van Ypersele, J.-P., and Greuell, W.: Modeling of snow and ice melt at ETH Camp 
+% (West Greenland): A study of surface albedo, J. Geophys. Res., 108, 4231, https://doi.org/10.1029/2001JD001160,
+% 2003. 
+
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
@@ -71,17 +88,17 @@ function [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, w
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-T_tolerance      = 1e-10;
-d_tolerance      = 1e-11;
-water_tolerance  = 1e-13;
+T_tolerance        = 1e-10;
+d_tolerance        = 1e-11;
+water_tolerance    = 1e-13;
 
 % constants
-CtoK                = 273.15;      % Celsius to Kelvin conversion
-density_fresh_snow  = 300.0;       % density of fresh snow [kg m-3]
-density_phc         = 830.0;       % Pore closeoff density
-albedo_ice_max      = 0.58;        % maximum ice albedo, from Lefebre,2003
-albedo_ice_min      = ModelParam.albedo_ice;  % minimum ice albedo
-albedo_snow_min     = 0.65;        % minimum snow albedo, from Alexander 2014
+CtoK               = 273.15;                % celsius to kelvin conversion
+density_fresh_snow = 300.0;                 % density of fresh snow [kg m-3]
+density_phc        = 830.0;                 % Pore closeoff density
+albedo_ice_max     = 0.58;                  % maximum ice albedo, from Lefebre,2003
+albedo_ice_min     = ModelParam.albedo_ice; % minimum ice albedo
+albedo_snow_min    = 0.65;                  % minimum snow albedo, from Alexander 2014
 
 %% Function
 
@@ -92,7 +109,7 @@ else
         case "GardnerSharp" % function of effective grain radius
             % ClimateForcingStep.black_carbon_snow, IssmDouble ClimateForcingStep.black_carbon_ice, IssmDouble ClimateForcingStep.solar_zenith_angle, IssmDouble ClimateForcingStep.cloud_optical_thickness, int m
             albedo(1)         = albedo_gardner(grain_radius, dz, density, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice,  ClimateForcingStep.solar_zenith_angle, ClimateForcingStep.cloud_optical_thickness);
-            albedo_diffuse(1) = albedo_gardner(grain_radius, dz, density, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice, 50.0, ClimateForcingStep.cloud_optical_thickness);
+            albedo_diffuse(1) = albedo_gardner(grain_radius, dz, density, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice,                                   50.0, ClimateForcingStep.cloud_optical_thickness);
 
         case "BruneLeFebre" % function of effective grain radius
             % Spectral fractions  (Lefebre et al., 2003)
@@ -133,28 +150,28 @@ else
             t0 = zeros(size(albedo));
 
             % specify constants
-            % a_wet = 0.15;        % water albedo (0.15)
-            % a_new = ModelParam.albedo_snow        % new snow albedo (0.64 - 0.89)
-            % a_old = ModelParam.albedo_ice;        % old snow/ice albedo (0.27-0.53)
-            % t0_wet = ModelParam.albedo_wet_snow_t0;      % time scale for wet snow (15-21.9) [d]
-            % t0_dry = ModelParam.albedo_dry_snow_t0;      % warm snow timescale [15] [d]
-            % ModelParam.albedo_K = 7                % time scale temperature coef. (7) [d]
-            % water0 = 300;            % 200 - 600 [mm]
-            z_snow = 15;           % 16 - 32 [mm]
+            % a_wet = 0.15;                           % water albedo (0.15)
+            % a_new = ModelParam.albedo_snow          % new snow albedo (0.64 - 0.89)
+            % a_old = ModelParam.albedo_ice;          % old snow/ice albedo (0.27-0.53)
+            % t0_wet = ModelParam.albedo_wet_snow_t0; % time scale for wet snow (15-21.9) [d]
+            % t0_dry = ModelParam.albedo_dry_snow_t0; % warm snow timescale [15] [d]
+            % ModelParam.albedo_K = 7                 % time scale temperature coef. (7) [d]
+            % water0 = 300;                           % 200 - 600 [mm]
+            z_snow = 15;                              % 16 - 32 [mm]
 
             % determine timescale for albedo decay
-            t0(water > 0+water_tolerance ) = ModelParam.albedo_wet_snow_t0;                                % wet snow timescale
-            TC                     = temperature - CtoK;                                                     % change temperature from K to °C
-            t0warm                 = abs(TC) * ModelParam.albedo_K + ModelParam.albedo_dry_snow_t0;% 'warm' snow timescale
+            t0(water > 0+water_tolerance ) = ModelParam.albedo_wet_snow_t0;                         % wet snow timescale
+            TC                     = temperature - CtoK;                                            % change temperature from K to °C
+            t0warm                 = abs(TC) * ModelParam.albedo_K + ModelParam.albedo_dry_snow_t0; % 'warm' snow timescale
 
             t0(abs(water)<water_tolerance  & TC >= -10-T_tolerance ) = ...
                 t0warm(abs(water)<water_tolerance  & TC >= -10-T_tolerance );
             t0(TC < -10-T_tolerance ,1) =  10 * ModelParam.albedo_K ...
-                + ModelParam.albedo_dry_snow_t0;                             % 'cold' snow timescale
+                + ModelParam.albedo_dry_snow_t0;                                  % 'cold' snow timescale
 
             % calculate new albedo
             d_a = (albedo - ModelParam.albedo_ice) ./ t0 * ClimateForcingStep.dt; % change in albedo
-            albedo   = albedo - d_a;                                                   % new albedo
+            albedo   = albedo - d_a;                                              % new albedo
 
             % modification of albedo due to thin layer of snow or solid
             % condensation (deposition) at the surface surface
@@ -290,7 +307,7 @@ dac = max(0.04 - as, ...
 lice = find([density; 999]>=830-d_tolerance );
 z1   = sum(dz(1:(lice(1)-1)).*density(1:(lice(1)-1)));
 
-m=length(density);
+m = length(density);
 if (m > 0) && (lice(1) <= m) && (z1 > d_tolerance)
     
     % determine albedo values for bottom layer
@@ -316,6 +333,7 @@ dasz = 0.53 * as .* (1 - (as + dac)) .* (1 - u) .^ 1.2;
 dat = (0.1 * t .* (as + dac).^ 1.3) ./ ((1 + 1.5*t).^as);
  
 %% Broadband albedo 
+
 albedo = as + dac + dasz + dat;
 
 end
