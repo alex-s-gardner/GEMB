@@ -19,7 +19,7 @@ function [grain_radius, grain_dendricity, grain_sphericity]  = calculate_grain_s
 % sphericity (grain_sphericity) for every grid cell in the column.
 %
 % Note: This function only executes if ModelParam.albedo_method is set to 
-% "GardnerSharp" or "BruneLeFebre". If strictly empirical albedo models are 
+% "GardnerSharp" or "BrunLefebre". If strictly empirical albedo models are 
 % used (e.g., GreuellKonzelmann), the grain properties are returned unchanged.
 % 
 %% Inputs
@@ -71,8 +71,8 @@ T_tolerance     = 1e-10;
 gdn_tolerance   = 1e-10;
 water_tolerance = 1e-13;
 
-% only when ModelParam.albedo_method = "GardnerSharp" or "BruneLeFebre" do we run grainGrowth: 
-if ~(strcmp(ModelParam.albedo_method, 'GardnerSharp') || strcmp(ModelParam.albedo_method, 'BruneLeFebre'))
+% only when ModelParam.albedo_method = "GardnerSharp" or "BrunLefebre" do we run grainGrowth: 
+if ~(strcmp(ModelParam.albedo_method, 'GardnerSharp') || strcmp(ModelParam.albedo_method, 'BrunLefebre'))
 	%come out as we came in:
 	return;
 end

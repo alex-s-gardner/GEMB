@@ -28,7 +28,7 @@ classdef test_calculate_grain_size < matlab.unittest.TestCase
     methods (Test)
         
         function test_albedo_method_skip(tcase)
-            % verify that albedo_method values other than GardnerSharp/BruneLeFebre return inputs unchanged
+            % verify that albedo_method values other than GardnerSharp/BrunLefebre return inputs unchanged
             n                   = 5;
             t_in                = 260 * ones(n, 1);
             dz                  = 0.1 * ones(n, 1);

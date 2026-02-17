@@ -15,7 +15,7 @@ function [albedo, albedo_diffuse] = calculate_albedo(temperature, dz, density, w
 %
 %
 %% Inputs
-% ModelParam.albedo_method = albedo method to use ["None", "GardnerSharp", "BruneLeFebre", "GreuellKonzelmann", "BougamontBamber"]
+% ModelParam.albedo_method = albedo method to use ["None", "GardnerSharp", "BrunLefebre", "GreuellKonzelmann", "BougamontBamber"]
 %
 % Method 0
 %  ModelParam.albedo_fixed = direct input value for albedo, override all changes to albedo
@@ -111,7 +111,7 @@ else
             albedo(1)         = albedo_gardner(grain_radius, dz, density, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice,  ClimateForcingStep.solar_zenith_angle, ClimateForcingStep.cloud_optical_thickness);
             albedo_diffuse(1) = albedo_gardner(grain_radius, dz, density, ClimateForcingStep.black_carbon_snow, ClimateForcingStep.black_carbon_ice,                                   50.0, ClimateForcingStep.cloud_optical_thickness);
 
-        case "BruneLeFebre" % function of effective grain radius
+        case "BrunLefebre" % function of effective grain radius
             % Spectral fractions  (Lefebre et al., 2003)
             % [0.3-0.8um 0.8-1.5um 1.5-2.8um]
             sF = [0.606 0.301 0.093];
@@ -188,7 +188,7 @@ else
     end
 
     %If we do not have fresh snow
-    if ismember(ModelParam.albedo_method,["GardnerSharp","BruneLeFebre"]) && ...
+    if ismember(ModelParam.albedo_method,["GardnerSharp","BrunLefebre"]) && ...
             ((ModelParam.albedo_density_threshold - density(1)) >= d_tolerance)
 
         % In a snow layer < 10cm, account for mix of ice and snow,

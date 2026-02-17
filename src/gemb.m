@@ -518,7 +518,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     %
     %% Outputs
     %
-    %  OutCum           : struct       Updated cumulative structure with incremented .count.
+    %  OutCum                   : struct       Updated cumulative structure with incremented .count.
     %
     %% Author Information
     % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -530,7 +530,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
     
     % 1. Calculate derived variables for output
-    albedo_surface       = albedo(1);
+    albedo_surface   = albedo(1);
     
     % Firn Air Content (firn_air_content) [m]
     % Defined as the integrated column thickness of air equivalent.

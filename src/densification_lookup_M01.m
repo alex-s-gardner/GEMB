@@ -60,7 +60,7 @@ switch densification_coeffs_M01
     case "Ant_ERA5v4_Paolo23"    
         M01 = [2.84, 0.32, 3.10, 0.37];
 
-    % ERA5 new albedo_method="BruneLeFebre", shortwave_absorption_method=1
+    % ERA5 new albedo_method="BrunLefebre", shortwave_absorption_method=1
     case "Ant_ERA5_BF_SW1"
         M01 = [2.2191, 0.2301, 2.2917, 0.2710]; 
 

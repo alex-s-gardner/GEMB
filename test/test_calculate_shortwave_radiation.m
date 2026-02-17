@@ -100,11 +100,11 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
         end
         
         function test_penetration_brun_method(tcase)
-            % Test Case: Penetration with Brun method ("BruneLeFebre")
+            % Test Case: Penetration with Brun method ("BrunLefebre")
             % This method calculates its own spectral albedos internally
             
             tcase.MP.shortwave_absorption_method = 1;
-            tcase.MP.albedo_method = "BruneLeFebre";
+            tcase.MP.albedo_method = "BrunLefebre";
             
             shortwave_flux = calculate_shortwave_radiation(tcase.dz, tcase.density, tcase.grain_radius, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.CF, tcase.MP);
@@ -124,7 +124,7 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
         end
         
         function test_penetration_standard_method(tcase)
-            % Test Case: Penetration with Standard method (NOT "BruneLeFebre")
+            % Test Case: Penetration with Standard method (NOT "BrunLefebre")
             % Uses Greuell & Konzelmann coefficients
             
             tcase.MP.shortwave_absorption_method = 1;
