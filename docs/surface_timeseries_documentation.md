@@ -42,7 +42,7 @@ exportgraphics(gcf,'surface_timeseries_documentation_01.png',Resolution=300)
 
 ![](https://chadagreene.com/GEMB_figures/surface_timeseries_documentation_01.png)
 
-In the figure above, the skin temperature never exceeds 273.15 K because anything warmer is water! 
+In the figure above, the skin temperature never exceeds 273.15 K because if any additional energy is added it will be used to melt the ice! 
 
 # Author Information
 The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
