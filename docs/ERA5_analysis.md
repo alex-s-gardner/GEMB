@@ -91,7 +91,7 @@ CF.precipitation        = ncread(filename_pressure_precip,'tp') * 1000;
 % Wind speed is the hypotenuse of the vector components: 
 CF.wind_speed           = hypot(ncread(filename_wind,'u10'),ncread(filename_wind,'v10')); 
 
-% ERA5's ssrd is "surface solar radiation downwards" (Surface downlwelling shortwave flux in air)
+% ERA5's ssrd is "surface solar radiation downwards" (Surface downwelling shortwave flux in air)
 % Divide accumulated hourly flux by 3600 to convert the total number of joules per square meter to average watts per square meter: 
 CF.shortwave_downward   = ncread(filename_radiation,'ssrd') / 3600;
 
@@ -153,7 +153,7 @@ Above, we see that the surface albedo generally hovers around 0.846, and drops a
 
 ## 7. Update Model Parameters 
 
-To include a model spinup cycle, update the model parameters and re-run GEMB like this: 
+To include a specified number of model spinup cycles, update the model parameters and re-run GEMB like this: 
 
 ```matlab
 % Update the model parameters: 
@@ -341,6 +341,7 @@ ylabel(cb,'Column density (kg m^{-3})')
 clim([350 400])
 cmocean dense % optional colormap
 
+% Add a time series of surface melt: 
 hold on
 plot(OutData.time, OutData.melt, 'linewidth',2)
 
