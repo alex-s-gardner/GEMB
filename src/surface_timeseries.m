@@ -29,11 +29,8 @@ function A_surface = surface_timeseries(A)
 %   % Get a time series of skin temperature: 
 %   temperature_skin = surface_timeseries(OutData.temperature); 
 % 
-%   % Create a datetime array to make it easy: 
-%   dates_datetime = datetime(OutData.dates,'convertfrom','datenum'); 
-% 
 %   % Plot the timeseries: 
-%   plot(dates_datetime, temperature_skin)
+%   plot(OutData.time, temperature_skin)
 %   ylabel 'Skin temperature (K)'
 % 
 %% Author Information

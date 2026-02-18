@@ -26,20 +26,18 @@ temperature_dewpoint = ncread(filename,'d2m');
 % Convert dewpoint temperature to actual vapor pressure: 
 vapor_pressure = dewpoint_to_vapor_pressure(temperature_dewpoint); 
 
-% Reference date plus hours: 
-dates = datetime(datenum(1970,1,1,0,0,0) +...
-    double(ncread(filename,'valid_time'))/24,...
-    'ConvertFrom','datenum');
+% Reference date plus hours since the referene date: 
+time = datetime(1970,1,1) + duration(ncread(filename,'valid_time'),0,0);
     
 figure
 subplot(2,1,1)
-plot(dates,temperature_dewpoint)
+plot(time,temperature_dewpoint)
 box off
 axis tight
 ylabel 'Dewpoint temperature (K)'
 
 subplot(2,1,2)
-plot(dates,vapor_pressure)
+plot(time,vapor_pressure)
 box off
 axis tight
 ylabel 'Vapor pressure (Pa)'

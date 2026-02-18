@@ -52,7 +52,7 @@ function z_center = dz2z(dz)
 %   z_center = dz2z(OutData.dz);
 %   
 %   % Convert time to 2D so pcolor can plot it: 
-%   time_2D = repmat(OutData.dates,size(OutData.temperature,1),1);
+%   time_2D = repmat(OutData.time,size(OutData.temperature,1),1);
 %   
 %   figure
 %   pcolor(time_2D,z_center,OutData.T)

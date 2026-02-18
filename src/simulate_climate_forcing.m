@@ -32,7 +32,7 @@ function ClimateForcing = simulate_climate_forcing(set_id, time_step_hours)
 %% Outputs
 %
 %  ClimateForcing        : struct       Structure containing generated climate data:
-%    .dates              : datenum      Time vector.
+%    .time               : datetime     Time vector.
 %    .shortwave_downward : W m^-2       Downward shortwave radiation.
 %    .longwave_downward  : W m^-2       Downward longwave radiation.
 %    .temperature_air    : K            Air temperature.
@@ -65,7 +65,6 @@ end
 % initialize times and random seed
 dec_year = location_parameters.start_date:time_step:location_parameters.end_date+1;
 dec_year = dec_year(:);
-dates = decyear2datenum(dec_year);
 
 rng(location_parameters.rand_seed);
 
@@ -110,7 +109,7 @@ varname       = "precipitation";
 precipitation = simulate_precipitation(dec_year, coeffs.(varname));
 
 % populate structure
-ClimateForcing.dates              = dates;
+ClimateForcing.time               = datetime(decyear2datenum(dec_year),'convertfrom','datenum');
 ClimateForcing.shortwave_downward = shortwave_downward;
 ClimateForcing.temperature_air    = temperature_air;
 ClimateForcing.pressure_air       = pressure_air;

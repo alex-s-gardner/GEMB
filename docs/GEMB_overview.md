@@ -12,7 +12,7 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 # Function List 
 
-### Primary functions: 
+### Primary functions:  
 
 [**`dz2z`**](dz2z_documentation.md) returns a center coordinates from GEMB column spacings. 
 
