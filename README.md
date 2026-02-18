@@ -19,99 +19,47 @@ GEMB simulates a wide range of physical processes critical to glacier health:
 * **Dynamic Albedo:** Models albedo evolution with long-term memory, accounting for grain growth and specific surface area.
 * **Grid Management:** Utilizes a dynamic Lagrangian-style vertical grid that evolves with accumulation and ablation, automatically merging and splitting layers to maintain numerical stability.
 
+## Prerequisites
+ This version of GEMB requires MATLAB. Some examples in the documentation generate sample data using the `simulate_precipitation` function, which depends on the Statistics Toolbox, but otherwise GEMB can be run using a base MATLAB license without any additional toolboxes. If you do not have a MATLAB license, GEMB may be compatible with [Octave](https://octave.org/), but has only been tested with MATLAB. 
 
-## Model Configuration
+## Documentation
 
-The model is highly configurable via the `model_initialize_parameters` function. Key configuration categories include:
+### GEMB Contents
 
-1.  **Densification Physics:**
-    * Options include **"HerronLangway"** (empirical), **"Arthern"** (semi-empirical), and **"Ligtenberg"** (semi-empirical).
-    * Calibration coefficients for the Ligtenberg model can be specified for Antarctica or Greenland (e.g., `"Gre_RACMO_GS_SW0"`).
+[List of functions](docs/GEMB_overview.md) shows the contents of GEMB and describes function dependencies. 
 
-2.  **Grid Geometry:**
-    * Vertical discretization is controlled by `column_ztop` (dvapor_pressureepth of high-resolution surface zone) and `column_zy` (stretching factor for deep layers).
-    * Users define minimum (`column_dzmin`) and maximum (`column_dzmax`) layer thicknesses to ensure stability.
+[List of variables](docs/GEMB_variables.md) describes variable names and units used throughout GEMB. 
 
-3.  **Energy Balance & Optical Properties:**
-    * **Albedo Schemes:** Options include `"GardnerSharp"`, `"GreuellKonzelmann"`, `"BrunLefebre"`, or `"BougamontBamber"`.
-    * **Solar Penetration:** The `shortwave_absorption_method` toggles between surface-only (0) or subsurface extinction (1).
-    * **Thermal Conductivity:** Select between `"Sturm"` or `"Calonne"` parameterizations.
-    * **Emissivity:** Configurable methods (0, 1, 2) and thresholds based on grain size.
+### Basic Workflow
 
-4.  **Initialization:**
-    * Fresh snow density can be set via models like `"350kgm2"`, `"Fausto"`, or `"Kaspers"`.
-    * Spin-up cycles (`spinup_cycles`) allow the model to reach equilibrium before saving output.
+Using GEMB requires four basic steps: 
 
-## Climate Forcing Inputs
+1. Define a Climate Forcing structure that contains time series of surface forcing using these structure field names: 
 
-GEMB requires high-frequency meteorological forcing data. The `simulate_climate_forcing` function generates synthetic data containing the following variables:
+    ```matlab
+    CF.time                           = ; % datetime
+    CF.temperature_air                = ; % K 
+    CF.pressure_air                   = ; % Pa
+    CF.precipitation                  = ; % kg m^-2
+    CF.wind_speed                     = ; % m s^-1
+    CF.shortwave_downward             = ; % W m^-2
+    CF.longwave_downward              = ; % W m^-2
+    CF.vapor_pressure                 = ; % Pa
+    CF.temperature_air_mean           = ; % K
+    CF.wind_speed_mean                = ; % m s^-1
+    CF.precipitation_mean             = ; % kg m^-2
+    CF.temperature_observation_height = ; % m
+    CF.wind_observation_height        = ; % m
+    ```
+2. Use [`model_initialize_parameters`](docs/model_initialize_parameters_documentation.md) to define model parameters.
+3. Use [`model_initialize_column`](docs/model_initialize_column_documentation.md) to create an initial profile of temperature, density, grid spacing, and other column parameters. 
+3. Run the [`gemb`](docs/gemb_documentation.md) function.
 
-* **Radiation:**
-    * Downward Shortwave (`shortwave_downward`): Calculated based on solar geometry and location.
-    * Downward Longwave (`longwave_downward`): Derived from air temperature and vapor pressure, with adjustments for cloud cover.
-* **Thermodynamics:**
-    * Air Temperature (`temperature_air`): Simulated time series.
-    * Air Pressure (`pressure_air`): Calculated from elevation and temperature.
-    * Humidity: Relative humidity (`relative_humidity`) and vapor pressure (`vapor_pressure`).
-* **Dynamics & Mass:**
-    * Wind Speed (`wind_speed`): Stochastic generation with seasonal noise.
-    * Precipitation (`precipitation`): Accumulated mass input.
-* **Metadata:**
-    * Includes location (`latitude`, `longitude`, `elevation`) and measurement heights (`wind_observation_height`, `temperature_observation_height`).
+### Tutorials
 
-## Getting Started
+[Getting ERA5 reanalysis data](docs/ERA5_time_series_data.md) describes how to download ERA5 time series data for a single location. 
 
-### Prerequisites
-* MATLAB (The core physics are written in MATLAB/C++).
-
-### Basic Usage
-The following MATLAB snippet demonstrates the standard workflow to configure, initialize, and run a GEMB simulation.
-
-```matlab
-% 1. Specify Model Parameters
-% Initialize the default parameter structure. 
-ModelParam = model_initialize_parameters();
-
-% 2. Load Climate Forcing
-% Generate or load meteorological forcing data (Temperature, Wind, Precip, etc.)
-% 'test_1' loads a pre-defined test case.
-ClimateForcing = simulate_climate_forcing("test_1");
-
-% 3. Initialize Grid
-% Set up the initial vertical column state (Temperature, Density, Water content, etc.)
-[temperature, dz, density, water, grain_size, grain_dendricity, grain_sphericity, albedo, albedo_diffuse] = ...
-    model_initialize_column(ModelParam, ClimateForcing);
-
-% 4. Run GEMB
-% Execute the model. 'verbose' enables detailed logging.
-verbose = true;
-OutData = gemb(temperature, dz, density, water, grain_size, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ...
-               ClimateForcing, ModelParam, verbose);
-```
-### Visualizing Results
-Once the model run is complete, the results are stored in the `OutData` structure. You can visualize the evolution of the firn column using standard MATLAB plotting commands.
-
-```matlab
-% Example: Plotting Surface Mass Balance Components
-figure;
-plot(OutData.time, OutData.M, 'r', 'DisplayName', 'Melt');
-hold on;
-plot(OutData.time, OutData.R, 'b', 'DisplayName', 'Runoff');
-legend;
-title('Modeled Surface Mass Balance Components');
-ylabel('Mass Flux (kg m^{-2})');
-xlabel('Time');
-
-% Example: Plotting Temperature Profile Evolution
-% OutData.temperature contains temperature profiles [depth x time]
-% Note: Using the initial depth profile for visualization purposes.
-figure;
-imagesc(OutData.time, cumsum(OutData.dz(:,1)), OutData.temperature); 
-colorbar;
-title('Firn Temperature Evolution');
-ylabel('Depth (m)');
-xlabel('Time');
-```
+[Analyzing ERA5 reanalysis data](docs/ERA5_analysis.md) describes how to read ERA5 hourly data into MATLAB and analyse it with GEMB.
 
 ## Citation
 If you use the GEMB software in your research, please cite the following paper:

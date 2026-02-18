@@ -79,7 +79,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 %% Example
 % Run a basic example: 
 %   
-%   Initialize model parameters:
+%   % Initialize model parameters:
 %   ModelParam = model_initialize_parameters(output_frequency="daily");
 %    
 %   % Generate sample data: 
@@ -380,10 +380,10 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     I = find(output_index);                      % save index
     for i = 1:n
         if i == 1
-            OutData.temperature_air(i) = mean(ClimateForcing.temperature_air(1:I(i))) - 273.15;  % convert from K to deg C
+            OutData.temperature_air(i) = mean(ClimateForcing.temperature_air(1:I(i)));  
             OutData.precipitation(i)   = sum(ClimateForcing.precipitation(1:I(i)));
         else
-            OutData.temperature_air(i) = mean(ClimateForcing.temperature_air((I(i-1)+1):I(i))) - 273.15;
+            OutData.temperature_air(i) = mean(ClimateForcing.temperature_air((I(i-1)+1):I(i)));
             OutData.precipitation(i)   = sum(ClimateForcing.precipitation((I(i-1)+1):I(i)));
         end
     end

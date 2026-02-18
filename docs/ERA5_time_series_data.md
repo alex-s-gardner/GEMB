@@ -20,7 +20,7 @@ After you've logged in, click on the **Download** tab and select which variables
 
 Summit Station is located at (72.579583°N, 38.459186°W), which we round to the nearest tenth of a degree to get the closest ERA5 grid cell. For our example data, we selected hourly data from the start of the year 2000 through the end of 2025. Select NetCDF as the output format and request to download the data. The request may take a minute or two, but should be ready for download in less time than it takes to refill a coffee. 
 
-After downloading, unzip the folder and you will find [five NetCDF files](https://chadagreene.com/GEMB_data/)with names like `reanalysis-era5-land-timeseries-sfc-2m-temperaturelaos9yiu.nc`. The last eight characters are unique identfiers automatically assigned to each file. Despite requesting all of the files at the same time, the unique identifiers are different for each of the five files, which can make it difficult to identify them as belonging together. To make things easier, we manually changed the final characters of all five filenames to `_summit`. 
+After downloading, unzip the folder and you will find [five NetCDF files](https://chadagreene.com/GEMB_data/) with names like `reanalysis-era5-land-timeseries-sfc-2m-temperaturelaos9yiu.nc`. The last eight characters are unique identfiers automatically assigned to each file. Despite requesting all of the files at the same time, the unique identifiers are different for each of the five files, which can make it difficult to identify them as belonging together. To make things easier, we manually changed the final characters of all five filenames to `_summit`. 
 
 In MATLAB, you can explore the contents of each NetCDF using the `ncdisp` function like this: 
 
@@ -143,6 +143,8 @@ Variables:
                        calendar = 'proleptic_gregorian'
 >> 
 ```
+
+For an example of how to analyze this data with GEMB, check out [this tutorial](ERA5_analysis.md).
 
 # Author Information
 The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
