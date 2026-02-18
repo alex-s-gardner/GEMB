@@ -25,7 +25,6 @@ Below is a list of variables used by GEMB.
 | column\_zmin                          | m                 | Minimum total column depth. See Figure 1 of [Gardner et al., 2023](https://doi.org/10.5194/gmd-16-2277-2023)                                                                                 |
 | column\_ztop                          | m                 | Depth of constant grid spacing at the surface. See Figure 1 of [Gardner et al., 2023](https://doi.org/10.5194/gmd-16-2277-2023).                                                             |
 | column\_zy                            | m                 | Grid stretching factor for lower layers. See Figure 1 of [Gardner et al., 2023](https://doi.org/10.5194/gmd-16-2277-2023)                                                                    |
-| dates                                 | datenum           | Serial date number represents the whole and fractional number of days from a fixed, preset date (January 0, 0000) in the proleptic ISO calendar. |
 | densification\_coeffs\_M01            | string            | Coefficients for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").                                                                                    |
 | densification\_from\_compaction       | m                 | Compaction due to densification.                                                                                                                 |
 | densification\_from\_melt             | m                 | Compaction due to melt.                                                                                                                          |
@@ -77,6 +76,7 @@ Below is a list of variables used by GEMB.
 | temperature\_air\_mean                | K                 | Climatologial average temperature.                                                                                                                |
 | temperature\_observation\_height      | m                 | Thermometer height.                                                                                                                              |
 | thermal\_conductivity\_method         | string            | Model: "Sturm" or "Calonne".                                                                                                                     |
+| time                                 | datetime           | Dates in MATLAB's datetime format (also accepts datenum format.) |
 | valid\_profile\_length                |                   | Length of the vertical profile at the instant in time it was saved as output.                                                                    |
 | vapor\_pressure                       | Pa                | Vapor pressure.                                                                                                                                  |
 | water                                 | kg m<sup>-2</sup> | Pore water                                                                                                                                                 |

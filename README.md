@@ -94,9 +94,9 @@ Once the model run is complete, the results are stored in the `OutData` structur
 ```matlab
 % Example: Plotting Surface Mass Balance Components
 figure;
-plot(OutData.dates, OutData.M, 'r', 'DisplayName', 'Melt');
+plot(OutData.time, OutData.M, 'r', 'DisplayName', 'Melt');
 hold on;
-plot(OutData.dates, OutData.R, 'b', 'DisplayName', 'Runoff');
+plot(OutData.time, OutData.R, 'b', 'DisplayName', 'Runoff');
 legend;
 title('Modeled Surface Mass Balance Components');
 ylabel('Mass Flux (kg m^{-2})');
@@ -106,7 +106,7 @@ xlabel('Time');
 % OutData.temperature contains temperature profiles [depth x time]
 % Note: Using the initial depth profile for visualization purposes.
 figure;
-imagesc(OutData.dates, cumsum(OutData.dz(:,1)), OutData.temperature); 
+imagesc(OutData.time, cumsum(OutData.dz(:,1)), OutData.temperature); 
 colorbar;
 title('Firn Temperature Evolution');
 ylabel('Depth (m)');

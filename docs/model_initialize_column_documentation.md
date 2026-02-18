@@ -1,5 +1,5 @@
 # `model_initialize_column` documentation
-`model_initialize_column ` initializes a GEMB column based on specifiedmodel and climate forcing parameters.
+`model_initialize_column ` initializes a GEMB column based on specified model and climate forcing parameters.
 
 # Syntax 
 ```matlab

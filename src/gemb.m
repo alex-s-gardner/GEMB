@@ -50,7 +50,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 %     albedo                 : Initial surface albedo (0-1).
 %     albedo_diffuse         : Initial diffuse albedo accumulator.
 %   ClimateForcing           : Structure containing time-series meteorological data.
-%     .dates                 : datenum      Time vector.
+%     .time                  : datetime     Time vector.
 %     .shortwave_downward    : W m^-2       Downward shortwave radiation.
 %     .longwave_downward     : W m^-2       Downward longwave radiation.
 %     .temperature_air       : K            Air temperature.
@@ -106,7 +106,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 
 arguments 
     Profile           (:,9) table {mustContainVariables(Profile, ["temperature", "dz", "density", "water", "grain_radius", "grain_dendricity", "grain_sphericity", "albedo", "albedo_diffuse"])}
-    ClimateForcing    (1,1) struct {mustHaveFields(ClimateForcing, ["dates", "shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation","wind_observation_height","temperature_observation_height","temperature_air_mean","wind_speed_mean","precipitation_mean"])}
+    ClimateForcing    (1,1) struct {mustHaveFields(ClimateForcing, ["time", "shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation","wind_observation_height","temperature_observation_height","temperature_air_mean","wind_speed_mean","precipitation_mean"])}
     ModelParam                      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "spinup_cycles","output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","shortwave_downward_diffuse","cloud_fraction","density_ice"])}
     display_options.verbose         (1,1) logical = false
     display_options.display_waitbar (1,1) logical = true
@@ -145,7 +145,7 @@ if verbose
     disp(['------------------ STARTING RUN # ' num2str(ModelParam.run_prefix) ' --------------------' ])
     tic                                        % start timer
 end
-ClimateForcing.dates = datenum(ClimateForcing.dates); %  
+ClimateForcing.dates = datenum(ClimateForcing.time); %  
 dates = ClimateForcing.dates;              % extract dates for convenience
 dt    = (dates(2)-dates(1)) * (60*60*24);  % input time step in seconds
 
@@ -350,7 +350,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     end
     
     % single level time series
-    varname.monolevel = {'dates', 'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'shortwave_net', ...
+    varname.monolevel = {'time', 'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'shortwave_net', ...
         'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'valid_profile_length', ...
         'densification_from_compaction', 'densification_from_melt', 'ps'};
     
@@ -361,7 +361,20 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
         OutData.(varname.monolevel{v}) = nan(1,n);
     end
     
-    OutData.dates = ClimateForcing.dates(output_index)';
+    OutData.time = datetime(ClimateForcing.dates(output_index)', 'ConvertFrom', 'datenum');
+    
+     %  time                     : datetime     Time vector for output steps.
+     %  melt                     : kg m^-2      Melt mass balance.
+     %  runoff                   : kg m^-2      Runoff mass balance.
+     %  refreeze                 : kg m^-2      Refreeze mass balance.
+     %  evaporation_condensation : kg m^-2      Evaporation (-) / Condensation (+).
+     %  shortwave_net            : W m^-2       Net shortwave radiation at the surface.
+     %  longwave_net             : W m^-2       Net longwave radiation at the surface.
+     %  heat_flux_sensible       : W m^-2       Sensible heat flux at the surface.
+     %  heat_flux_latent         : W m^-2       Latent heat flux at the surface.
+     %  albedo_surface           : fraction     Surface albedo (top layer).
+     %  valid_profile_length     : integer      Number of valid layers in the profile (non-NaN).
+     %  densification_from_compaction  : m      Compaction due to densification.
 
     % Time averages/totals:
     I = find(output_index);                      % save index
