@@ -18,8 +18,8 @@ function Profile = model_initialize_column(ModelParam, ClimateForcing)
 %    density           kg m^-3   ice density                ModelParam.density_ice
 %    water             kg m^-2   old-snow water content     0
 %    grain_radius      mm        old-snow grain size        2.5
-%    grain_dendricity  fraction  old-snow grain dendricity  0
-%    grain_sphericity  fraction  old-snow grain sphericity  0
+%    grain_dendricity  fraction  old-snow grain dendricity  1
+%    grain_sphericity  fraction  old-snow grain sphericity  0.5
 %    albedo            fraction  surface albedo             ModelParam.albedo_snow
 %    albedo_diffuse    fraction  diffuse surface albedo     ModelParam.albedo_snow
 %   
@@ -38,15 +38,15 @@ function Profile = model_initialize_column(ModelParam, ClimateForcing)
 %   >> head(Profile)
 %       temperature     dz     density    water    grain_radius    grain_dendricity    grain_sphericity    albedo    albedo_diffuse
 %       ___________    ____    _______    _____    ____________    ________________    ________________    ______    ______________
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85     
-%         253.15       0.05      910        0          2.5                0                   0             0.85          0.85             
-%  
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
 % from Nicole-Jeanne Schlegel and Chad Greene. Complete code and documentation are available
@@ -69,8 +69,8 @@ temperature      = zeros(m,1) + ClimateForcing.temperature_air_mean; % initial g
 density          = zeros(m,1) + ModelParam.density_ice;    % density to that of ice [kg m-3]
 water            = zeros(m,1);                             % water content of zero [kg m-2]
 grain_radius     = zeros(m,1) + 2.5;                       % grain size of old snow [mm]
-grain_dendricity = zeros(m,1);                             % grain dentricity of old snow
-grain_sphericity = zeros(m,1);                             % grain sphericity of old snow
+grain_dendricity = ones(m,1);                              % grain dentricity of fresh snow
+grain_sphericity = 0.5 * ones(m,1);                        % grain sphericity of fresh snow
 albedo           = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]
 albedo_diffuse   = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]  
 
