@@ -9,7 +9,7 @@ function Profile = model_initialize_column(ModelParam, ClimateForcing)
 %% Description
 %
 % Profile = model_initialize_column(ModelParam, ClimateForcing) uses inputs ModelParam from 
-% model_initialize_parameters and input structure ClimateForcing (which must contain at least
+% model_initialize_parameters and input timetable ClimateForcing (which must contain at least
 % temperature_air_mean). The output Profile is a table containing the following variables: 
 % 
 %    Variable          Units     Description                Initial Value
@@ -29,7 +29,7 @@ function Profile = model_initialize_column(ModelParam, ClimateForcing)
 % 
 %   % Initialize parameters: 
 %   ModelParam = model_initialize_parameters;
-%   ClimateForcing.temperature_air_mean = 253.15; % -20 C
+%   ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 %  
 %   % Initialize Column: 
 %   Profile = model_initialize_column(ModelParam, ClimateForcing);
@@ -56,16 +56,16 @@ function Profile = model_initialize_column(ModelParam, ClimateForcing)
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 
-assert(isscalar(ClimateForcing.temperature_air_mean),'Temperature ClimateForcing.temperature_air_mean must be a scalar.')
-assert(ClimateForcing.temperature_air_mean>0,'Temperature ClimateForcing.temperature_air_mean must exceed 0 K.')
-if ClimateForcing.temperature_air_mean<100
+assert(isscalar(ClimateForcing.Properties.CustomProperties.temperature_air_mean),'Temperature ClimateForcing.temperature_air_mean must be a scalar.')
+assert(ClimateForcing.Properties.CustomProperties.temperature_air_mean>0,'Temperature ClimateForcing.temperature_air_mean must exceed 0 K.')
+if ClimateForcing.Properties.CustomProperties.temperature_air_mean<100
     warning('Temperature ClimateForcing.temperature_air_mean should be in kelvin, but is below 100, suggesting an error. Confirm that the units are kelvin.')
 end
 
 % initialze column variables 
 dz               = model_initialize_grid(ModelParam);
 m                = length(dz);
-temperature      = zeros(m,1) + ClimateForcing.temperature_air_mean; % initial grid cell temperature to the annual mean temperature [K]
+temperature      = zeros(m,1) + ClimateForcing.Properties.CustomProperties.temperature_air_mean; % initial grid cell temperature to the annual mean temperature [K]
 density          = zeros(m,1) + ModelParam.density_ice;    % density to that of ice [kg m-3]
 water            = zeros(m,1);                             % water content of zero [kg m-2]
 grain_radius     = zeros(m,1) + 2.5;                       % grain size of old snow [mm]
@@ -113,6 +113,8 @@ function dz = model_initialize_grid(ModelParam)
 % Gardner, A. S., Schlegel, N.-J., and Larour, E.: Glacier Energy and Mass Balance (GEMB): 
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
+% 
+% See also model_initialize_forcing and model_initialize_parameters.
 
 %% Error checks: 
 

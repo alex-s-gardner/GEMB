@@ -35,7 +35,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 % OutData = gemb(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, ClimateForcing, ModelParam)
 % produces time series of snow, firn, and ice properties OutData from input
 % vectors of the initial column temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, and albedo, albedo_diffuse.
-% Input ClimateForcing is a structure containing time series of surface
+% Input ClimateForcing is a timetable containing time series of surface
 % forcing parameters descibed below. Input ModelParam is from the function
 % model_initialize_parameters.m. 
 %
@@ -106,11 +106,17 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 
 arguments 
     Profile           (:,9) table {mustContainVariables(Profile, ["temperature", "dz", "density", "water", "grain_radius", "grain_dendricity", "grain_sphericity", "albedo", "albedo_diffuse"])}
-    ClimateForcing    (1,1) struct {mustHaveFields(ClimateForcing, ["time", "shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation","wind_observation_height","temperature_observation_height","temperature_air_mean","wind_speed_mean","precipitation_mean"])}
+    ClimateForcing    (:,7) timetable {mustContainVariables(ClimateForcing, ["shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation"])}
     ModelParam                      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "spinup_cycles","output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","shortwave_downward_diffuse","cloud_fraction","density_ice"])}
     display_options.verbose         (1,1) logical = false
     display_options.display_waitbar (1,1) logical = true
 end
+
+assert(isfinite(ClimateForcing.Properties.CustomProperties.temperature_air_mean),           "Undefined climatological mean temperature. Set it by ClimateForcing.Properties.CustomProperties.temperature_air_mean = __")
+assert(isfinite(ClimateForcing.Properties.CustomProperties.wind_speed_mean),                "Undefined climatological mean wind speed. Set it by ClimateForcing.Properties.CustomProperties.wind_speed_mean = __")
+assert(isfinite(ClimateForcing.Properties.CustomProperties.precipitation_mean),             "Undefined climatological mean precipitation. Set it by ClimateForcing.Properties.CustomProperties.precipitation_mean = __")
+assert(isfinite(ClimateForcing.Properties.CustomProperties.temperature_observation_height), "Undefined  temperature observation height. Set it by ClimateForcing.Properties.CustomProperties.temperature_observation_height = __")
+assert(isfinite(ClimateForcing.Properties.CustomProperties.wind_observation_height),        "Undefined wind observation height. Set it by ClimateForcing.Properties.CustomProperties.wind_observation_height = __")
 
 assert(ModelParam.rain_temperature_threshold>=270.15 & ModelParam.rain_temperature_threshold<=276.15,'ModelParam.rain_temperature_threshold should be within three degrees of 273.15. Ensure you are using kelvin.')
 
@@ -442,11 +448,11 @@ function ClimateForcingStep = model_inputs_single_timestep(index, dt, ClimateFor
     ClimateForcingStep.precipitation      = ClimateForcing.precipitation(index);      % precipitation [kg m-2]
     
     % Location specifc parameters
-    ClimateForcingStep.wind_observation_height        = ClimateForcing.wind_observation_height;
-    ClimateForcingStep.temperature_observation_height = ClimateForcing.temperature_observation_height;
-    ClimateForcingStep.temperature_air_mean           = ClimateForcing.temperature_air_mean;
-    ClimateForcingStep.wind_speed_mean                = ClimateForcing.wind_speed_mean;
-    ClimateForcingStep.precipitation_mean             = ClimateForcing.precipitation_mean;
+    ClimateForcingStep.wind_observation_height        = ClimateForcing.Properties.CustomProperties.wind_observation_height;
+    ClimateForcingStep.temperature_observation_height = ClimateForcing.Properties.CustomProperties.temperature_observation_height;
+    ClimateForcingStep.temperature_air_mean           = ClimateForcing.Properties.CustomProperties.temperature_air_mean;
+    ClimateForcingStep.wind_speed_mean                = ClimateForcing.Properties.CustomProperties.wind_speed_mean;
+    ClimateForcingStep.precipitation_mean             = ClimateForcing.Properties.CustomProperties.precipitation_mean;
 
     % if we are provided with cc and cot values, extract for the timestep
     if numel(ModelParam.black_carbon_snow)>1

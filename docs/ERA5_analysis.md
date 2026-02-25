@@ -1,17 +1,17 @@
 # ERA5 time series analysis
 
-This tutorial describes how to use ERA5 reanalysis data to model the firn column in an accumulation zone  near Greenland's [Summit Station](https://en.wikipedia.org/wiki/Summit_Camp).  
+This tutorial describes how to use ERA5 reanalysis data to model the firn column in an accumulation zone  near Greenland's [Summit Station](https://en.wikipedia.org/wiki/Summit_Camp). See `GEMB_example_ERA5.m` for a single script that contains all of the code below.
 
 ## 0. Download data
 
 To follow along, download the same data files that we explore below [here](https://chadagreene.com/GEMB_data/), or check out [this tutorial](ERA5_time_series_data.md) to see how to get the same type of data for any other location on Earth. 
 
 ## 1. Define Climate Forcing
-The [`gemb`](gemb_documentation.md) function requires a Climate Forcing structure that contains the following input variables: 
+The [`gemb`](gemb_documentation.md) function requires a Climate Forcing timetable that you can create with the [`model_initialize_forcing`](model_initialize_forcing_documentation.md) function. Here's a breakdown of the ERA5 variables you'll need how to convert them to the units required by GEMB:
 
 | `gemb` variable        | ERA5 source     | Conversion notes                                                                                                                                  |
 |------------------------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `time`                 | `valid_time`    | Convert "hours since 1970-01-01" to datetime or datenum format.   |
+| `time`                 | `valid_time`    | Convert "hours since 1970-01-01" to datetime format.   |
 | `temperature_air`      | `t2m`           | No conversion necessary. |
 | `pressure_air`         | `sp`            | No conversion necessary.|
 | `precipitation`        | `tp`            | Divide by 1000 to convert from m to kg m<sup>-2</sup>   |
@@ -25,27 +25,10 @@ The [`gemb`](gemb_documentation.md) function requires a Climate Forcing structur
 | `temperature_observation_height`      |  | The modeled 2 m air temperature is equivalent to a thermometer placed 2 m above the ground. |
 | `wind_observation_height`   |  | The modeled 10 m wind speed is equivalent to an anemometer placed 10 m above the ground. |
 
-Defining a Climate Forcing structure `CF` for the [`gemb`](gemb_documentation.md) function will require us to use the table above to fill in the 13 variables in the following blank template: 
-
-```matlab
-CF.time                           = ; % datetime
-CF.temperature_air                = ; % K 
-CF.pressure_air                   = ; % Pa
-CF.precipitation                  = ; % kg m^-2
-CF.wind_speed                     = ; % m s^-1
-CF.shortwave_downward             = ; % W m^-2
-CF.longwave_downward              = ; % W m^-2
-CF.vapor_pressure                 = ; % Pa
-CF.temperature_air_mean           = ; % K
-CF.wind_speed_mean                = ; % m s^-1
-CF.precipitation_mean             = ; % kg m^-2
-CF.temperature_observation_height = ; % m
-CF.wind_observation_height        = ; % m
-```
-
 Assuming you've downloaded the example data and placed it in your current directory or another location where MATLAB can find it, define each of the filenames:
 
 ```matlab
+% Define climate data filenames: 
 filename_2m_temperature  = 'reanalysis-era5-land-timeseries-sfc-2m-temperature_summit.nc';
 filename_pressure_precip = 'reanalysis-era5-land-timeseries-sfc-pressure-precipitation_summit.nc';
 filename_radiation       = 'reanalysis-era5-land-timeseries-sfc-radiation-heat_summit.nc';
@@ -72,43 +55,84 @@ Variables:
                        calendar = 'proleptic_gregorian'
 ```
 
-The units of time in the ERA5 NetCDF are `'hours since 1970-01-01'`, so create a time variable by defining a reference date in datetime format and add the number of hours since the reference date. Here, we'll let `time` be the the first variable defined in a Climate Forcing structure we'll call `CF`:
+The units of time in the ERA5 NetCDF are `'hours since 1970-01-01'`, so create a time variable by defining a reference date in datetime format and add the number of hours since the reference date.
 
 ```matlab
 % Reference date plus number of hours since the reference date: 
-CF.time = datetime(1970,1,1) + duration(ncread(filename_2m_temperature,'valid_time'),0,0);
+time = datetime(1970,1,1) + duration(ncread(filename_2m_temperature,'valid_time'),0,0);
 ```
 
-The remaining variables in the Climate Forcing structure `CF` are defined individually by reading the ERA5 variables listed in the table at the top of this page. Note that some units are converted from units used by ERA5 to units required by GEMB. Also note that while ERA5 does not explicitly contain vapor pressure data, GEMB provides a [`dewpoint_to_vapor_pressure`](dewpoint_to_vapor_pressure_documentation.md) function that converts dewpoint temperature to corresponding vapor pressure.  
+The remaining variables are defined individually by reading the ERA5 variables listed in the table at the top of this page. Note that some units are converted from units used by ERA5 to units required by GEMB. Also note that while ERA5 does not explicitly contain vapor pressure data, GEMB provides a [`dewpoint_to_vapor_pressure`](dewpoint_to_vapor_pressure_documentation.md) function that converts dewpoint temperature to corresponding vapor pressure.  
 
 ```matlab
-CF.temperature_air      = ncread(filename_2m_temperature,'t2m'); 
-CF.pressure_air         = ncread(filename_pressure_precip,'sp');
+% Read temperature and pressure: 
+temperature_air = ncread(filename_2m_temperature,'t2m'); 
+pressure_air    = ncread(filename_pressure_precip,'sp');
 
 % Multiply hourly precipitation by 1000 to convert from m to kg/m^2:  
-CF.precipitation        = ncread(filename_pressure_precip,'tp') * 1000;
+precipitation   = ncread(filename_pressure_precip,'tp') * 1000;
+```
+
+At this point we run into a minor issue, because some precipitation values are less than zero: 
+
+```matlab
+>> min(precipitation)
+ans =
+  -4.4035e-05
+```
+
+You might assume a small negative value of precipitation could indicate evaporation, but in ERA5, negative precipitation is just numerical noise that probably came from converting data types. We can set it to zero and move on:
+
+```matlab
+% Fix numerical noise: 
+precipitation(precipitation<0) = 0; 
 
 % Wind speed is the hypotenuse of the vector components: 
-CF.wind_speed           = hypot(ncread(filename_wind,'u10'),ncread(filename_wind,'v10')); 
+wind_speed = hypot(ncread(filename_wind,'u10'),ncread(filename_wind,'v10')); 
 
 % ERA5's ssrd is "surface solar radiation downwards" (Surface downwelling shortwave flux in air)
 % Divide accumulated hourly flux by 3600 to convert the total number of joules per square meter to average watts per square meter: 
-CF.shortwave_downward   = ncread(filename_radiation,'ssrd') / 3600;
+shortwave_downward   = ncread(filename_radiation,'ssrd') / 3600;
 
 % ERA5's strd is "Surface thermal radiation downwards". Divide it by 3600 to convert accumulated energy to average flux:  
-CF.longwave_downward    = ncread(filename_radiation,'strd') / 3600;
+longwave_downward    = ncread(filename_radiation,'strd') / 3600;
 
-temperature_dewpoint    = ncread(filename_2m_temperature,'d2m');
-CF.vapor_pressure       = dewpoint_to_vapor_pressure(temperature_dewpoint); 
+% Need to conver dewpoint temperature to vapor pressure:
+temperature_dewpoint = ncread(filename_2m_temperature,'d2m');
+vapor_pressure = dewpoint_to_vapor_pressure(temperature_dewpoint); 
 
-CF.temperature_air_mean = mean(CF.temperature_air); 
-
-CF.wind_speed_mean      = mean(CF.wind_speed); 
-CF.precipitation_mean   = mean(CF.precipitation); 
-
-CF.temperature_observation_height = 2;  % 2 m air temperature
-CF.wind_observation_height        = 10; % 10 m wind speed
+% Build a Climate Forcing timetable:
+ClimateForcing = model_initialize_forcing(time_vector,... % time
+    temperature_air,...
+    pressure_air,...
+    precipitation,...      
+    wind_speed,...
+    shortwave_downward,...
+    longwave_downward,...
+    vapor_pressure,...
+    temperature_air_mean = mean(temperature_air),...
+    wind_speed_mean = mean(wind_speed),...
+    precipitation_mean = mean(precipitation),...
+    temperature_observation_height = 2,...
+    wind_observation_height = 10); 
 ```
+
+This is what the complete climate forcing timetable looks like: 
+
+```matlab
+>> head(ClimateForcing)
+            time            temperature_air    pressure_air    precipitation    wind_speed    shortwave_downward    longwave_downward    vapor_pressure
+    ____________________    _______________    ____________    _____________    __________    __________________    _________________    ______________
+    01-Jan-2000 00:00:00        245.19            64100          0.046432         13.465              0                  174.47              44.843    
+    01-Jan-2000 01:00:00        245.07            64059          0.047861         12.809              0                  176.84              44.312    
+    01-Jan-2000 02:00:00        244.91            64045          0.052294         11.945              0                   177.7              43.752    
+    01-Jan-2000 03:00:00        244.75            64006          0.051484         10.962              0                  178.29               43.27    
+    01-Jan-2000 04:00:00        244.63            63976          0.041652         10.096              0                  180.72              42.704    
+    01-Jan-2000 05:00:00         244.3            63926          0.029244         9.1997              0                  173.98               41.65    
+    01-Jan-2000 06:00:00        243.91            63891          0.021435         8.3843              0                  170.73              40.317    
+    01-Jan-2000 07:00:00        243.06            63997          0.012085         7.1716              0                  162.37              36.928    
+```
+
 ## 3. Define Model Parameters
 
 Use the [`model_initialize_parameters`](model_initialize_parameters_documentation.md) function to intialize model parameters. Although the climate forcing data are hourly, we will output to daily frequency to minimize the amount of data we will need to plot later: 
@@ -119,10 +143,10 @@ ModelParam = model_initialize_parameters(output_frequency="daily");
 
 ## 4. Initialize a GEMB Column
 
-Use the [`model_initialize_column`](model_initialize_column_documentation.md) function to create an initial GEMB column based on our climate forcing structure `CF` and model parameters `ModelParam`: 
+Use the [`model_initialize_column`](model_initialize_column_documentation.md) function to create an initial GEMB column based on our climate forcing timetable `ClimateForcing` and model parameters `ModelParam`: 
 
 ```matlab
-Profile = model_initialize_column(ModelParam, CF);
+Profile = model_initialize_column(ModelParam, ClimateForcing);
 ```
 
 ## 5. Run GEMB
@@ -130,7 +154,7 @@ Profile = model_initialize_column(ModelParam, CF);
 With the climate forcing, model parameters, and column all set, running GEMB is very easy, although it may take ~30 seconds to run this example data: 
 
 ```matlab
-OutData = gemb(Profile, CF, ModelParam);
+OutData = gemb(Profile, ClimateForcing, ModelParam);
 ```
 
 ## 6. Visualize albedo evolution
@@ -160,7 +184,7 @@ To include a specified number of model spinup cycles, update the model parameter
 ModelParam.spinup_cycles = 3; 
 
 % Re-run GEMB: 
-OutData = gemb(Profile, CF, ModelParam);
+OutData = gemb(Profile, ClimateForcing, ModelParam);
 
 figure
 plot(OutData.time, OutData.albedo_surface, LineWidth=2)
@@ -252,16 +276,16 @@ exportgraphics(gcf,'ERA5_analysis_evaporation_condensation.jpg',Resolution=300)
 Above, positive values indicate net evaporation and negative values indicate net condensation. High wind and low humidity are primarily responsible for increased wintertime evaporation and the reduced surface temperatures. Use the [`vapor_pressure_to_relative_humidity`](vapor_pressure_to_relative_humidity_documentation.md) function to convert vapor pressure to relative humidity and plot it along with hourly wind speed as a function of day of year:
 
 ```matlab
-relative_humidity = vapor_pressure_to_relative_humidity(CF.vapor_pressure, CF.temperature_air);
+relative_humidity = vapor_pressure_to_relative_humidity(vapor_pressure, temperature_air);
 
 figure
 subplot(2,1,1)
-binscatter(day(CF.time,"dayofyear"), CF.wind_speed, 150)
+binscatter(day(ClimateForcing.time,"dayofyear"), ClimateForcing.wind_speed, 150)
 axis([0 366 0 25])
 ylabel 'Wind speed (m s^{-1})'
 
 subplot(2,1,2)
-binscatter(day(CF.time,"dayofyear"), relative_humidity, 150)
+binscatter(day(ClimateForcing.time,"dayofyear"), relative_humidity, 150)
 axis([0 366 50 100])
 ylabel 'Relative humidity (%)'
 xlabel 'Day of year'

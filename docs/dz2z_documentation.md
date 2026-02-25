@@ -14,9 +14,11 @@ z_center = dz2z(dz)
 Initialize a column and plot its grid spacing. A mean air temperature is defined below because it is used by `model_initialize_column` to set the initial temperature of the snow/firn/ice column. 
 
 ```matlab
-% Initialize parameters: 
+% Initialize model parameters: 
 ModelParam = model_initialize_parameters();
-ClimateForcing.temperature_air_mean = 253.15; % -20 C
+
+% Mean air temperature is the only ClimateForcing parameter required to create a Profile:
+ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
   
 % Initialize Column: 
 Profile = model_initialize_column(ModelParam, ClimateForcing);
