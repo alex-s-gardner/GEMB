@@ -78,11 +78,17 @@ function z_center = dz2z(dz)
 % See also surface_timeseries.
 
 arguments
-    dz (:,:) 
+    dz (:,:) {mustBeNumeric}
 end
+
+% Take note of which entries are NaN:
+isn = isnan(dz); 
 
 % The bottom of the top grid cell is located at -dz(first_finite_value), so
 % the center of the top grid cell is half a grid cell above that:
 z_center = -cumsum(dz,'omitnan') + surface_timeseries(dz)/2; 
+
+% Set outputs to NaN where inputs were NaN:
+z_center(isn) = NaN; 
 
 end
