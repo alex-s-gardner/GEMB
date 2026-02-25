@@ -34,7 +34,7 @@ GEMB simulates a wide range of physical processes critical to glacier health:
 
 Using GEMB requires four basic steps: 
 
-1. **Define Climate Forcing:** Use [`model_initialize_forcing`](model_initialize_forcing_documentation.md) to create a timetable of surface forcing from modeled or observed time series, or use [`simulate_climate_forcing`](simulate_climate_forcing_documentation.md) to create synthetic data for testing. 
+1. **Define Climate Forcing:** Use [`model_initialize_forcing`](docs/model_initialize_forcing_documentation.md) to create a timetable of surface forcing from modeled or observed time series, or use [`simulate_climate_forcing`](simulate_climate_forcing_documentation.md) to create synthetic data for testing. 
 2. **Define Model Parameters:** Use [`model_initialize_parameters`](docs/model_initialize_parameters_documentation.md) to set model parameters such as the number of spinup cycles or which densification model is used.
 3. **Initialize a Column:** Use [`model_initialize_column`](docs/model_initialize_column_documentation.md) to create an initial profile of temperature, density, grid spacing, and other column properties. 
 4. **Run GEMB:** Enter the Climate Forcing, Model Parameters, and initial Profile into the [`gemb`](docs/gemb_documentation.md) function.
