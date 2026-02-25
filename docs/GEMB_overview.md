@@ -1,14 +1,20 @@
 # Overview of GEMB
 
+
+# Basic Workflow
+
+Using GEMB requires four basic steps: 
+
+1. **Define Climate Forcing:** Use [`model_initialize_forcing`](model_initialize_forcing_documentation.md) to create a timetable of surface forcing from modeled or observed time series, or use [`simulate_climate_forcing`](simulate_climate_forcing_documentation.md) to create synthetic data for testing. 
+2. **Define Model Parameters:** Use [`model_initialize_parameters`](docs/model_initialize_parameters_documentation.md) to set model parameters such as the number of spinup cycles or which densification model is used.
+3. **Initialize a Column:** Use [`model_initialize_column`](docs/model_initialize_column_documentation.md) to create an initial profile of temperature, density, grid spacing, and other column properties. 
+4. **Run GEMB:** Enter the Climate Forcing, Model Parameters, and initial Profile into the [`gemb`](docs/gemb_documentation.md) function.
+
+After climate forcing, model parameters, and the initial state of the column defined, the `gemb` function calls `gemb_core` for each time step of the climate forcing. At each time step, `gemb_core` calls a series of functions that update the column grain size, albedo, shortwave radiation, temperature, accumulation, meltwater, and density. In this process, the `manage_layers` function adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
+
+Here are the functions that are called by `gemb`:
+
 ![](https://chadagreene.com/GEMB_figures/gemb_dependency_graph.jpg)
-
-The figure above shows all of the functions that are called by the `gemb_run` example script. It shows that before running `gemb`, you must first: 
-
-1. Use the `model_initialize_parameters` function to initialize a `ModelParam` structure that contains default values for physics modules, grid geometry, and output controls.
-2. Use the `simulate_climate_forcing` function to initialize a `ClimateForcing` structure that contains time series of synthetic air temperature, downward shortwave and longwave radiation, air pressure, relative humidty, vapor pressure, wind speed, and precipitation. 
-3. Use the `model_initialize_column` function to create vertical columns that contain initial values of temperature, density, water content, grain properties, albedo, and column spacing. 
-
-With model parameters, climate forcing, and the initial state of the column defined, the `gemb` function calls `gemb_core` for each time step of the climate forcing. At each time step, `gemb_core` calls a series of functions that update the column grain size, albedo, shortwave radiation, temperature, accumulation, meltwater, and density. In this process, the `manage_layers` function adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
 
 # Function List 
 
@@ -19,6 +25,8 @@ With model parameters, climate forcing, and the initial state of the column defi
 [**`gemb`**](gemb_documentation.md) runs the GEMB model.
 
 [**`model_initialize_column`**](model_initialize_column_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.
+
+[**`model_initialize_forcing`**](model_initialize_forcing_documentation.md) initializes a timetable of climatological surface forcing variables.
 
 **[`model_initialize_parameters`](model_initialize_parameters_documentation.md)** initializes and validates the model configuration options, setting default values for physics modules, grid geometry, and output controls.
 
@@ -42,7 +50,7 @@ With model parameters, climate forcing, and the initial state of the column defi
 
 **`simulate_air_temperature`** simulates air temp using fitted coefficients.
 
-**`simulate_climate_forcing`** generates synthetic climate forcing data for GEMB simulations based on predefined parameter sets.
+**[`simulate_climate_forcing`](simulate_climate_forcing_documentation.md)** generates synthetic climate forcing data for GEMB simulations based on predefined parameter sets.
 
 **`simulate_coeffs_disp`** displays structure fields as executable MATLAB code.
 

@@ -36,7 +36,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_dztop=tcase.MP.column_dztop,...
             column_zmax=tcase.MP.column_zmax,...
             column_zy=tcase.MP.column_zy);
-            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+            ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
             Profile = model_initialize_column(ModelParam, ClimateForcing);
             z_center = dz2z(Profile.dz); 
@@ -69,7 +69,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_dztop=tcase.MP.column_dztop,...
             column_zmax=tcase.MP.column_zmax,...
             column_zy=tcase.MP.column_zy);
-            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+            ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
             Profile = model_initialize_column(ModelParam, ClimateForcing);
             
@@ -104,7 +104,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             tcase.MP.column_zmax  = 1;
             tcase.MP.column_zy    = 1.0;
             
-            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+            ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
             ModelParam = model_initialize_parameters(column_ztop=tcase.MP.column_ztop,...
             column_dztop=tcase.MP.column_dztop,...
             column_zmax=tcase.MP.column_zmax,...
@@ -131,7 +131,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_zy=tcase.MP.column_zy);
             ModelParam.column_dztop = 1; % override the dztop value bc 1 would not get past model_initialize_parameters error checks.  
 
-            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+            ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
             Profile = model_initialize_column(ModelParam, ClimateForcing);
             z_center = dz2z(Profile.dz); 
@@ -154,7 +154,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_dztop=tcase.MP.column_dztop,...
             column_zmax=tcase.MP.column_zmax,...
             column_zy=tcase.MP.column_zy);
-            ClimateForcing.temperature_air_mean = 253.15; % -20 C
+            ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
             Profile = model_initialize_column(ModelParam, ClimateForcing);
             z_center = dz2z(Profile.dz); 

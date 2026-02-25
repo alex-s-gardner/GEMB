@@ -17,7 +17,9 @@ function z_center = dz2z(dz)
 %
 %   % Initialize parameters: 
 %   ModelParam = model_initialize_parameters;
-%   ClimateForcing.temperature_air_mean = 253.15; % -20 C
+%
+%   % Mean air temperature is the only ClimateForcing parameter required to create a Profile:
+%   ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 %  
 %   % Initialize Column: 
 %   Profile = model_initialize_column(ModelParam, ClimateForcing);
@@ -55,11 +57,10 @@ function z_center = dz2z(dz)
 %   time_2D = repmat(OutData.time,size(OutData.temperature,1),1);
 %   
 %   figure
-%   pcolor(time_2D,z_center,OutData.T)
+%   pcolor(time_2D,z_center,OutData.temperature)
 %   shading interp
 %   clim([250 270])
 %   ylabel 'Column height (m)'
-%   xlabel 'Time step'
 %   ylim([-10 1])
 %   cb = colorbar;
 %   ylabel(cb,'Temperature (K)')

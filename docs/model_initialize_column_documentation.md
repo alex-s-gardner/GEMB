@@ -7,7 +7,7 @@ Profile = model_initialize_column(ModelParam, ClimateForcing)
 ```
 
 # Description
-`Profile = model_initialize_column(ModelParam, ClimateForcing)` uses inputs `ModelParam` from [`model_initialize_parameters`](model_initialize_parameters_documentation.md) and input structure `ClimateForcing` (which must contain at least `temperature_air_mean`). The output `Profile` is a table containing the following variables:  
+`Profile = model_initialize_column(ModelParam, ClimateForcing)` uses inputs `ModelParam` from [`model_initialize_parameters`](model_initialize_parameters_documentation.md) and input timetable `ClimateForcing` (which must contain at least `temperature_air_mean`). The output `Profile` is a table containing the following variables:  
 
 |Variable   |  Units | Description          |      Initial Value|
 |---|---|---|---|
@@ -27,7 +27,9 @@ Initialize a GEMB column based on default model parameters and a mean surface te
 ```matlab
 % Initialize parameters: 
 ModelParam = model_initialize_parameters;
-ClimateForcing.temperature_air_mean = 253.15; % -20 C
+
+% Mean air temperature is the only ClimateForcing parameter required to create a Profile:
+ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
 % Initialize Column: 
 Profile = model_initialize_column(ModelParam, ClimateForcing);
