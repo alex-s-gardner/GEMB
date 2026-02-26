@@ -227,3 +227,46 @@ plot(OutData.time, OutData.melt, 'linewidth',2)
 if save_figures
     exportgraphics(gcf,'ERA5_analysis_density.jpg',Resolution=300)
 end
+
+%% Replicate Figure 12 of Gardner et al., 2023 
+% https://doi.org/10.5281/zenodo.7430469 
+
+% Approx decimal year (ignoring leap years and Jan 1 but it's good enough)
+ClimateForcing.time_decimalyear = year(ClimateForcing.time) + day(ClimateForcing.time,'dayofyear')/365.25;
+
+Sturm = interp2(OutData.time_decimalyear,-z_center, G.X, G.Y); 
+
+
+
+G = load('GEMB_final_SummitStationProfile.mat'); 
+
+figure('Position',[100 100 680 800])
+subplot(3,2,1)
+pcolor(G.X,G.Y,G.T_Obs)
+shading interp
+cb = colorbar('east'); 
+set(gca,'YDir','reverse') % Flips the y direction
+cmocean thermal           % Colormap 
+axis([2013.5 2014.5 0 2]) % Match axis limits to Gardner Figure 12
+clim([225 265])
+text(min(xlim),min(ylim),' a) Observed','vert','top')
+
+subplot(3,2,2)
+plot(ClimateForcing.time_decimalyear, ClimateForcing.shortwave_downward)
+hold on
+plot(ClimateForcing.time_decimalyear, ClimateForcing.longwave_downward)
+legend('dsw','dlw')
+axis([2013.5 2014.5 0 800]) 
+clim([225 265])
+text(min(xlim),max(ylim),' b) Radiative Forcing','vert','top')
+ylabel('flux [W/m^2]')
+
+subplot(3,2,3)
+pcolor(G.X,G.Y,Sturm)
+shading interp
+cb = colorbar('east'); 
+set(gca,'YDir','reverse') % Flips the y direction
+cmocean thermal           % Colormap 
+axis([2013.5 2014.5 0 2]) % Match axis limits to Gardner Figure 12
+clim([225 265])
+text(min(xlim),min(ylim),' c) Sturm','vert','top')
