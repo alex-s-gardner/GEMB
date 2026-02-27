@@ -1,4 +1,4 @@
-classdef test_model_initialize_column < matlab.unittest.TestCase
+classdef test_model_initialize_profile < matlab.unittest.TestCase
     
     properties
         % Default ModelParam structure
@@ -38,7 +38,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_zy=tcase.MP.column_zy);
             ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
-            Profile = model_initialize_column(ModelParam, ClimateForcing);
+            Profile = model_initialize_profile(ModelParam, ClimateForcing);
             z_center = dz2z(Profile.dz); 
 
             % Verify top section
@@ -71,7 +71,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_zy=tcase.MP.column_zy);
             ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
-            Profile = model_initialize_column(ModelParam, ClimateForcing);
+            Profile = model_initialize_profile(ModelParam, ClimateForcing);
             
             n_top = tcase.MP.column_ztop / tcase.MP.column_dztop;
             
@@ -109,7 +109,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_dztop=tcase.MP.column_dztop,...
             column_zmax=tcase.MP.column_zmax,...
             column_zy=tcase.MP.column_zy);
-            tcase.verifyWarning(@() model_initialize_column(ModelParam, ClimateForcing), ...
+            tcase.verifyWarning(@() model_initialize_profile(ModelParam, ClimateForcing), ...
                 '', ... 
                 'Should warn for very small dz_top');
         end
@@ -133,7 +133,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
 
             ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
-            Profile = model_initialize_column(ModelParam, ClimateForcing);
+            Profile = model_initialize_profile(ModelParam, ClimateForcing);
             z_center = dz2z(Profile.dz); 
 
             
@@ -156,7 +156,7 @@ classdef test_model_initialize_column < matlab.unittest.TestCase
             column_zy=tcase.MP.column_zy);
             ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
-            Profile = model_initialize_column(ModelParam, ClimateForcing);
+            Profile = model_initialize_profile(ModelParam, ClimateForcing);
             z_center = dz2z(Profile.dz); 
             
             tcase.verifyEqual(size(Profile.dz, 2), 1, 'dz should be a column vector');

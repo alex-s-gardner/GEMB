@@ -21,7 +21,7 @@ function A_surface = surface_timeseries(A)
 %   ModelParam = model_initialize_parameters(output_frequency="daily");
 %   
 %   % Initialize grid:
-%   [Profile = model_initialize_column(ModelParam, ClimateForcing);
+%   [Profile = model_initialize_profile(ModelParam, ClimateForcing);
 % 
 %   % Run GEMB:
 %   OutData = gemb(Profile, ClimateForcing, ModelParam);

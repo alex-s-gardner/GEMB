@@ -1,6 +1,8 @@
 # dz2z documentation
 `dz2z` returns a center coordinates from GEMB column spacings. 
 
+To convert the irregular `z_center` values output by `gemb` to regular vertical spacing, see [`gemb_interp`](gemb_interp_documentation.md).
+
 # Syntax 
 ```matlab
 z_center = dz2z(dz)
@@ -11,7 +13,7 @@ z_center = dz2z(dz)
 `z_center = dz2z(dz)` the center heights of a GEMB column each grid cell in meters.
 
 # Example 1: Visualize the initial column: 
-Initialize a column and plot its grid spacing. A mean air temperature is defined below because it is used by `model_initialize_column` to set the initial temperature of the snow/firn/ice column. 
+Initialize a column and plot its grid spacing. A mean air temperature is defined below because it is used by `model_initialize_profile` to set the initial temperature of the snow/firn/ice column. 
 
 ```matlab
 % Initialize model parameters: 
@@ -21,7 +23,7 @@ ModelParam = model_initialize_parameters();
 ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
   
 % Initialize Column: 
-Profile = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
 % Get height column corresponding to dz: 
 z_center = dz2z(Profile.dz);
@@ -48,7 +50,7 @@ time_step_hours = 3;
 ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 
 % Initialize grid:
-Profile = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
 % Run GEMB: 
 OutData = gemb(Profile, ClimateForcing, ModelParam);
