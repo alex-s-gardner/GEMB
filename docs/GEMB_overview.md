@@ -7,7 +7,7 @@ Using GEMB requires four basic steps:
 
 1. **Define Climate Forcing:** Use [`model_initialize_forcing`](model_initialize_forcing_documentation.md) to create a timetable of surface forcing from modeled or observed time series, or use [`simulate_climate_forcing`](simulate_climate_forcing_documentation.md) to create synthetic data for testing. 
 2. **Define Model Parameters:** Use [`model_initialize_parameters`](model_initialize_parameters_documentation.md) to set model parameters such as the number of spinup cycles or which densification model is used.
-3. **Initialize a Column:** Use [`model_initialize_column`](model_initialize_column_documentation.md) to create an initial profile of temperature, density, grid spacing, and other column properties. 
+3. **Initialize a Column:** Use [`model_initialize_profile`](model_initialize_profile_documentation.md) to create an initial profile of temperature, density, grid spacing, and other column properties. 
 4. **Run GEMB:** Enter the Climate Forcing, Model Parameters, and initial Profile into the [`gemb`](docs/gemb_documentation.md) function.
 
 After climate forcing, model parameters, and the initial state of the column defined, the `gemb` function calls `gemb_core` for each time step of the climate forcing. At each time step, `gemb_core` calls a series of functions that update the column grain size, albedo, shortwave radiation, temperature, accumulation, meltwater, and density. In this process, the `manage_layers` function adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
@@ -20,19 +20,22 @@ Here are the functions that are called by `gemb`:
 
 ### Primary functions:  
 
+
+**[`dewpoint_to_vapor_pressure`](dewpoint_to_vapor_pressure_documentation.md)** converts dewpoint temperature to actual vapor pressure. 
+
 [**`dz2z`**](dz2z_documentation.md) returns a center coordinates from GEMB column spacings. 
 
 [**`gemb`**](gemb_documentation.md) runs the GEMB model.
 
-[**`model_initialize_column`**](model_initialize_column_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.
+[**`gemb_interp`**](gemb_interp_documentation.md) regularizes the MxN gemb output onto a consistent vertical grid.
 
 [**`model_initialize_forcing`**](model_initialize_forcing_documentation.md) initializes a timetable of climatological surface forcing variables.
+
+[**`model_initialize_profile`**](model_initialize_profile_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.
 
 **[`model_initialize_parameters`](model_initialize_parameters_documentation.md)** initializes and validates the model configuration options, setting default values for physics modules, grid geometry, and output controls.
 
 **[`surface_timeseries`](surface_timeseries_documentation.md)** returns the top row of finite data in a column timeseries of GEMB output data.
-
-**[`dewpoint_to_vapor_pressure`](dewpoint_to_vapor_pressure_documentation.md)** converts dewpoint temperature to actual vapor pressure. 
 
 ### Climate simulation and fitting functions:
 

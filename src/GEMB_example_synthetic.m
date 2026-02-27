@@ -11,7 +11,7 @@ ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 ModelParam = model_initialize_parameters(output_frequency="daily");
 
 % Initialize a column:
-Profile = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
 % Run GEMB (Takes a minute):
 OutData = gemb(Profile, ClimateForcing, ModelParam);

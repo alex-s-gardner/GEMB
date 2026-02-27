@@ -1,13 +1,13 @@
-# `model_initialize_column` documentation
-`model_initialize_column ` initializes a GEMB column based on specified model and climate forcing parameters.
+# `model_initialize_profile` documentation
+`model_initialize_profile ` initializes a GEMB column based on specified model and climate forcing parameters.
 
 # Syntax 
 ```matlab
-Profile = model_initialize_column(ModelParam, ClimateForcing)
+Profile = model_initialize_profile(ModelParam, ClimateForcing)
 ```
 
 # Description
-`Profile = model_initialize_column(ModelParam, ClimateForcing)` uses inputs `ModelParam` from [`model_initialize_parameters`](model_initialize_parameters_documentation.md) and input timetable `ClimateForcing` (which must contain at least `temperature_air_mean`). The output `Profile` is a table containing the following variables:  
+`Profile = model_initialize_profile(ModelParam, ClimateForcing)` uses inputs `ModelParam` from [`model_initialize_parameters`](model_initialize_parameters_documentation.md) and input timetable `ClimateForcing` (which must contain at least `temperature_air_mean`). The output `Profile` is a table containing the following variables:  
 
 |Variable   |  Units | Description          |      Initial Value|
 |---|---|---|---|
@@ -32,7 +32,7 @@ ModelParam = model_initialize_parameters;
 ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 
 % Initialize Column: 
-Profile = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_profile(ModelParam, ClimateForcing);
 ```
 
 Use MATLAB's built-in `head` function to view the top rows of the `Profile` table:
@@ -67,10 +67,10 @@ plot(Profile.temperature,z,'o-')
 xlabel 'Initial temperature (K)'
 
 set(gcf,'Renderer','painters')
-exportgraphics(gcf,'model_initialize_column_documentation_01.jpg','resolution',500)
+exportgraphics(gcf,'model_initialize_profile_documentation_01.jpg','resolution',500)
 ```
 
-![](https://chadagreene.com/GEMB_figures/model_initialize_column_documentation_01.jpg)
+![](https://chadagreene.com/GEMB_figures/model_initialize_profile_documentation_01.jpg)
 
 
 # Author Information

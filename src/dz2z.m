@@ -12,7 +12,7 @@ function z_center = dz2z(dz)
 % 
 %% Example 1: Visualize the initial column: 
 % Initialize a column and plot its grid spacing. A mean air temperature is
-% defined below because it is used by model_initialize_column to set the
+% defined below because it is used by model_initialize_profile to set the
 % initial temperature of the snow/firn/ice column. 
 %
 %   % Initialize parameters: 
@@ -22,7 +22,7 @@ function z_center = dz2z(dz)
 %   ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 %  
 %   % Initialize Column: 
-%   Profile = model_initialize_column(ModelParam, ClimateForcing);
+%   Profile = model_initialize_profile(ModelParam, ClimateForcing);
 %
 %   % Get height column corresponding to dz: 
 %   z_center = dz2z(Profile.dz);
@@ -45,7 +45,7 @@ function z_center = dz2z(dz)
 %   ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 %   
 %   % Initialize grid:
-%   Profile = model_initialize_column(ModelParam, ClimateForcing);
+%   Profile = model_initialize_profile(ModelParam, ClimateForcing);
 %   
 %   % Run GEMB: 
 %   OutData = gemb(Profile, ClimateForcing, ModelParam);

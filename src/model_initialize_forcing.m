@@ -59,7 +59,7 @@ function ClimateForcing = model_initialize_forcing(time, temperature_air, pressu
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 % 
-% See also model_initialize_column and model_initialize_parameters.
+% See also model_initialize_profile and model_initialize_parameters.
 
 
 %% Check Inputs:

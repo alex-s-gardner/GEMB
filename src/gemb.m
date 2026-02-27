@@ -87,7 +87,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 %   ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 %   
 %   % Initialize grid:
-%   Profile = model_initialize_column(ModelParam, ClimateForcing);
+%   Profile = model_initialize_profile(ModelParam, ClimateForcing);
 %   
 %   % Run GEMB: 
 %   OutData = gemb(Profile, ClimateForcing, ModelParam);
@@ -105,7 +105,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 %% Check Inputs 
 
 arguments 
-    Profile           (:,9) table {mustContainVariables(Profile, ["temperature", "dz", "density", "water", "grain_radius", "grain_dendricity", "grain_sphericity", "albedo", "albedo_diffuse"])}
+    Profile           (:,10) table {mustContainVariables(Profile, ["z_center","temperature", "dz", "density", "water", "grain_radius", "grain_dendricity", "grain_sphericity", "albedo", "albedo_diffuse"])}
     ClimateForcing    (:,7) timetable {mustContainVariables(ClimateForcing, ["shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation"])}
     ModelParam                      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "spinup_cycles","output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","shortwave_downward_diffuse","cloud_fraction","density_ice"])}
     display_options.verbose         (1,1) logical = false

@@ -1,14 +1,14 @@
-function Profile = model_initialize_column(ModelParam, ClimateForcing)
-% model_initialize_column initializes a GEMB column based on specified
+function Profile = model_initialize_profile(ModelParam, ClimateForcing)
+% model_initialize_profile initializes a GEMB column based on specified
 % model and climate forcing parameters.
 %
 %% Syntax 
 %
-%  Profile = model_initialize_column(ModelParam, ClimateForcing)
+%  Profile = model_initialize_profile(ModelParam, ClimateForcing)
 %
 %% Description
 %
-% Profile = model_initialize_column(ModelParam, ClimateForcing) uses inputs ModelParam from 
+% Profile = model_initialize_profile(ModelParam, ClimateForcing) uses inputs ModelParam from 
 % model_initialize_parameters and input timetable ClimateForcing (which must contain at least
 % temperature_air_mean). The output Profile is a table containing the following variables: 
 % 
@@ -32,7 +32,7 @@ function Profile = model_initialize_column(ModelParam, ClimateForcing)
 %   ClimateForcing.Properties.CustomProperties.temperature_air_mean = 253.15; % -20 C
 %  
 %   % Initialize Column: 
-%   Profile = model_initialize_column(ModelParam, ClimateForcing);
+%   Profile = model_initialize_profile(ModelParam, ClimateForcing);
 %
 %   % Inspect outputs: 
 %   >> head(Profile)
@@ -64,6 +64,7 @@ end
 
 % initialze column variables 
 dz               = model_initialize_grid(ModelParam);
+z_center         = dz2z(dz); 
 m                = length(dz);
 temperature      = zeros(m,1) + ClimateForcing.Properties.CustomProperties.temperature_air_mean; % initial grid cell temperature to the annual mean temperature [K]
 density          = zeros(m,1) + ModelParam.density_ice;    % density to that of ice [kg m-3]
@@ -74,7 +75,7 @@ grain_sphericity = 0.5 * ones(m,1);                        % grain sphericity of
 albedo           = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]
 albedo_diffuse   = zeros(m,1) + ModelParam.albedo_snow;    % albedo equal to fresh snow [fraction]  
 
-Profile = table(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse);
+Profile = table(z_center, dz, temperature, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse);
 
 end
 

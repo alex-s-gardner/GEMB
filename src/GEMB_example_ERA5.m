@@ -59,7 +59,7 @@ ClimateForcing = model_initialize_forcing(time_vector,... % time
 ModelParam = model_initialize_parameters(output_frequency="daily");
 
 % Initialize grid:
-Profile = model_initialize_column(ModelParam, ClimateForcing);
+Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
 % Run GEMB: 
 OutData = gemb(Profile, ClimateForcing, ModelParam);
@@ -231,20 +231,40 @@ end
 %% Replicate Figure 12 of Gardner et al., 2023 
 % https://doi.org/10.5281/zenodo.7430469 
 
-% Approx decimal year (ignoring leap years and Jan 1 but it's good enough)
-ClimateForcing.time_decimalyear = year(ClimateForcing.time) + day(ClimateForcing.time,'dayofyear')/365.25;
+% Regrid the default "Sturm" solution to the original profile spacing: 
+T_Sturm = gemb_interp(z_center, OutData.temperature ,Profile); 
 
-Sturm = interp2(OutData.time_decimalyear,-z_center, G.X, G.Y); 
+% Rerun gemb with "Calonne" thermal conductivity method: 
+ModelParam.thermal_conductivity_method = "Calonne"; 
+OutData_Calonne = gemb(Profile,ClimateForcing,ModelParam); 
 
+% Get center locations of Calonne grid cells: 
+z_center_calonne = dz2z(OutData_Calonne.dz); 
 
+% Regrid the "Calonne" solution to the original profile spacing: 
+T_Calonne = gemb_interp(z_center_calonne, OutData_Calonne.temperature ,Profile); 
 
+%%
+
+% Load observation data from https://doi.org/10.5281/zenodo.7430469:  
 G = load('GEMB_final_SummitStationProfile.mat'); 
+
+% Approx decimal year (ignoring leap years and Jan 1 but it's good enough)
+time_decimalyear = year(OutData.time) + day(OutData.time,'dayofyear')/365.25;
+
+% Create 2D grids of query points for interpolation: 
+[time_decimalyear_2D,z_center_2D] = meshgrid(time_decimalyear,Profile.z_center); 
+
+% Interpolate observed temperatures to our Profile grid: 
+T_Obs = interp2(G.X,G.Y,G.T_Obs,time_decimalyear_2D,-z_center_2D);
+
+%%
 
 figure('Position',[100 100 680 800])
 subplot(3,2,1)
 pcolor(G.X,G.Y,G.T_Obs)
 shading interp
-cb = colorbar('east'); 
+colorbar('east'); 
 set(gca,'YDir','reverse') % Flips the y direction
 cmocean thermal           % Colormap 
 axis([2013.5 2014.5 0 2]) % Match axis limits to Gardner Figure 12
@@ -252,21 +272,86 @@ clim([225 265])
 text(min(xlim),min(ylim),' a) Observed','vert','top')
 
 subplot(3,2,2)
-plot(ClimateForcing.time_decimalyear, ClimateForcing.shortwave_downward)
+plot(ClimateForcing.time, ClimateForcing.shortwave_downward,linewidth=1)
 hold on
-plot(ClimateForcing.time_decimalyear, ClimateForcing.longwave_downward)
-legend('dsw','dlw')
-axis([2013.5 2014.5 0 800]) 
+plot(ClimateForcing.time, ClimateForcing.longwave_downward,linewidth=1)
+xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
+ylim([0 800]) 
 clim([225 265])
 text(min(xlim),max(ylim),' b) Radiative Forcing','vert','top')
 ylabel('flux [W/m^2]')
+legend('dsw','dlw','location','best')
+legend boxoff
 
 subplot(3,2,3)
-pcolor(G.X,G.Y,Sturm)
+pcolor(OutData.time,Profile.z_center,T_Sturm)
+shading interp
+cmocean thermal       
+xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
+ylim([-2 0])
+clim([225 265])
+text(min(xlim),max(ylim),' c) Sturm','vert','top')
+
+subplot(3,2,4)
+pcolor(OutData.time,Profile.z_center,T_Sturm-T_Obs)
 shading interp
 cb = colorbar('east'); 
-set(gca,'YDir','reverse') % Flips the y direction
-cmocean thermal           % Colormap 
-axis([2013.5 2014.5 0 2]) % Match axis limits to Gardner Figure 12
+cmocean balance           
+xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
+ylim([-2 0])
+clim([-5 5])
+text(min(xlim),max(ylim),' d) Sturm - observed','vert','top','backgroundcolor','w')
+
+subplot(3,2,5)
+pcolor(OutData.time,Profile.z_center,T_Calonne)
+shading interp
+cmocean thermal       
+xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
+ylim([-2 0])
 clim([225 265])
-text(min(xlim),min(ylim),' c) Sturm','vert','top')
+text(min(xlim),max(ylim),' e) Calonne','vert','top')
+
+subplot(3,2,6)
+pcolor(OutData.time,Profile.z_center,T_Calonne-T_Obs)
+shading interp
+cmocean balance           
+xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
+ylim([-2 0])
+clim([-5 5])
+text(min(xlim),max(ylim),' f) Calonne - observed','vert','top','backgroundcolor','w')
+
+if save_figures
+    exportgraphics(gcf,'ERA5_analysis_gardner_fig12.jpg',Resolution=300)
+end
+
+%%
+
+% Calculate mean bias between models and observations: 
+T_Sturm_bias   = mean(T_Sturm   - T_Obs, 2, 'omitnan'); 
+T_Calonne_bias = mean(T_Calonne - T_Obs, 2, 'omitnan');  
+
+% Calculate rms of residuals: 
+T_Sturm_rmse   =  rms(T_Sturm   - T_Obs, 2, 'omitnan'); 
+T_Calonne_rmse =  rms(T_Calonne - T_Obs, 2, 'omitnan'); 
+
+figure
+subplot(1,2,1)
+plot(T_Sturm_bias,Profile.z_center,'linewidth',1)
+hold on
+plot(T_Calonne_bias,Profile.z_center,'linewidth',1)
+ylim([-2 -0.2])
+ylabel 'depth [m]'
+xlabel 'bias [K]'
+
+subplot(1,2,2)
+plot(T_Sturm_rmse,Profile.z_center,'linewidth',1)
+hold on
+plot(T_Calonne_rmse,Profile.z_center,'linewidth',1)
+ylim([-2 -0.2])
+legend('Sturm','Calonne','Location','best')
+legend boxoff
+xlabel 'rmse [K]'
+
+if save_figures
+    exportgraphics(gcf,'ERA5_analysis_gardner_fig13.jpg',Resolution=300)
+end
