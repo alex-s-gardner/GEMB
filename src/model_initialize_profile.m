@@ -13,8 +13,9 @@ function Profile = model_initialize_profile(ModelParam, ClimateForcing)
 % temperature_air_mean). The output Profile is a table containing the following variables: 
 % 
 %    Variable          Units     Description                Initial Value
+%    z_center          m         grid cell center height    array generated from model parameters
+%    dz                m         grid cell thickness        array generated from model parameters
 %    temperature       K         temperature                mean annual surface temperature 
-%    dz                m         thickness                  array generated from model parameters
 %    density           kg m^-3   ice density                ModelParam.density_ice
 %    water             kg m^-2   old-snow water content     0
 %    grain_radius      mm        old-snow grain size        2.5
@@ -36,16 +37,16 @@ function Profile = model_initialize_profile(ModelParam, ClimateForcing)
 %
 %   % Inspect outputs: 
 %   >> head(Profile)
-%       temperature     dz     density    water    grain_radius    grain_dendricity    grain_sphericity    albedo    albedo_diffuse
-%       ___________    ____    _______    _____    ____________    ________________    ________________    ______    ______________
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-%         253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
+%       z_center     dz     temperature    density    water    grain_radius    grain_dendricity    grain_sphericity    albedo    albedo_diffuse
+%       ________    ____    ___________    _______    _____    ____________    ________________    ________________    ______    ______________
+%        -0.025     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+%        -0.075     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+%        -0.125     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+%        -0.175     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+%        -0.225     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+%        -0.275     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+%        -0.325     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+%        -0.375     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
