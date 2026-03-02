@@ -52,19 +52,17 @@ Use MATLAB's built-in `head` function to view the top rows of the `Profile` tabl
       -0.375     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85               
 ```
 
-Above, we see that all nine variables are 264x1, representing a column of initial values. Use [`dz2z`](dz2z_documentation.md) to convert the column of `dz` values to grid cell centers and show the grid spacing alongside initial temperature:
+Above, we see that all ten variables are 264x1, representing a column of initial values. Here is how the initial grid-cell thickness `dz` and `temperature` values vary as a function of depth:
 
 ```matlab
-z = dz2z(Profile.dz); 
-
 figure
 subplot(1,2,1)
-plot(Profile.dz,z,'o-')
+plot(Profile.dz,Profile.z_center,'o-')
 xlabel 'Vertical spacing (m)'
 ylabel 'Grid cell center height (m)'
 
 subplot(1,2,2)
-plot(Profile.temperature,z,'o-')
+plot(Profile.temperature,Profile.z_center,'o-')
 xlabel 'Initial temperature (K)'
 
 set(gcf,'Renderer','painters')
