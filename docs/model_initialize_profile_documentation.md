@@ -11,8 +11,9 @@ Profile = model_initialize_profile(ModelParam, ClimateForcing)
 
 |Variable   |  Units | Description          |      Initial Value|
 |---|---|---|---|
+|`z_center`    |   m  | Center height of each grid cell |                  array generated from model parameters |
+|`dz`    |   m  |grid cell thickness |                  array generated from model parameters |
 |`temperature`     | K |  temperature |  mean annual surface temperature |
-|`dz`    |   m  |thickness |                  array generated from model parameters |
 |`density`     | kg m<sup>-3</sup> | ice density   |             `ModelParam.density_ice` |
 |`water`     | kg m<sup>-2</sup> | old-snow water content  |   0|
 |`grain_radius`    | mm  |old-snow grain size   |     2.5|
@@ -39,16 +40,16 @@ Use MATLAB's built-in `head` function to view the top rows of the `Profile` tabl
 
 ```matlab
 >> head(Profile)
-    temperature     dz     density    water    grain_radius    grain_dendricity    grain_sphericity    albedo    albedo_diffuse
-    ___________    ____    _______    _____    ____________    ________________    ________________    ______    ______________
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85     
-      253.15       0.05    910.00     0.00         2.50              1.00                0.50           0.85          0.85                           
+     z_center     dz     temperature    density    water    grain_radius    grain_dendricity    grain_sphericity    albedo    albedo_diffuse
+     ________    ____    ___________    _______    _____    ____________    ________________    ________________    ______    ______________
+      -0.025     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+      -0.075     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+      -0.125     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+      -0.175     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+      -0.225     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+      -0.275     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+      -0.325     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85     
+      -0.375     0.05      253.15         910        0          2.5                1                  0.5            0.85          0.85               
 ```
 
 Above, we see that all nine variables are 264x1, representing a column of initial values. Use [`dz2z`](dz2z_documentation.md) to convert the column of `dz` values to grid cell centers and show the grid spacing alongside initial temperature:
