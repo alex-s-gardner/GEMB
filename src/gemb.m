@@ -171,8 +171,10 @@ ModelParam.dt_divisors = fast_divisors(dt * 10000)/10000;
 
 %% Initialize output structure
 
-column_length = length(dz);
-[output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam);
+if ~strcmp(ModelParam.output_frequency,'final');
+    column_length = length(dz);
+    [output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam);
+end
 
 %% Initialize Progress Bar Variables
 
@@ -221,7 +223,7 @@ for simulation_iteration = 1:total_cycles
            gemb_core(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ...
             ClimateForcingStep, ModelParam, verbose);
 
-        % calculate net longwave [water m-2]
+        % calculate net longwave [W m-2]
         longwave_net = ClimateForcingStep.longwave_downward - longwave_upward;
 
         % sum component mass changes [kg m-2]
@@ -235,19 +237,26 @@ for simulation_iteration = 1:total_cycles
         refreeze_cumulative      = refreeze + refreeze_cumulative;
       
         % Check if not in spinup_cycle
-        if simulation_iteration == ModelParam.spinup_cycles + 1
+        if simulation_iteration == total_cycles
 
-            % grow cumulative output values
-            OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
-                shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
-                density, albedo, dz, ModelParam, OutCum);
+            switch ModelParam.output_frequency
+                case 'final'
+                    % Only return the "final" profile as a table:
+                    z_center = dz2z(dz); 
+                    OutData  = table(z_center, dz, temperature, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse);
 
-            if output_index(date_ind)
-
-                [OutData, OutCum] = ...
-                    model_output_populate(density, temperature, water, dz, grain_radius, grain_dendricity, grain_sphericity, ...
-                    output_index, date_ind, ModelParam, OutData, OutCum);
-    
+                otherwise
+                    % grow cumulative output values
+                    OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
+                        shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
+                        density, albedo, dz, ModelParam, OutCum);
+        
+                    if output_index(date_ind)
+                        [OutData, OutCum] = ...
+                            model_output_populate(density, temperature, water, dz, grain_radius, grain_dendricity, grain_sphericity, ...
+                            output_index, date_ind, ModelParam, OutData, OutCum);
+            
+                    end
             end
         end
 
@@ -351,6 +360,10 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
             output_index = (date_vector(1:end-1,3) - date_vector(2:end,3)) ~= 0;
         case "all"
             output_index = true(numel(ClimateForcing.dates),1);
+        case "final"
+            % All false except the final entry: 
+            output_index = false(numel(ClimateForcing.dates)-1,1);
+            output_index(end) = true;
         otherwise
             error('ModelParam.output_frequency can only be "monthly", "daily", or "all".')
     end
