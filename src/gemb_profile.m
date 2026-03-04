@@ -1,18 +1,21 @@
-function Profile = gemb_profile(OutData, index)
+function Profile = gemb_profile(OutData, time_i)
 % gemb_profile generates a tabulated Profile from a gemb output structure.
 %
 %% Syntax
 % 
 %  Profile = gemb_profile(OutData)
-%  Profile = gemb_profile(OutData, index)
+%  Profile = gemb_profile(OutData, time_i)
 %
 %% Description
 %
 % Profile = gemb_profile(OutData) creates a Profile table containing column
 % properties from the last time step OutData from the gemb function. 
 % 
-% Profile = gemb_profile(OutData, index) specifies an integer timestep index 
-% in the range of 1 to the length of OutData.time. 
+% Profile = gemb_profile(OutData, time_i) specifies a query datetime time_i
+% corresponding to the desired output profile. If time_i is not specified,
+% the last time step OutData is used. If time_i does not exactly match any
+% elements in OutData.time, the profile corresponding to the nearest time step
+% will be returned. 
 %
 %% Author Information
 % The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
@@ -25,29 +28,32 @@ function Profile = gemb_profile(OutData, index)
 %
 % See also model_initialize_profile. 
 
-
 %% Check inputs: 
 
 arguments
     OutData struct 
-    index (1,1) {mustBeInteger} =numel(OutData.time)
+    time_i (1,1) datetime =OutData.time(end)
 end
 
-assert(index>0,'Input index must be greater than zero.')
-assert(index<=numel(OutData.time),'Input index must be greater than zero.')
+assert(time_i>=OutData.time(1)  ,'time_i cannot be before the first time step of OutData.')
+assert(time_i<=OutData.time(end),'time_i cannot be after the last time step of OutData.')
 
-%%
+%% Construct the table
 
-dz               = OutData.dz(:,index); 
+% Get the index of the closest time step: 
+index = interp1(OutData.time, 1:numel(OutData.time), time_i, "nearest"); 
+
+isf              = isfinite(OutData.dz(:,index)); 
+dz               = OutData.dz(isf,index); 
 z_center         = dz2z(dz); 
-temperature      = OutData.temperature(:, index); 
-density          = OutData.density(:, index); 
-water            = OutData.water(:, index); 
-grain_radius     = OutData.grain_radius(:, index); 
-grain_dendricity = OutData.grain_dendricity(:, index); 
-grain_sphericity = OutData.grain_sphericity(:, index); 
-albedo           = OutData.albedo(:, index); 
-albedo_diffuse   = OutData.albedo_diffuse(:, index); 
+temperature      = OutData.temperature(isf, index); 
+density          = OutData.density(isf, index); 
+water            = OutData.water(isf, index); 
+grain_radius     = OutData.grain_radius(isf, index); 
+grain_dendricity = OutData.grain_dendricity(isf, index); 
+grain_sphericity = OutData.grain_sphericity(isf, index); 
+albedo           = OutData.albedo(isf, index); 
+albedo_diffuse   = OutData.albedo_diffuse(isf, index); 
 
 Profile = table(z_center, dz, temperature, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse);
 
