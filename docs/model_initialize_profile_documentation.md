@@ -1,6 +1,8 @@
 # `model_initialize_profile` documentation
 `model_initialize_profile ` initializes a GEMB column based on specified model and climate forcing parameters.
 
+See also [`gemb_profile`](gemb_profile_documentation.md).
+
 # Syntax 
 ```matlab
 Profile = model_initialize_profile(ModelParam, ClimateForcing)

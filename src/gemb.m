@@ -142,8 +142,8 @@ assert(all(water>=0),'Profile variable water must be greater than or equal to ze
 assert(all(grain_radius>=0),'Profile variable grain_radius must be greater than or equal to zero.')
 assert(all(grain_dendricity>=0) & all(grain_dendricity<=1),'Profile variable grain_dendricity must be in the range of 0 to 1.')
 assert(all(grain_sphericity>=0) & all(grain_dendricity<=1),'Profile variable grain_dendricity must be in the range of 0 to 1.')
-assert(all(albedo>=0) & all(albedo<=1),'Profile variable albedo must be in the range of 0 to 1.')
-assert(all(albedo_diffuse>=0) & all(albedo_diffuse<=1),'Profile variable albedo_diffuse must be in the range of 0 to 1.')
+assert(all(albedo(isfinite(albedo))>=0) & all(albedo(isfinite(albedo))<=1),'Profile variable albedo must be in the range of 0 to 1.')
+assert(all(albedo_diffuse(isfinite(albedo_diffuse))>=0) & all(albedo_diffuse(isfinite(albedo_diffuse))<=1),'Profile variable albedo_diffuse must be in the range of 0 to 1.')
 
 %% Begin GEMB
 
@@ -221,7 +221,7 @@ for simulation_iteration = 1:total_cycles
            gemb_core(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ...
             ClimateForcingStep, ModelParam, verbose);
 
-        % calculate net longwave [water m-2]
+        % calculate net longwave [W m-2]
         longwave_net = ClimateForcingStep.longwave_downward - longwave_upward;
 
         % sum component mass changes [kg m-2]
@@ -441,8 +441,8 @@ function ClimateForcingStep = model_inputs_single_timestep(index, dt, ClimateFor
     ClimateForcingStep.dt                 = dt;                                       % time step in seconds
     ClimateForcingStep.temperature_air    = ClimateForcing.temperature_air(index);    % screen level air temperature [K]   
     ClimateForcingStep.wind_speed         = ClimateForcing.wind_speed(index);         % wind speed [m s-1]
-    ClimateForcingStep.longwave_downward  = ClimateForcing.longwave_downward(index);  % downward longwave radiation flux [water m-2]
-    ClimateForcingStep.shortwave_downward = ClimateForcing.shortwave_downward(index); % downward shortwave radiation flux [water m-2]
+    ClimateForcingStep.longwave_downward  = ClimateForcing.longwave_downward(index);  % downward longwave radiation flux [W m-2]
+    ClimateForcingStep.shortwave_downward = ClimateForcing.shortwave_downward(index); % downward shortwave radiation flux [W m-2]
     ClimateForcingStep.vapor_pressure     = ClimateForcing.vapor_pressure(index);     % screen level vapor pressure [Pa]
     ClimateForcingStep.pressure_air       = ClimateForcing.pressure_air(index);       % screen level air pressure [Pa]
     ClimateForcingStep.precipitation      = ClimateForcing.precipitation(index);      % precipitation [kg m-2]
