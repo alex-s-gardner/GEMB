@@ -29,6 +29,8 @@ Here are the functions that are called by `gemb`:
 
 [**`gemb_interp`**](gemb_interp_documentation.md) regularizes the MxN gemb output onto a consistent vertical grid.
 
+[**`gemb_profile`**](gemb_profile_documentation.md) extracts a single profile from the output of `gemb` that can be used for the input of a new `gemb` run. 
+
 [**`model_initialize_forcing`**](model_initialize_forcing_documentation.md) initializes a timetable of climatological surface forcing variables.
 
 [**`model_initialize_profile`**](model_initialize_profile_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.
