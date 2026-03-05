@@ -1,19 +1,20 @@
-function Profile = gemb_profile(OutData, time_i)
-% gemb_profile generates a tabulated Profile from a gemb output structure.
+function Profile = gemb_profile(OutData, time_extract)
+% gemb_profile generates a tabulated Profile from a gemb output structure. The Profile generated 
+% by this function can be used to restart gemb from a saved state such as after a spinup run. 
 %
 %% Syntax
 % 
 %  Profile = gemb_profile(OutData)
-%  Profile = gemb_profile(OutData, time_i)
+%  Profile = gemb_profile(OutData, time_extract)
 %
 %% Description
 %
 % Profile = gemb_profile(OutData) creates a Profile table containing column
 % properties from the last time step OutData from the gemb function. 
 % 
-% Profile = gemb_profile(OutData, time_i) specifies a query datetime time_i
-% corresponding to the desired output profile. If time_i is not specified,
-% the last time step OutData is used. If time_i does not exactly match any
+% Profile = gemb_profile(OutData, time_extract) specifies a query datetime time_extract
+% corresponding to the desired output profile. If time_extract is not specified,
+% the last time step OutData is used. If time_extract does not exactly match any
 % elements in OutData.time, the profile corresponding to the nearest time step
 % will be returned. 
 %
@@ -32,16 +33,16 @@ function Profile = gemb_profile(OutData, time_i)
 
 arguments
     OutData struct 
-    time_i (1,1) datetime =OutData.time(end)
+    time_extract (1,1) datetime =OutData.time(end)
 end
 
-assert(time_i>=OutData.time(1)  ,'time_i cannot be before the first time step of OutData.')
-assert(time_i<=OutData.time(end),'time_i cannot be after the last time step of OutData.')
+assert(time_extract>=OutData.time(1)  ,'time_extract cannot be before the first time step of OutData.')
+assert(time_extract<=OutData.time(end),'time_extract cannot be after the last time step of OutData.')
 
 %% Construct the table
 
 % Get the index of the closest time step: 
-index = interp1(OutData.time, 1:numel(OutData.time), time_i, "nearest"); 
+index = interp1(OutData.time, 1:numel(OutData.time), time_extract, "nearest"); 
 
 isf              = isfinite(OutData.dz(:,index)); 
 dz               = OutData.dz(isf,index); 
@@ -58,4 +59,3 @@ albedo_diffuse   = OutData.albedo_diffuse(isf, index);
 Profile = table(z_center, dz, temperature, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse);
 
 end
-
