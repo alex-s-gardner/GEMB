@@ -154,6 +154,17 @@ Profile = model_initialize_profile(ModelParam, ClimateForcing);
 With the climate forcing, model parameters, and column all set, running GEMB is very easy, although it may take ~30 seconds to run this example data: 
 
 ```matlab
+% Spinup model (i.e. allow profile state to equilibrate to climate)
+ModelParam.output_frequency = "last";
+spinup_cycles = 3;
+for i = 1:spinup_cycles
+    OutData = gemb(Profile, ClimateForcing, ModelParam);
+    Profile = gemb_profile(OutData);
+end
+
+% Run GEMB using equilibrated Profile (Takes a minute):
+ModelParam.output_frequency = "daily";
+Profile = gemb_profile(OutData);
 OutData = gemb(Profile, ClimateForcing, ModelParam);
 ```
 

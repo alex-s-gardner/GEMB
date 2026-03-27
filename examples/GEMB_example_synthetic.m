@@ -23,6 +23,7 @@ for i = 1:spinup_cycles
 end
 
 % Run GEMB using equilibrated Profile (Takes a minute):
+ModelParam.output_frequency = "daily";
 Profile = gemb_profile(OutData);
 OutData = gemb(Profile, ClimateForcing, ModelParam);
 
