@@ -23,7 +23,6 @@ function options = model_initialize_parameters(options)
 %
 %    --- GENERAL & INITIALIZATION ---
 %    .run_prefix                    : string       Unique run identifier (default: "default").
-%    .spinup_cycles                 : integer      Number of spin-up cycles (default: 0).
 %
 %    --- DENSITY & DENSIFICATION ---
 %    .densification_method          : string       Model: "HerronLangway", "Arthern", "Ligtenberg".
@@ -63,7 +62,7 @@ function options = model_initialize_parameters(options)
 %    .albedo_K                      : double       Temperature coef. time scale [d] (Bougamont2005).
 %
 %    --- OUTPUT CONTROLS ---
-%    .output_frequency              : string       Output resolution: "daily", "monthly", or "all".
+%    .output_frequency              : string       Output resolution: "daily", "monthly", "all", or "last".
 %    .output_padding                : integer      Extra vertical levels for grid resizing (default: 1000).
 %
 %    --- GRID GEOMETRY ---
@@ -86,9 +85,8 @@ function options = model_initialize_parameters(options)
 %   % All defaults: 
 %   ModelParam = model_initialize_parameters;
 %
-%   % Specify 3 spinup cycles, ice density of 920 kg/m3, and the Ligtenberg densification method: 
-%   ModelParam = model_initialize_parameters(spinup_cycles=3,...
-%                                              ice_density=920,...
+%   % Specify ice density of 920 kg/m3, and the Ligtenberg densification method: 
+%   ModelParam = model_initialize_parameters(ice_density=920,...
 %                                     densification_method="Ligtenberg");
 %
 %   % Not sure what your options are? Try entering "help" as the selection: 
@@ -130,11 +128,6 @@ arguments
     %% GEMB INITIALIZATION
     % unique model run ID to save output as
     options.run_prefix (1,1) string = "default";
-    
-    % spin-up
-    % number of cycles of met data run before output is calculated.
-    % set spinUp = 0 for no spin up
-    options.spinup_cycles (1,1) double {mustBeInteger, mustBeInRange(options.spinup_cycles, 0, 10000)} = 0;  
      
     %% DENSITY AND DENSIFICATION 
     % select densification model to use (default is "Arthern"):
@@ -267,7 +260,7 @@ arguments
     %   - "daily"
     %   - "all"
     options.output_frequency (1,1) string {mustBeMember(options.output_frequency, ...
-        ["all", "monthly", "daily"])} = 'all';
+        ["all", "monthly", "daily", "last"])} = 'all';
 
     % number of additional vertical levels in output initialization to accommodate changing grid size
     options.output_padding  (1,1) double {mustBeInteger, mustBeInRange(options.output_padding, 0, 10000)} = 1000;   

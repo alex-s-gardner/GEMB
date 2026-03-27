@@ -16,13 +16,11 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 %
 % The function performs the following steps:
 % 1. Initializes outputs and calculates time steps from the forcing data.
-% 2. Runs a spin-up loop (defined by ModelParam.spinup_cycles) to equate
-%    the model state with the climate forcing.
-% 3. Iterates through each time step in the climate forcing data.
-% 4. Calls the physics engine (gemb_core) to calculate energy fluxes,
+% 2. Iterates through each time step in the climate forcing data.
+% 3. Calls the physics engine (gemb_core) to calculate energy fluxes,
 %    melt, percolation, and layer updates.
-% 5. Checks for mass conservation and boundary condition stability.
-% 6. Aggregates and returns the simulation results.
+% 4. Checks for mass conservation and boundary condition stability.
+% 5. Aggregates and returns the simulation results.
 %
 %% Syntax
 %
@@ -65,7 +63,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 %     .wind_speed_mean       : 
 %     .precipitation_mean    : 
 %   ModelParam     : Structure containing model configuration parameters.
-%                    Must include 'run_prefix' and 'spinup_cycles'. See
+%                    Must include 'run_prefix'. See
 %                    model_initialize_parameters for more information.
 % 
 % OutData = gemb(..., verbose=true) turns on additional checks to ensure
@@ -107,7 +105,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 arguments 
     Profile           (:,10) table {mustContainVariables(Profile, ["z_center","temperature", "dz", "density", "water", "grain_radius", "grain_dendricity", "grain_sphericity", "albedo", "albedo_diffuse"])}
     ClimateForcing    (:,7) timetable {mustContainVariables(ClimateForcing, ["shortwave_downward", "longwave_downward", "temperature_air", "pressure_air", "vapor_pressure", "wind_speed", "precipitation"])}
-    ModelParam                      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "spinup_cycles","output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","shortwave_downward_diffuse","cloud_fraction","density_ice"])}
+    ModelParam                      (1,1) struct {mustHaveFields(ModelParam, ["run_prefix", "output_frequency","output_padding","black_carbon_snow","black_carbon_ice","cloud_optical_thickness","solar_zenith_angle","shortwave_downward_diffuse","cloud_fraction","density_ice"])}
     display_options.verbose         (1,1) logical = false
     display_options.display_waitbar (1,1) logical = true
 end
@@ -175,12 +173,9 @@ column_length = length(dz);
 [output_index, OutData, OutCum] = model_initialize_output(column_length, ClimateForcing, ModelParam);
 
 %% Initialize Progress Bar Variables
-
-total_cycles = ModelParam.spinup_cycles + 1;
-
 if display_options.display_waitbar
     steps_per_cycle   = length(dates);
-    total_steps       = total_cycles * steps_per_cycle;
+    total_steps       = steps_per_cycle;
     waitbar_step_mod  = max(round(total_steps/100),1);
     global_step_count = 0;
     
@@ -192,92 +187,80 @@ if display_options.display_waitbar
     end
 end
 
-%% Start spinup loop
+% Initialize cumulative variables:
+runoff_cumulative                   = 0;
+refreeze_cumulative                 = 0;
+melt_cumulative                     = 0;
+evaporation_condensation_cumulative = 0;
+precipitation_cumulative            = 0;
+mass_added_cumulative               = 0;
+melt_surface_cumulative             = 0;
+rain_cumulative                     = 0;
 
-for simulation_iteration = 1:total_cycles
+% Start loop for data frequency
+% Specify the time range over which the mass balance is to be calculated:
+for date_ind = 1:length(dates)
 
-    % Initialize cumulative variables:
-    runoff_cumulative                   = 0;
-    refreeze_cumulative                 = 0;
-    melt_cumulative                     = 0;
-    evaporation_condensation_cumulative = 0;
-    precipitation_cumulative            = 0;
-    mass_added_cumulative               = 0;
-    melt_surface_cumulative             = 0;
-    rain_cumulative                     = 0;
-
-    % Start loop for data frequency
-
-    % Specify the time range over which the mass balance is to be calculated:
-    for date_ind = 1:length(dates)
-
-        % Extract daily data:
-        ClimateForcingStep = model_inputs_single_timestep(date_ind, dt, ClimateForcing, ModelParam);
-        
-        % run GEMB for a single time interval
-        [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, shortwave_net, heat_flux_sensible, ...
-            heat_flux_latent, longwave_upward, rain, melt, runoff, refreeze, mass_added, ~, ...
-            densification_from_compaction, densification_from_melt] = ...
-           gemb_core(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ...
-            ClimateForcingStep, ModelParam, verbose);
-
-        % calculate net longwave [W m-2]
-        longwave_net = ClimateForcingStep.longwave_downward - longwave_upward;
-
-        % sum component mass changes [kg m-2]
-        mass_added_cumulative    = mass_added + mass_added_cumulative;
-        melt_cumulative          = melt + melt_cumulative;
-        melt_surface_cumulative  = melt_surface + melt_surface_cumulative;
-        runoff_cumulative        = runoff + runoff_cumulative;
-        precipitation_cumulative = ClimateForcingStep.precipitation +  precipitation_cumulative;
-        evaporation_condensation_cumulative = evaporation_condensation + evaporation_condensation_cumulative;   % evap(-) / cond(+)
-        rain_cumulative          = rain + rain_cumulative;
-        refreeze_cumulative      = refreeze + refreeze_cumulative;
-      
-        % Check if not in spinup_cycle
-        if simulation_iteration == ModelParam.spinup_cycles + 1
-
-            % grow cumulative output values
-            OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
-                shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
-                density, albedo, dz, ModelParam, OutCum);
-
-            if output_index(date_ind)
-
-                [OutData, OutCum] = ...
-                    model_output_populate(density, temperature, water, dz, grain_radius, grain_dendricity, grain_sphericity, ...
-                    output_index, date_ind, ModelParam, OutData, OutCum);
+    % Extract daily data:
+    ClimateForcingStep = model_inputs_single_timestep(date_ind, dt, ClimateForcing, ModelParam);
     
-            end
-        end
+    % run GEMB for a single time interval
+    [temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, shortwave_net, heat_flux_sensible, ...
+        heat_flux_latent, longwave_upward, rain, melt, runoff, refreeze, mass_added, ~, ...
+        densification_from_compaction, densification_from_melt] = ...
+        gemb_core(temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, albedo, albedo_diffuse, evaporation_condensation, melt_surface, ...
+        ClimateForcingStep, ModelParam, verbose);
 
-        if display_options.display_waitbar
-            % Update Progress Bar
-            global_step_count = global_step_count + 1;
-            if ~isempty(h_bar) && (mod(global_step_count, waitbar_step_mod) == 0 || global_step_count == total_steps)
-                 % Calculate percentage
-                 pct_complete = global_step_count / total_steps;
-                 
-                 % Create message: Date | Cycle X of Y
-                 msg = sprintf('Simulating: %s | Cycle: %d / %d', ...
-                     datetime(dates(date_ind),'ConvertFrom', 'datenum'), ...
-                     simulation_iteration, ...
-                     total_cycles);
-                 
-                 % Update the bar
-                 waitbar(pct_complete, h_bar, msg);
-            end
-        end
+    % calculate net longwave [W m-2]
+    longwave_net = ClimateForcingStep.longwave_downward - longwave_upward;
+
+    % sum component mass changes [kg m-2]
+    mass_added_cumulative    = mass_added + mass_added_cumulative;
+    melt_cumulative          = melt + melt_cumulative;
+    melt_surface_cumulative  = melt_surface + melt_surface_cumulative;
+    runoff_cumulative        = runoff + runoff_cumulative;
+    precipitation_cumulative = ClimateForcingStep.precipitation +  precipitation_cumulative;
+    evaporation_condensation_cumulative = evaporation_condensation + evaporation_condensation_cumulative;   % evap(-) / cond(+)
+    rain_cumulative          = rain + rain_cumulative;
+    refreeze_cumulative      = refreeze + refreeze_cumulative;
+    
+    
+    % grow cumulative output values
+    OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
+        shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
+        density, albedo, dz, ModelParam, OutCum);
+
+    if output_index(date_ind)
+        [OutData, OutCum] = ...
+            model_output_populate(density, temperature, water, dz, grain_radius, grain_dendricity, grain_sphericity, ...
+            output_index, date_ind, ModelParam, OutData, OutCum);
     end
 
-    if verbose
-        % Display cycle completed and time to screen:
-        disp([num2str(ModelParam.run_prefix) ': cycle: ' num2str(simulation_iteration) ' of '  ...
-            num2str(ModelParam.spinup_cycles + 1) ', cpu time: ' num2str(round(toc)) ' sec,'...
-            ' avg melt: ' num2str(round(melt_cumulative/(dates(end)-dates(1))*365.25)) ...
-            ' kg/m2/yr']);
+
+    if display_options.display_waitbar
+        % Update Progress Bar
+        global_step_count = global_step_count + 1;
+        if ~isempty(h_bar) && (mod(global_step_count, waitbar_step_mod) == 0 || global_step_count == total_steps)
+                % Calculate percentage
+                pct_complete = global_step_count / total_steps;
+                
+                % Create message: Date | Cycle X of Y
+                msg = sprintf('Simulating: %s', ...
+                    datetime(dates(date_ind),'ConvertFrom', 'datenum'));
+                
+                % Update the bar
+                waitbar(pct_complete, h_bar, msg);
+        end
     end
 end
+
+if verbose
+    % Display cycle completed and time to screen:
+    disp([num2str(ModelParam.run_prefix) ', cpu time: ' num2str(round(toc)) ' sec,'...
+        ' avg melt: ' num2str(round(melt_cumulative/(dates(end)-dates(1))*365.25)) ...
+        ' kg/m2/yr']);
+end
+
 
 if display_options.display_waitbar
     % Close the progress bar
@@ -303,7 +286,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     % the following initialization tasks:
     %
     % 1. **Time Indexing:** Determines the logical indices (`output_index`) corresponding 
-    %    to the requested output frequency (e.g., 'daily', 'monthly', or 'all').
+    %    to the requested output frequency (e.g., 'daily', 'monthly', 'all', or 'last').
     % 2. **Data Allocation:** Pre-allocates the `OutData` structure with NaNs for both 
     %    single-level variables (scalars per time step) and multi-level profile variables 
     %    (vectors per time step) to optimize memory usage.
@@ -321,7 +304,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     %    .temperature_air  : K         Air temperature.
     %    .precipitation    : kg m^-2.  Precipitation.
     %  ModelParam          : struct    Model parameters structure containing:
-    %    .output_frequency : string    Frequency of output ('daily', 'monthly', 'all').
+    %    .output_frequency : string    Frequency of output ('daily', 'monthly', 'all', or 'last').
     %    .output_padding   : integer   Extra buffer size for profile arrays.
     %
     %% Outputs
@@ -351,8 +334,11 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
             output_index = (date_vector(1:end-1,3) - date_vector(2:end,3)) ~= 0;
         case "all"
             output_index = true(numel(ClimateForcing.dates),1);
+        case "last"
+            output_index = false(numel(ClimateForcing.dates),1);
+            output_index(end) = true;
         otherwise
-            error('ModelParam.output_frequency can only be "monthly", "daily", or "all".')
+            error('ModelParam.output_frequency can only be "monthly", "daily", "all", or "last".')
     end
     
     % single level time series
