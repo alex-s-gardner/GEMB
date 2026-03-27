@@ -20,7 +20,6 @@ Here are the functions that are called by `gemb`:
 
 ### Primary functions:  
 
-
 **[`dewpoint_to_vapor_pressure`](dewpoint_to_vapor_pressure_documentation.md)** converts dewpoint temperature to actual vapor pressure. 
 
 [**`dz2z`**](dz2z_documentation.md) returns a center coordinates from GEMB column spacings. 
@@ -36,6 +35,8 @@ Here are the functions that are called by `gemb`:
 [**`model_initialize_profile`**](model_initialize_profile_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.
 
 **[`model_initialize_parameters`](model_initialize_parameters_documentation.md)** initializes and validates the model configuration options, setting default values for physics modules, grid geometry, and output controls.
+
+**[`forcing_climatology`](forcing_climatology_documentation.md)** creates a climatological average forcing structure that can be used to spinup a gemb run.
 
 **[`surface_timeseries`](surface_timeseries_documentation.md)** returns the top row of finite data in a column timeseries of GEMB output data.
 
