@@ -2,18 +2,29 @@
 
 
 %% Set up the model and run it: 
+addpath("src")
 
 % Generate 3-hourly synthetic climate forcing data: 
 time_step_hours = 3;
 ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 
 % Initialize model parameters:
-ModelParam = model_initialize_parameters(output_frequency="daily");
+ModelParam = model_initialize_parameters();
 
 % Initialize a column:
 Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
-% Run GEMB (Takes a minute):
+% Spinup model (i.e. allow profile state to equilibrate to climate)
+ModelParam.output_frequency = "last";
+spinup_cycles = 3;
+for i = 1:spinup_cycles
+    OutData = gemb(Profile, ClimateForcing, ModelParam);
+    Profile = gemb_profile(OutData);
+end
+
+% Run GEMB using equilibrated Profile (Takes a minute):
+ModelParam.output_frequency = "daily";
+Profile = gemb_profile(OutData);
 OutData = gemb(Profile, ClimateForcing, ModelParam);
 
 %% Plot results: 

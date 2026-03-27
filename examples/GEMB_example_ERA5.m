@@ -61,7 +61,17 @@ ModelParam = model_initialize_parameters(output_frequency="daily");
 % Initialize grid:
 Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
-% Run GEMB: 
+% Spinup model (i.e. allow profile state to equilibrate to climate)
+ModelParam.output_frequency = "last";
+spinup_cycles = 3;
+for i = 1:spinup_cycles
+    OutData = gemb(Profile, ClimateForcing, ModelParam);
+    Profile = gemb_profile(OutData);
+end
+
+% Run GEMB using equilibrated Profile (Takes a minute):
+ModelParam.output_frequency = "daily";
+Profile = gemb_profile(OutData);
 OutData = gemb(Profile, ClimateForcing, ModelParam);
 
 %%
@@ -115,7 +125,7 @@ box off
 ylabel 'Firn air content anomaly (m)'
 
 if save_figures
-    exportgraphics(gcf,'ERA5_analysis_firn_air_content.jpg',Resolution=300)
+    exportgraphics(gcf,'ERA5_analysis_firn_air_content.jpg', Resolution=300)
 end
 
 %%

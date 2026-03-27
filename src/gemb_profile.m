@@ -33,7 +33,7 @@ function Profile = gemb_profile(OutData, time_extract)
 
 arguments
     OutData struct 
-    time_extract (1,1) datetime =OutData.time(end)
+    time_extract (1,1) datetime = OutData.time(end)
 end
 
 assert(time_extract>=OutData.time(1)  ,'time_extract cannot be before the first time step of OutData.')
@@ -42,7 +42,12 @@ assert(time_extract<=OutData.time(end),'time_extract cannot be after the last ti
 %% Construct the table
 
 % Get the index of the closest time step: 
-index = interp1(OutData.time, 1:numel(OutData.time), time_extract, "nearest"); 
+if time_extract == OutData.time(end)
+    % interp fails when length(OutData.time) == 1
+    index = length(OutData.time);
+else
+    index = interp1(OutData.time, 1:numel(OutData.time), time_extract, "nearest"); 
+end
 
 isf              = isfinite(OutData.dz(:,index)); 
 dz               = OutData.dz(isf,index); 
