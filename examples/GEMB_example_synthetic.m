@@ -43,3 +43,9 @@ ylabel 'Column height (m)'
 ylim([-10 1])
 cb = colorbar;
 ylabel(cb,'Temperature (K)')
+
+% Plot cumulative profile thickness (accounting for mass added/removed):
+figure
+plot(OutData.time, OutData.thickness_cumulative)
+ylabel 'Cumulative thickness (m)'
+box off

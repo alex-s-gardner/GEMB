@@ -110,8 +110,8 @@ end
 
 %%
 
-% Detrend FAC for an "anomaly" time series: 
-firn_air_content_anomaly = detrend(OutData.firn_air_content); 
+% Detrend FAC for an "anomaly" time series:
+firn_air_content_anomaly = detrend(OutData.firn_air_content);
 
 figure
 subplot(2,1,1)
@@ -126,6 +126,18 @@ ylabel 'Firn air content anomaly (m)'
 
 if save_figures
     exportgraphics(gcf,'ERA5_analysis_firn_air_content.jpg', Resolution=300)
+end
+
+%%
+
+% Plot cumulative profile thickness (accounting for mass added/removed):
+figure
+plot(OutData.time, OutData.thickness_cumulative)
+box off
+ylabel 'Cumulative thickness (m)'
+
+if save_figures
+    exportgraphics(gcf,'ERA5_analysis_thickness_cumulative.jpg', Resolution=300)
 end
 
 %%
