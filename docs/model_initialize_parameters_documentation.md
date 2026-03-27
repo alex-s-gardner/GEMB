@@ -19,8 +19,6 @@ A list of all GEMB variables and descriptions can be found [here](GEMB_variables
 ```matlab
 --- GENERAL & INITIALIZATION ---
 .run_prefix                    : string       Unique run identifier (default: "default").
-.spinup_cycles                 : integer      Number of spin-up cycles (default: 0).
-
 --- DENSITY & DENSIFICATION ---
 .densification_method          : string       Model: "HerronLangway", "Arthern", "Ligtenberg".
 .densification_coeffs_M01      : string       Coeffs for Ligtenberg model (e.g., "Gre_RACMO_GS_SW0").
@@ -133,7 +131,6 @@ ModelParam =
   struct with fields:
 
                            run_prefix: "default"
-                        spinup_cycles: 0
                  densification_method: "Arthern"
              densification_coeffs_M01: "Gre_RACMO_GS_SW0"
                       new_snow_method: "350kgm2"
@@ -173,17 +170,11 @@ ModelParam =
 ```
 
 ## Example 2: Override defaults
-If you wish to override any default model parameters, you can specify them as keyword arguments. For example, here's how to specify three spinup cycles instead of the default zero: 
+If you wish to override any default model parameters, you can specify them as keyword arguments. For example, here's how to specify the `"Ligtenberg"` densification method with a custom ice density:
 
 ```matlab
-ModelParam = model_initialize_parameters(spinup_cycles=3);
-```
-To override multiple default values, list them as function inputs like this: 
-
-```matlab
-ModelParam = model_initialize_parameters(spinup_cycles=3,...
-    ice_density=920,...
-    densification_method="Ligtenberg");
+ModelParam = model_initialize_parameters(densification_method="Ligtenberg",...
+    density_ice=920);
 ```
 ## Example 3: Update model parameters
 If you love your `ModelParam` structure very much, but you just want to tweak one little thing about it, you can update any field value manually. Just make sure spell and capitalize the field name correctly. Here's how to initialize a `ModelParam` structure, then change the `column_ztop` value from the default 10 to 15: 

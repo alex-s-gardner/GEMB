@@ -69,7 +69,6 @@ Below is a list of variables used by GEMB.
 | shortwave\_downward\_diffuse          | W m<sup>-2</sup>  | Downward diffusive shortwave flux.                                                                                                               |
 | shortwave\_net                        | W m<sup>-2</sup>  | Net shortwave radiation.                                                                                                                                                 |
 | solar\_zenith\_angle                  | degrees           | Solar zenith angle.                                                                                                                              |
-| spinup\_cycles                        | integer value     | Number of spinup cycles (default: 0)                                                                                                             |
 | surface\_roughness\_effective\_ratio  |                   | Ratio of physical surface roughness to effective roughness.                                                                                      |
 | temperature                           | K                 | Column temperature.                                                                                                                              |
 | temperature\_air                      | K                 | Air temperature.                                                                                                                                 |
