@@ -559,8 +559,8 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     OutCum.albedo_surface           = OutCum.albedo_surface + albedo_surface;
     
     OutCum.densification_from_compaction = OutCum.densification_from_compaction + densification_from_compaction;
-    OutCum.densification_from_melt  = OutCum.densification_from_melt + densification_from_melt;
-    OutCum.firn_air_content         = OutCum.firn_air_content + firn_air_content;
+    OutCum.densification_from_melt       = OutCum.densification_from_melt + densification_from_melt;
+    OutCum.firn_air_content              = OutCum.firn_air_content + firn_air_content;
     
     % Increment the counter
     OutCum.count = OutCum.count + 1;
