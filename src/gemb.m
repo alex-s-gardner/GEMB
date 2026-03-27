@@ -344,7 +344,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     % single level time series
     varname.monolevel = {'time', 'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'shortwave_net', ...
         'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'valid_profile_length', ...
-        'densification_from_compaction', 'densification_from_melt', 'ps'};
+        'densification_from_compaction', 'densification_from_melt'};
     
     n = sum(output_index);
     
@@ -381,7 +381,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     end
     
     % Multi level time series:
-    varname.profile = {'temperature', 'dz', 'density', 'water', 'grain_radius', 'grain_dendricity', 'grain_sphericity', 'albedo', 'albedo_diffuse', 'ps'};
+    varname.profile = {'temperature', 'dz', 'density', 'water', 'grain_radius', 'grain_dendricity', 'grain_sphericity', 'albedo', 'albedo_diffuse'};
     
     for v = 1:length(varname.profile)
         OutData.(varname.profile{v}) = nan(column_length + ModelParam.output_padding, n);
@@ -639,9 +639,6 @@ function [OutData, OutCum] = ...
             end
         end
         
-        % Calculate Total Mass for surface height change (ps) calculation
-        mass_total = sum(dz .* density);
-    
         % Store instantaneous level (profile) data
         o = (size(density,1) - 1);
         
@@ -660,7 +657,6 @@ function [OutData, OutCum] = ...
         OutData.grain_sphericity(end-o:end,r) = grain_sphericity;
         
         % Calculate surface height change relative to ice equivalent
-        OutData.ps(end-o:end,r)               = sum(dz) - mass_total/ModelParam.density_ice;
         OutData.valid_profile_length(r)       = o+1;
         
         % Reset cumulative values back to zero for the next interval
