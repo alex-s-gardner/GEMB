@@ -59,7 +59,7 @@ A list of all GEMB variables and descriptions can be found [here](GEMB_variables
 .albedo_K                      : double       Temperature coef. time scale [days] (Bougamont2005).
 
 --- OUTPUT CONTROLS ---
-.output_frequency              : string       Output resolution: "daily", "monthly", or "all".
+.output_frequency              : string       Output resolution: "daily", "monthly", "all", or "last".
 .output_padding                : integer      Extra vertical levels for grid resizing (default: 1000).
 
 --- GRID GEOMETRY ---
