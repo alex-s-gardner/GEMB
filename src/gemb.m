@@ -187,15 +187,8 @@ if display_options.display_waitbar
     end
 end
 
-% Initialize cumulative variables:
-runoff_cumulative                   = 0;
-refreeze_cumulative                 = 0;
-melt_cumulative                     = 0;
-evaporation_condensation_cumulative = 0;
-precipitation_cumulative            = 0;
-mass_added_cumulative               = 0;
-melt_surface_cumulative             = 0;
-rain_cumulative                     = 0;
+% Initialize total thickness [m] that is added or subtracted form the profile:
+thickness_added_total = 0;
 
 % Start loop for data frequency
 % Specify the time range over which the mass balance is to be calculated:
@@ -214,19 +207,11 @@ for date_ind = 1:length(dates)
     % calculate net longwave [W m-2]
     longwave_net = ClimateForcingStep.longwave_downward - longwave_upward;
 
-    % sum component mass changes [kg m-2]
-    mass_added_cumulative    = mass_added + mass_added_cumulative;
-    melt_cumulative          = melt + melt_cumulative;
-    melt_surface_cumulative  = melt_surface + melt_surface_cumulative;
-    runoff_cumulative        = runoff + runoff_cumulative;
-    precipitation_cumulative = ClimateForcingStep.precipitation +  precipitation_cumulative;
-    evaporation_condensation_cumulative = evaporation_condensation + evaporation_condensation_cumulative;   % evap(-) / cond(+)
-    rain_cumulative          = rain + rain_cumulative;
-    refreeze_cumulative      = refreeze + refreeze_cumulative;
-    
+    % sum total thickness [m]
+    thickness_added_total = (mass_added ./ ModelParam.density_ice) + thickness_added_total;
     
     % grow cumulative output values
-    OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
+    OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, thickness_added_total, ...
         shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
         density, albedo, dz, ModelParam, OutCum);
 
@@ -344,7 +329,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     % single level time series
     varname.monolevel = {'time', 'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'shortwave_net', ...
         'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'valid_profile_length', ...
-        'densification_from_compaction', 'densification_from_melt'};
+            'densification_from_compaction', 'densification_from_melt', 'thickness_cumulative'};
     
     n = sum(output_index);
     
@@ -355,18 +340,19 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     
     OutData.time = datetime(ClimateForcing.dates(output_index)', 'ConvertFrom', 'datenum');
     
-     %  time                     : datetime     Time vector for output steps.
-     %  melt                     : kg m^-2      Melt mass balance.
-     %  runoff                   : kg m^-2      Runoff mass balance.
-     %  refreeze                 : kg m^-2      Refreeze mass balance.
-     %  evaporation_condensation : kg m^-2      Evaporation (-) / Condensation (+).
-     %  shortwave_net            : W m^-2       Net shortwave radiation at the surface.
-     %  longwave_net             : W m^-2       Net longwave radiation at the surface.
-     %  heat_flux_sensible       : W m^-2       Sensible heat flux at the surface.
-     %  heat_flux_latent         : W m^-2       Latent heat flux at the surface.
-     %  albedo_surface           : fraction     Surface albedo (top layer).
-     %  valid_profile_length     : integer      Number of valid layers in the profile (non-NaN).
-     %  densification_from_compaction  : m      Compaction due to densification.
+     %  time                           : datetime     Time vector for output steps.
+     %  melt                           : kg m^-2      Melt mass balance.
+     %  runoff                         : kg m^-2      Runoff mass balance.
+     %  refreeze                       : kg m^-2      Refreeze mass balance.
+     %  evaporation_condensation       : kg m^-2      Evaporation (-) / Condensation (+).
+     %  shortwave_net                  : W m^-2       Net shortwave radiation at the surface.
+     %  longwave_net                   : W m^-2       Net longwave radiation at the surface.
+     %  heat_flux_sensible             : W m^-2       Sensible heat flux at the surface.
+     %  heat_flux_latent               : W m^-2       Latent heat flux at the surface.
+     %  albedo_surface                 : fraction     Surface albedo (top layer).
+     %  valid_profile_length           : integer      Number of valid layers in the profile (non-NaN).
+     %  densification_from_compaction  : m            Compaction due to densification.
+     %  thickness_cumulative           : m            Profile thickness accounting for mass added and subtracted from the system
 
     % Time averages/totals:
     I = find(output_index);                      % save index
@@ -390,7 +376,7 @@ function [output_index, OutData, OutCum] = model_initialize_output(column_length
     % Initialize cumulative output values:
     varname.cumulative = {'runoff', 'melt', 'refreeze', 'evaporation_condensation', 'rain', 'mass_added', 'shortwave_net', ...
         'longwave_net', 'heat_flux_sensible', 'heat_flux_latent', 'albedo_surface', 'densification_from_compaction', ...
-        'densification_from_melt', 'firn_air_content'};
+            'densification_from_melt', 'firn_air_content', 'thickness_cumulative'};
     
     % Set cumulative values zero:
     for v = 1:length(varname.cumulative)
@@ -478,7 +464,7 @@ function ClimateForcingStep = model_inputs_single_timestep(index, dt, ClimateFor
     end
 end
 
-function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, ...
+function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_condensation, rain, mass_added, thickness_added_total, ...
     shortwave_net, longwave_net, heat_flux_sensible, heat_flux_latent, densification_from_compaction, densification_from_melt, ...
     density, albedo, dz, ModelParam, OutCum)
     % model_cumulative_add updates cumulative variables for model output.
@@ -557,6 +543,7 @@ function OutCum = model_cumulative_add(melt, runoff, refreeze, evaporation_conde
     OutCum.heat_flux_sensible       = OutCum.heat_flux_sensible + heat_flux_sensible;
     OutCum.heat_flux_latent         = OutCum.heat_flux_latent + heat_flux_latent;
     OutCum.albedo_surface           = OutCum.albedo_surface + albedo_surface;
+    OutCum.thickness_cumulative     = OutCum.thickness_cumulative + thickness_added_total;
     
     OutCum.densification_from_compaction = OutCum.densification_from_compaction + densification_from_compaction;
     OutCum.densification_from_melt       = OutCum.densification_from_melt + densification_from_melt;
@@ -570,14 +557,14 @@ end
 
 function [OutData, OutCum] = ...
     model_output_populate(density, temperature, water, dz, grain_radius, grain_dendricity, grain_sphericity, ...
-     output_index, date_ind, ModelParam, OutData, OutCum)
+     output_index, date_ind, OutData, OutCum)
     % model_output_populate stores model state and fluxes into the output structure.
     %
     %% Syntax
     %
     % [OutData, OutCum] = model_output_populate(OutData, OutCum, ...
     %    density, temperature, water, dz, grain_radius, grain_dendricity, grain_sphericity, ...
-    %    ModelParam, output_index, date_ind)
+    %    output_index, date_ind)
     %
     %% Description
     %
@@ -594,7 +581,6 @@ function [OutData, OutCum] = ...
     %  OutData          : struct       Main output structure containing time series.
     %  OutCum           : struct       Accumulator structure for the current interval.
     %  density, temperature, water, ... : vectors      Current vertical profiles of density, temperature, etc.
-    %  ModelParam       : struct       Model parameters (needs .density_ice, .output_padding).
     %  output_index     : logical      Vector indicating which time steps are output steps.
     %  date_ind         : integer      Current time step index.
     %
@@ -625,7 +611,7 @@ function [OutData, OutCum] = ...
         
         % Define which variables are cumulative totals vs time-averages
         cumulative_vars = {'melt', 'runoff', 'refreeze', 'evaporation_condensation', 'precipitation', 'rain', 'mass_added', ...
-                           'densification_from_compaction', 'densification_from_melt'};
+            'densification_from_compaction', 'densification_from_melt'};
         is_cumulative = ismember(varname, cumulative_vars);
         
         % Transfer data from OutCum to OutData
@@ -656,7 +642,7 @@ function [OutData, OutCum] = ...
         OutData.grain_dendricity(end-o:end,r) = grain_dendricity;
         OutData.grain_sphericity(end-o:end,r) = grain_sphericity;
         
-        % Calculate surface height change relative to ice equivalent
+        % record profile length
         OutData.valid_profile_length(r)       = o+1;
         
         % Reset cumulative values back to zero for the next interval

@@ -47,7 +47,7 @@ function options = model_initialize_parameters(options)
 %    --- ALBEDO & RADIATION ---
 %    .albedo_method                 : string       Scheme: "GardnerSharp", "GreuellKonzelmann", etc.
 %    .albedo_density_threshold      : double       Density threshold [kg m^-3] below which albedo_method is applied (Default Inf).
-%    .shortwave_absorption_method   : double       0 (surface only) or 1 (subsurface penetration).
+%    .shortwave_subsurface_absorption : logical     false (surface only) or true (subsurface penetration).
 %    .albedo_snow                   : double       Albedo for fresh snow (0.5-0.95).
 %    .albedo_ice                    : double       Albedo for bare ice (0.2-0.6).
 %    .albedo_fixed                  : double       Fixed albedo used if albedo_method="None" or density > threshold.
@@ -143,15 +143,15 @@ arguments
     % Specify densification coefficients for Ligtenberg model. These 
     % coefficients have been calibrated to match observations (default is "Gre_RACMO_GS_SW0"):
     % ------------------------ Antarctic -------------------------
-    %   "Ant_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_absorption_method=0
+    %   "Ant_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_subsurface_absorption=0
     %   "Ant_ERA5v4_Paolo23" : ERA5 v4 (Paolo et al., 2023)
-    %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BrunLefebre", shortwave_absorption_method=1
+    %   "Ant_ERA5_BF_SW1"    : ERA5 new albedo_method="BrunLefebre", shortwave_subsurface_absorption=1
     %   "Ant_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
     %   "Ant_Ligtenberg"     : Ligtenberg and others (2011), Antarctica
     % ------------------------- Greenland ------------------------
-    %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_absorption_method=0, firn & bare ice
+    %   "Gre_ERA5_GS_SW0"    : ERA5 new albedo_method="GardnerSharp", shortwave_subsurface_absorption=0, firn & bare ice
     %   "Gre_RACMO_GS_SW0"   : RACMO calibration, default (Gardner et al., 2023)
-    %   "Gre_RACMO_GB_SW1"   : ismember(albedo_method,["GreuellKonzelmann","Bougamont2005"]) && shortwave_absorption_method>0
+    %   "Gre_RACMO_GB_SW1"   : ismember(albedo_method,["GreuellKonzelmann","Bougamont2005"]) && shortwave_subsurface_absorption>0
     %   "Gre_KuipersMunneke" : Kuipers Munneke and others (2015) [semi-empirical], Greenland
     options.densification_coeffs_M01 (1,1) string {mustBeMember(options.densification_coeffs_M01, ...
         ["Ant_ERA5_GS_SW0", "Ant_ERA5v4_Paolo23", "Ant_ERA5_BF_SW1", "Ant_RACMO_GS_SW0", ...
@@ -215,7 +215,7 @@ arguments
     % Select method of calculating albedo and subsurface absorption (default is "GardnerSharp")
     %   0-"None"             : direct input from albedo_fixed parameter, no use of albedo_density_threshold
     %   1-"GardnerSharp"     : effective grain radius (Gardner & Sharp, 2009)
-    %   2-"BrunLefebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with shortwave_absorption_method=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
+    %   2-"BrunLefebre"     : effective grain radius (Brun et al., 1992; LeFebre et al., 2003), with shortwave_subsurface_absorption=1, SW penetration follows grain size in 3 spectral bands (Brun et al., 1992)
     %   3-"GreuellKonzelmann": density and cloud amount (Greuell & Konzelmann, 1994)
     %   4-"Bougamont2005"    : exponential time decay & wetness (Bougamont et al., 2005)
     options.albedo_method (1,1) string {mustBeMember(options.albedo_method, ...
@@ -225,9 +225,9 @@ arguments
     % Default value is Inf.
     options.albedo_density_threshold (1,1) double {mustBeGreaterThanOrEqual(options.albedo_density_threshold, 0)} = Inf;
     
-    % apply all SW to top grid cell (0) or allow SW to penetrate surface (1)
-    % (default 0: if shortwave_absorption_method=1 and albedo_method=2, function of effective radius (Brun et al., 1992) or else dependent on snow density (taken from Bassford, 2002))
-    options.shortwave_absorption_method (1,1) double {mustBeMember(options.shortwave_absorption_method, [0,1])} = 0;
+    % false: apply all SW to top grid cell; true: allow SW to penetrate surface
+    % (if true and albedo_method="BrunLefebre", extinction is grain-size dependent (Brun et al., 1992); otherwise density-dependent (Bassford, 2002))
+    options.shortwave_subsurface_absorption (1,1) logical = false;
 
     % for methods of calculating albedo see albedo function
     % --------------- "GardnerSharp" & "BrunLefebre" ----------------------

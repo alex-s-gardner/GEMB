@@ -42,7 +42,7 @@ A list of all GEMB variables and descriptions can be found [here](GEMB_variables
 --- ALBEDO & RADIATION ---
 .albedo_method                 : string       Scheme: "GardnerSharp", "GreuellKonzelmann", etc.
 .albedo_density_threshold      : double       Density threshold [kg m^-3] below which albedo_method is applied (Default Inf).
-.shortwave_absorption_method   : double       0 (surface only) or 1 (subsurface penetration).
+.shortwave_subsurface_absorption : logical     false (surface only) or true (subsurface penetration).
 .albedo_snow                   : double       Albedo for fresh snow (0.5-0.95).
 .albedo_ice                    : double       Albedo for bare ice (0.2-0.6).
 .albedo_fixed                  : double       Fixed albedo used if albedo_method="None" or density > threshold.
@@ -102,11 +102,10 @@ A list of all GEMB variables and descriptions can be found [here](GEMB_variables
 * `"Kaspers"` Antarctic model by [Kaspers et al., 2004](https://doi.org/10.5194/acp-4-1365-2004).
 * `"KuipersMunneke"` Greenland model by [Kuipers Munneke et al., 2015](https://doi.org/10.5194/tc-9-2009-2015).
 
-**`shortwave_absorption_method`** The shortwave absorption method controls how shortwave energy is absorbed and whether it penetrates the surface grid cell.
- 
-* `"Surface"` (default) Shortwave energy is absorbed at the surface and does not penetrate. 
-* `"Brun"` distributes absorbed shortwave as a function of grain size.
-* `"GreuellKonzelmann"` Based on [Greuell & Konzelmann, 1994](https://doi.org/10.1016/0921-8181(94)90010-8).
+**`shortwave_subsurface_absorption`** Controls whether shortwave energy penetrates below the surface grid cell.
+
+* `false` (default) All shortwave energy is absorbed at the surface.
+* `true` Shortwave energy penetrates the surface; extinction is grain-size dependent when `albedo_method="BrunLefebre"` (Brun et al., 1992), otherwise density-dependent (Bassford, 2002).
 
 **`thermal_conductivity_method`** The thermal conductivity method determines the coefficients of an empirical density-based regression used to compute thermal conductivity profiles of snow, firn, and ice. 
 
@@ -145,7 +144,7 @@ ModelParam =
          water_irreducible_saturation: 0.07
                         albedo_method: "GardnerSharp"
              albedo_density_threshold: Inf
-          shortwave_absorption_method: 0
+     shortwave_subsurface_absorption: false
                           albedo_snow: 0.85
                            albedo_ice: 0.48
                          albedo_fixed: 0.85

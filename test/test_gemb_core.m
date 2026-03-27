@@ -85,16 +85,16 @@ classdef test_gemb_core < matlab.unittest.TestCase
             % "desnity" typo matches source code expectation in albedo.m
             tcase.MP.albedo_density_threshold = 1023; 
             
-            tcase.MP.albedo_wet_snow_t0          = 15;
-            tcase.MP.albedo_dry_snow_t0          = 30;
-            tcase.MP.albedo_K                    = 7;
-            tcase.MP.shortwave_absorption_method = 1;
+            tcase.MP.albedo_wet_snow_t0              = 15;
+            tcase.MP.albedo_dry_snow_t0              = 30;
+            tcase.MP.albedo_K                        = 7;
+            tcase.MP.shortwave_subsurface_absorption = true;
             
             % Emissivity
-            tcase.MP.emissivity                      = 0.98;
+            tcase.MP.emissivity                        = 0.98;
             tcase.MP.emissivity_grain_radius_large     = 0.97; % Required by thermo.m
-            tcase.MP.emissivity_method               = "uniform"; % String required by thermo.m
-            tcase.MP.longwave_upward_delta           = 0;
+            tcase.MP.emissivity_method                 = "uniform"; % String required by thermo.m
+            tcase.MP.longwave_upward_delta             = 0;
             tcase.MP.emissivity_grain_radius_threshold = 10;
             
             % Thermal & Grid

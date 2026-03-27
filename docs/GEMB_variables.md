@@ -75,6 +75,7 @@ Below is a list of variables used by GEMB.
 | temperature\_air\_mean                | K                 | Climatologial average temperature.                                                                                                                |
 | temperature\_observation\_height      | m                 | Thermometer height.                                                                                                                              |
 | thermal\_conductivity\_method         | string            | Model: "Sturm" or "Calonne".                                                                                                                     |
+| thickness\_cumulative                 | m                 | Profile thickness accounting for mass added and subtracted from the system.                                                                      |
 | time                                 | datetime           | Dates in MATLAB's datetime format (also accepts datenum format.) |
 | valid\_profile\_length                |                   | Length of the vertical profile at the instant in time it was saved as output.                                                                    |
 | vapor\_pressure                       | Pa                | Vapor pressure.                                                                                                                                  |

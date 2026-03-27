@@ -13,10 +13,10 @@ function shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radiu
 % radiation within the snow and firn column . 
 % Depending on the selected model configuration, the radiation is either:
 %
-% 1. Surface Absorption: All net shortwave energy is absorbed entirely by the 
-%    top grid cell (shortwave_absorption_method = 0).
-% 2. Subsurface Penetration: Shortwave energy penetrates the surface and is 
-%    absorbed by deeper layers (shortwave_absorption_method = 1).
+% 1. Surface Absorption: All net shortwave energy is absorbed entirely by the
+%    top grid cell (shortwave_subsurface_absorption = false).
+% 2. Subsurface Penetration: Shortwave energy penetrates the surface and is
+%    absorbed by deeper layers (shortwave_subsurface_absorption = true).
 %
 % When subsurface penetration is enabled, the extinction of radiation is modeled 
 % using one of two methods:
@@ -37,7 +37,7 @@ function shortwave_flux = calculate_shortwave_radiation(dz, density, grain_radiu
 %     .shortwave_downward          : W m^-2     Downward shortwave radiative flux.
 %     .shortwave_downward_diffuse  : W m^-2     Downward diffuse shortwave flux.
 %   ModelParam                     : struct     Model parameters:
-%     .shortwave_absorption_method : integer    0 (surface only) or 1 (subsurface penetration).
+%     .shortwave_subsurface_absorption : logical    false (surface only) or true (subsurface penetration).
 %     .albedo_method               : string     Albedo scheme selection (e.g., "GardnerSharp", "BrunLefebre").
 %     .density_ice                 : kg m^-3    Density of ice.
 % 
@@ -78,7 +78,7 @@ d_tolerance  = 1e-11;
 m = length(density);
 shortwave_flux = zeros(m,1);
 
-if (ModelParam.shortwave_absorption_method == 0) || ...
+if (~ModelParam.shortwave_subsurface_absorption) || ...
         ((ModelParam.density_ice - density(1))<d_tolerance)  % all sw radation is absorbed by the top grid cell
 
     % calculate surface shortwave radiation fluxes [W m-2]

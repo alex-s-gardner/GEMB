@@ -28,7 +28,7 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
             
             % Initialize ModelParam (MP)
             tcase.MP.density_ice = 917;
-            tcase.MP.shortwave_absorption_method = 0; % Default: No penetration
+            tcase.MP.shortwave_subsurface_absorption = false; % Default: No penetration
             tcase.MP.albedo_method = "GreuellKonzelmann"; % Default
             
             % Add source path
@@ -44,10 +44,10 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
     methods (Test)
         
         function test_surface_absorption_basic(tcase)
-            % Test Case: No penetration (shortwave_absorption_method = 0)
+            % Test Case: No penetration (shortwave_subsurface_absorption = false)
             % Albedo method != "GardnerSharp" (Standard calculation)
-            
-            tcase.MP.shortwave_absorption_method = 0;
+
+            tcase.MP.shortwave_subsurface_absorption = false;
             tcase.MP.albedo_method = "GreuellKonzelmann"; 
             
             shortwave_flux = calculate_shortwave_radiation(tcase.dz, tcase.density, tcase.grain_radius, tcase.albedo, tcase.albedo_diffuse, ...
@@ -57,7 +57,7 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
             expected_net = (1 - tcase.albedo) * tcase.CF.shortwave_downward;
             
             tcase.verifyEqual(shortwave_flux(1), expected_net, 'AbsTol', 1e-6, ...
-                'Top cell should absorb all net SW when absorption method is 0');
+                'Top cell should absorb all net SW when shortwave_subsurface_absorption is false');
             tcase.verifyEqual(sum(shortwave_flux(2:end)), 0, 'AbsTol', 1e-6, ...
                 'Lower cells should receive 0 energy');
         end
@@ -66,7 +66,7 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
             % Test Case: No penetration, Gardner Albedo Method ("GardnerSharp")
             % This uses a specific formula separating diffuse and direct components
             
-            tcase.MP.shortwave_absorption_method = 0;
+            tcase.MP.shortwave_subsurface_absorption = false;
             tcase.MP.albedo_method = "GardnerSharp";
             
             shortwave_flux = calculate_shortwave_radiation(tcase.dz, tcase.density, tcase.grain_radius, tcase.albedo, tcase.albedo_diffuse, ...
@@ -80,10 +80,10 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
         end
         
         function test_density_override(tcase)
-            % Test Case: Penetration requested (sw_method = 1), but surface is ICE
+            % Test Case: Penetration requested (shortwave_subsurface_absorption = true), but surface is ICE
             % Should revert to surface absorption
-            
-            tcase.MP.shortwave_absorption_method = 1;
+
+            tcase.MP.shortwave_subsurface_absorption = true;
             tcase.MP.albedo_method = "GreuellKonzelmann";
             
             d_ice = tcase.density;
@@ -103,7 +103,7 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
             % Test Case: Penetration with Brun method ("BrunLefebre")
             % This method calculates its own spectral albedos internally
             
-            tcase.MP.shortwave_absorption_method = 1;
+            tcase.MP.shortwave_subsurface_absorption = true;
             tcase.MP.albedo_method = "BrunLefebre";
             
             shortwave_flux = calculate_shortwave_radiation(tcase.dz, tcase.density, tcase.grain_radius, tcase.albedo, tcase.albedo_diffuse, ...
@@ -127,7 +127,7 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
             % Test Case: Penetration with Standard method (NOT "BrunLefebre")
             % Uses Greuell & Konzelmann coefficients
             
-            tcase.MP.shortwave_absorption_method = 1;
+            tcase.MP.shortwave_subsurface_absorption = true;
             tcase.MP.albedo_method = "GreuellKonzelmann";
             
             % CRITICAL FIX: Use a deep column to prevent flux from escaping the bottom.
@@ -157,11 +157,11 @@ classdef test_calculate_shortwave_radiation < matlab.unittest.TestCase
             % Test Case: Night time (0 incoming SW)
             tcase.CF.shortwave_downward          = 0;
             tcase.CF.shortwave_downward_diffuse  = 0;
-            tcase.MP.shortwave_absorption_method = 1;
-            
+            tcase.MP.shortwave_subsurface_absorption = true;
+
             shortwave_flux = calculate_shortwave_radiation(tcase.dz, tcase.density, tcase.grain_radius, tcase.albedo, tcase.albedo_diffuse, ...
                 tcase.CF, tcase.MP);
-            
+
             tcase.verifyEqual(sum(shortwave_flux), 0, 'AbsTol', 1e-10, 'Zero input flux should result in zero absorption');
         end
     end

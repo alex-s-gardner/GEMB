@@ -81,6 +81,7 @@ Outputs of the `gemb` function are packaged into an `OutData` structure whose va
 | `OutData.rain` | 1xN Time series of rain mass. |
 | `OutData.mass_added` | 1xN Time series of mass added (positive) or removed (negative) by `manage_layers`. |
 | `OutData.firn_air_content` | 1xN Time series of total height of all air in the firn column. |
+| `OutData.thickness_cumulative` | 1xN Time series of profile thickness accounting for mass added and subtracted from the system. |
 
 # Basic Workflow
 
