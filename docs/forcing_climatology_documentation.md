@@ -15,6 +15,9 @@ ClimateForcingSpinup = forcing_climatology(ClimateForcing, datetime_range)
 
 `ClimateForcingSpinup = forcing_climatology(ClimateForcing, datetime_range)` specifies a range of dates to include in the climatology. The `datetime_range` must be 1x2 datetime in the form `[datetime_start datetime_end]`. 
 
+# Method
+This function calculates the climatological average time series after eliminating leap days and any partial years of input data. The function assumes observations are equally spaced in time, and averages are computed for the first timestep of each year, the second timestep, the third timestep, etc. 
+
 # Example 
 Simulate a multi-decade time series of three-hourly climate forcing and convert it to climatological average. Then plot the raw data and climatological average temperature as a function of day of year. 
 
@@ -40,8 +43,6 @@ legend boxoff
 ```
 
 ![](https://chadagreene.com/GEMB_figures/forcing_climatology_documentation_01.jpg)
-
-
 
 # Author Information
 The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions

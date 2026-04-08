@@ -27,7 +27,7 @@ function Profile = gemb_profile(OutData, time_extract)
 % a model of firn processes for cryosphere research, Geosci. Model Dev., 16, 2277–2302, 
 % https://doi.org/10.5194/gmd-16-2277-2023, 2023. 
 %
-% See also model_initialize_profile. 
+% See also model_initialize_profile and gemb_spinup. 
 
 %% Check inputs: 
 

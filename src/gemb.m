@@ -218,7 +218,7 @@ for date_ind = 1:length(dates)
     if output_index(date_ind)
         [OutData, OutCum] = ...
             model_output_populate(density, temperature, water, dz, grain_radius, grain_dendricity, grain_sphericity, ...
-            output_index, date_ind, ModelParam, OutData, OutCum);
+            output_index, date_ind, OutData, OutCum);
     end
 
 

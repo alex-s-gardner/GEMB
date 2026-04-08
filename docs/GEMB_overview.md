@@ -30,6 +30,8 @@ Here are the functions that are called by `gemb`:
 
 [**`gemb_profile`**](gemb_profile_documentation.md) extracts a single profile from the output of `gemb` that can be used for the input of a new `gemb` run. 
 
+[**`gemb_spinup`**](gemb_spinup_documentation.md) spins up a `Profile` to an initial state. 
+
 [**`model_initialize_forcing`**](model_initialize_forcing_documentation.md) initializes a timetable of climatological surface forcing variables.
 
 [**`model_initialize_profile`**](model_initialize_profile_documentation.md) initializes a GEMB column based on specified model and climate forcing parameters.

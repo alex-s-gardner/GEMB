@@ -59,7 +59,7 @@ The units of time in the ERA5 NetCDF are `'hours since 1970-01-01'`, so create a
 
 ```matlab
 % Reference date plus number of hours since the reference date: 
-time = datetime(1970,1,1) + duration(ncread(filename_2m_temperature,'valid_time'),0,0);
+time_vector = datetime(1970,1,1) + duration(ncread(filename_2m_temperature,'valid_time'),0,0);
 ```
 
 The remaining variables are defined individually by reading the ERA5 variables listed in the table at the top of this page. Note that some units are converted from units used by ERA5 to units required by GEMB. Also note that while ERA5 does not explicitly contain vapor pressure data, GEMB provides a [`dewpoint_to_vapor_pressure`](dewpoint_to_vapor_pressure_documentation.md) function that converts dewpoint temperature to corresponding vapor pressure.  
@@ -97,12 +97,12 @@ shortwave_downward   = ncread(filename_radiation,'ssrd') / 3600;
 % ERA5's strd is "Surface thermal radiation downwards". Divide it by 3600 to convert accumulated energy to average flux:  
 longwave_downward    = ncread(filename_radiation,'strd') / 3600;
 
-% Need to conver dewpoint temperature to vapor pressure:
+% Convert dewpoint temperature to vapor pressure:
 temperature_dewpoint = ncread(filename_2m_temperature,'d2m');
 vapor_pressure = dewpoint_to_vapor_pressure(temperature_dewpoint); 
 
 % Build a Climate Forcing timetable:
-ClimateForcing = model_initialize_forcing(time_vector,... % time
+ClimateForcing = model_initialize_forcing(time_vector,... 
     temperature_air,...
     pressure_air,...
     precipitation,...      
@@ -138,6 +138,7 @@ This is what the complete climate forcing timetable looks like:
 Use the [`model_initialize_parameters`](model_initialize_parameters_documentation.md) function to intialize model parameters. Although the climate forcing data are hourly, we will output to daily frequency to minimize the amount of data we will need to plot later: 
 
 ```matlab
+% Initialize model parameter structure:
 ModelParam = model_initialize_parameters(output_frequency="daily");
 ```
 
@@ -146,31 +147,22 @@ ModelParam = model_initialize_parameters(output_frequency="daily");
 Use the [`model_initialize_profile`](model_initialize_profile_documentation.md) function to create an initial GEMB column based on our climate forcing timetable `ClimateForcing` and model parameters `ModelParam`: 
 
 ```matlab
+% Initialize grid:
 Profile = model_initialize_profile(ModelParam, ClimateForcing);
 ```
 
-## 5. Run GEMB
+## 5. Run GEMB (without spinup)
 
 With the climate forcing, model parameters, and column all set, running GEMB is very easy, although it may take ~30 seconds to run this example data: 
 
 ```matlab
-% Spinup model (i.e. allow profile state to equilibrate to climate)
-ModelParam.output_frequency = "last";
-spinup_cycles = 3;
-for i = 1:spinup_cycles
-    OutData = gemb(Profile, ClimateForcing, ModelParam);
-    Profile = gemb_profile(OutData);
-end
-
-% Run GEMB using equilibrated Profile (Takes a minute):
-ModelParam.output_frequency = "daily";
-Profile = gemb_profile(OutData);
+% Run gemb: 
 OutData = gemb(Profile, ClimateForcing, ModelParam);
 ```
 
 ## 6. Visualize albedo evolution
 
-It's always a good idea to check the data after running GEMB. Here we'll look at the time series of surface albedo and zoom in to the first 8 years of the time series so we can what's going on: 
+It's always a good idea to check the data after running GEMB. Here we'll look at the time series of surface albedo and zoom in to the first 8 years of the time series so we can see what's going on: 
 
 ```
 figure
@@ -184,24 +176,21 @@ exportgraphics(gcf,'ERA5_analysis_albedo.jpg',Resolution=300)
 
 ![](https://chadagreene.com/GEMB_figures/ERA5_analysis_albedo.jpg)
 
-Above, we see that the surface albedo generally hovers around 0.846, and drops a little on some warm summer days, as expected. Also notice the _much_ lower albedo values in the first few weeks of the time series, indicating that the model needs some spinup time for surface albedo to stabilize. 
+Above, we see that the surface albedo generally hovers around 0.846, and drops a little on some warm summer days, as expected when melt darkens the surface. Also notice the _much_ lower albedo values in the first few weeks of the time series, indicating that the model needs some spinup time for surface albedo to stabilize. To start from a more equilibrated state, in the next step, we run a model spinup before running `gemb`.
 
-## 7. Update Model Parameters
+## 7. Run GEMB (with spinup)
 
-To spin up the model, run GEMB repeatedly using the final column state from each run as the initial profile for the next. Use `gemb_profile` to extract the column state, and set `output_frequency` to `"last"` during spinup to avoid storing unnecessary output:
+GEMB includes a [`gemb_spinup`](gemb_spinup_documentation.md) function that runs a climate forcing time series repeatedly for a specified number of cycles to spin up an equilibrated `Profile`. In this example, we use the [`forcing_climatology`](forcing_climatology_documentation.md) function to create a climatological average forcing time series, then use `gemb_spinup` to obtain an equilibrium `Profile_spunup` after 100 years of climatological average forcing. Then run `gemb` using the spun-up profile as the starting point. 
 
 ```matlab
-% Run spinup cycles:
-ModelParam.output_frequency = "last";
-spinup_cycles = 3;
-for i = 1:spinup_cycles
-    OutData = gemb(Profile, ClimateForcing, ModelParam);
-    Profile = gemb_profile(OutData);
-end
+% Create climatological forcing: 
+ClimateForcingSpinup = forcing_climatology(ClimateForcing); 
 
-% Re-run GEMB with full output:
-ModelParam.output_frequency = "all";
-OutData = gemb(Profile, ClimateForcing, ModelParam);
+% Spin up a Profile after 100 years of climatological average data: 
+Profile_spunup = gemb_spinup(Profile, ClimateForcingSpinup, ModelParam, 100);
+
+% Run GEMB with a spun-up profile: 
+OutData = gemb(Profile_spunup, ClimateForcing, ModelParam);
 
 figure
 plot(OutData.time, OutData.albedo_surface, LineWidth=2)
@@ -214,9 +203,9 @@ exportgraphics(gcf,'ERA5_analysis_albedo2.jpg',Resolution=300)
 
 ![](https://chadagreene.com/GEMB_figures/ERA5_analysis_albedo2.jpg)
 
-Above we see that by including spinup cycles, the final results are now stable from the beginning of the time series. Comparing to the non-spun-up version, the results may look very different, but note the different _y_ axis limits.
+Above we see that by including spinup cycles, the final results are now stable from the beginning of the time series. Comparing to the non-spun-up version, the results may look very different, but note the different _y_ axis limits. As expected, albedo drops on warm summer days when melt darkens the surface.
 
-## 8. Interpret Firn Air Content 
+## 8. Interpret Firn Air Content and Thickness
 
 When snow falls and compacts into firn and ice, air gets trapped in the column. GEMB keeps track of the total `firn_air_content` of the column. Plotting the firn air content time series shows that the total air content in the column tends to increase over time, as expected, as air is only added at the top and never removed from the bottom or sides of the column. In the real world, however, the surface elevation does not exhibit much of a trend at Summit Station, where ice and air slowly exit the sides of the imaginary column due to ice flow divergence. 
 
@@ -242,6 +231,22 @@ exportgraphics(gcf,'ERA5_analysis_firn_air_content.jpg',Resolution=300)
 
 ![](https://chadagreene.com/GEMB_figures/ERA5_analysis_firn_air_content.jpg)
 
+Here's a time series of accumulated thickness anomaly: 
+
+```matlab
+% Plot cumulative profile thickness (accounting for mass added/removed):
+figure
+plot(OutData.time, OutData.thickness_cumulative)
+box off
+ylabel 'Cumulative thickness (m)'
+
+if save_figures
+    exportgraphics(gcf,'ERA5_analysis_thickness_cumulative.jpg', Resolution=300)
+end
+```
+
+![](https://chadagreene.com/GEMB_figures/ERA5_analysis_thickness_cumulative.jpg)
+
 ## 9. Surface temperature vs air temperature
 
 Near-surface air temperature does not always match the skin temperature of Earth's surface. (This is why ERA5 provides separate 2 m air temperature and skin temperature products.) GEMB uses near-surface air temperature as forcing and accounts for the height of the modeled or observed air temperature above the surface when solving energy balance equations. 
@@ -258,9 +263,10 @@ figure
 scatter(OutData.temperature_air, temperature_surface, 2, ...
     day(OutData.time,"dayofyear"), "filled")
 
-axis image 
+axis equal
+axis([210 280 210 280])
 hold on
-plot(xlim,xlim,'k',LineWidth=1) % 1:1 line
+plot(xlim,xlim,'k',LineWidth=1)
 xlabel '2 m air temperature (K) forcing from ERA5'
 ylabel 'Surface temperature (K) modeled by GEMB '
 
@@ -290,7 +296,7 @@ exportgraphics(gcf,'ERA5_analysis_evaporation_condensation.jpg',Resolution=300)
 
 ![](https://chadagreene.com/GEMB_figures/ERA5_analysis_evaporation_condensation.jpg)
 
-Above, positive values indicate net evaporation and negative values indicate net condensation. High wind and low humidity are primarily responsible for increased wintertime evaporation and the reduced surface temperatures. Use the [`vapor_pressure_to_relative_humidity`](vapor_pressure_to_relative_humidity_documentation.md) function to convert vapor pressure to relative humidity and plot it along with hourly wind speed as a function of day of year:
+Above, positive values indicate net evaporation and negative values indicate net condensation. High wind and low humidity are primarily responsible for increased wintertime evaporation and the reduced surface temperatures relative to air temperatures. Use the [`vapor_pressure_to_relative_humidity`](vapor_pressure_to_relative_humidity_documentation.md) function to convert vapor pressure to relative humidity and plot it along with hourly wind speed as a function of day of year:
 
 ```matlab
 relative_humidity = vapor_pressure_to_relative_humidity(vapor_pressure, temperature_air);
@@ -327,18 +333,18 @@ exportgraphics(gcf,'ERA5_analysis_temperature.jpg',Resolution=300)
 
 ![](https://chadagreene.com/GEMB_figures/ERA5_analysis_temperature.jpg)
 
-The dark blue grid cells at the top of the figure above correspond to NaNs that are present as padding in case the column needs to grow beyond its initial size. Indeed, the column did grow during the spinup cycle, which is evident by the fact that the initital padding was set to 1000 grid cells. Checking the dimensions of the data, we can see how the `output_padding` plus the number of grid cells in the initial column define the output height of the grid, and more than 900 unused grid cells of padding in the figure above suggests that the `output_padding` parameter could safely be set to 100 in a future run of this test.
+The dark blue grid cells at the top of the figure above correspond to NaNs that are present as padding in case the column needs to grow beyond its initial size. Indeed, the column did grow during the spinup cycle, which can be seen by comparing the height of the initial `Profile` to the height of `Profile_spunup`. Checking the dimensions of the data, we can see how the `output_padding` plus the number of grid cells in the initial column define the output height of the grid, and more than 900 unused grid cells of padding in the figure above suggests that the `output_padding` parameter could safely be set to 100 in a future run of this test.
 
 ```matlab
 >> ModelParam.output_padding
 ans =
        1000.00
->> height(Profile)
+>> height(Profile_spunup)
 ans =
-        264.00
+        333.00
 >> size(OutData.temperature)
 ans =
-       1264.00       9497.00
+       1333.00       9497.00
 ```
 
 The temperature data in the figure above are placed vertically in grid-cell space, but the grid cells near the surface are much thinner than the deeper grid cells, and their dimensions evolve with each timestep. Use [`dz2z`](dz2z_documentation.md) to convert from grid-cell space to true vertical dimensions and plot with `pcolor` instead of `imagesc` because `pcolor` allows variable spacing wheras `imagesc` equal spacing. 
@@ -391,7 +397,7 @@ exportgraphics(gcf,'ERA5_analysis_density.jpg',Resolution=300)
 
 ![](https://chadagreene.com/GEMB_figures/ERA5_analysis_density.jpg)
 
-Above, notice that surface melt tends to refreeze and create dense layers that get buried by subsequent snowfall events. Also notice that some dense layers are present below the surface throughout the time series. Any layers present at the beginning of the Climate Forcing time series are generated by melt events from the spinup runs.
+Above, notice that surface melt tends to refreeze and create dense layers that get buried by subsequent snowfall events. No melt layers are present beneath the surface at the beginning of the timeseries because the spinup's climatological average near-surface air temperature never gets close to the melting temperature.
 
 ## 12. Replicate Gardner et al., 2023 figures 
 
@@ -399,17 +405,17 @@ Figures 12 and 13 of [Gardner et al., 2023](https://doi.org/10.5194/gmd-16-2277-
 
 ```matlab
 % Regrid the default "Sturm" solution to the original profile spacing: 
-T_Sturm = gemb_interp(z_center, OutData.temperature, Profile); 
+T_Sturm = gemb_interp(z_center, OutData.temperature, Profile_spunup); 
 
 % Rerun gemb with "Calonne" thermal conductivity method: 
 ModelParam.thermal_conductivity_method = "Calonne"; 
-OutData_Calonne = gemb(Profile,ClimateForcing,ModelParam); 
+OutData_Calonne = gemb(Profile_spunup,ClimateForcing,ModelParam); 
 
 % Get center locations of Calonne grid cells: 
 z_center_calonne = dz2z(OutData_Calonne.dz); 
 
 % Regrid the "Calonne" solution to the original profile spacing: 
-T_Calonne = gemb_interp(z_center_calonne, OutData_Calonne.temperature ,Profile); 
+T_Calonne = gemb_interp(z_center_calonne, OutData_Calonne.temperature , Profile_spunup); 
 ```
 
 Get the observation data [here](https://doi.org/10.5281/zenodo.7430469), load it into MATLAB, and interpolate it to the same grid as `T_Sturm` and `T_Calonne`: 
@@ -456,7 +462,7 @@ legend('dsw','dlw','location','best')
 legend boxoff
 
 subplot(3,2,3)
-pcolor(OutData.time,Profile.z_center,T_Sturm)
+pcolor(OutData.time,Profile_spunup.z_center,T_Sturm)
 shading interp
 cmocean thermal       
 xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
@@ -465,7 +471,7 @@ clim([225 265])
 text(min(xlim),max(ylim),' c) Sturm','vert','top')
 
 subplot(3,2,4)
-pcolor(OutData.time,Profile.z_center,T_Sturm-T_Obs)
+pcolor(OutData.time,Profile_spunup.z_center,T_Sturm-T_Obs)
 shading interp
 cb = colorbar('east'); 
 cmocean balance           
@@ -475,7 +481,7 @@ clim([-5 5])
 text(min(xlim),max(ylim),' d) Sturm - observed','vert','top','backgroundcolor','w')
 
 subplot(3,2,5)
-pcolor(OutData.time,Profile.z_center,T_Calonne)
+pcolor(OutData.time,Profile_spunup.z_center,T_Calonne)
 shading interp
 cmocean thermal       
 xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
@@ -484,7 +490,7 @@ clim([225 265])
 text(min(xlim),max(ylim),' e) Calonne','vert','top')
 
 subplot(3,2,6)
-pcolor(OutData.time,Profile.z_center,T_Calonne-T_Obs)
+pcolor(OutData.time,Profile_spunup.z_center,T_Calonne-T_Obs)
 shading interp
 cmocean balance           
 xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
