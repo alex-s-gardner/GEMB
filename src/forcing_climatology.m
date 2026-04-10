@@ -16,6 +16,12 @@ function ClimateForcingSpinup = forcing_climatology(ClimateForcing, datetime_ran
 % a range of dates to include in the climatology. The datetime_range must be 
 % 1x2 datetime in the form [datetime_start datetime_end]. 
 % 
+%% Method 
+% This function calculates the climatological average time series after eliminating leap
+%  days and any partial years of input data. The function assumes observations are equally 
+% spaced in time, and averages are computed for the first timestep of each year, the second
+%  timestep, the third timestep, etc. 
+%
 %% Examples
 % For examples, go to https://github.com/alex-s-gardner/GEMB
 % 

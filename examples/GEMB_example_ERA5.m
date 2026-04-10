@@ -61,17 +61,7 @@ ModelParam = model_initialize_parameters(output_frequency="daily");
 % Initialize grid:
 Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
-% Spinup model (i.e. allow profile state to equilibrate to climate)
-ModelParam.output_frequency = "last";
-spinup_cycles = 3;
-for i = 1:spinup_cycles
-    OutData = gemb(Profile, ClimateForcing, ModelParam);
-    Profile = gemb_profile(OutData);
-end
-
-% Run GEMB using equilibrated Profile (Takes a minute):
-ModelParam.output_frequency = "daily";
-Profile = gemb_profile(OutData);
+% Run gemb: 
 OutData = gemb(Profile, ClimateForcing, ModelParam);
 
 %%
@@ -90,11 +80,14 @@ end
 
 %%
 
-% Update the model parameters: 
-ModelParam.spinup_cycles = 3; 
+% Create climatological forcing: 
+ClimateForcingSpinup = forcing_climatology(ClimateForcing); 
 
-% Re-run GEMB: 
-OutData = gemb(Profile, ClimateForcing, ModelParam);
+% Spin up a Profile after 100 years of climatological average data: 
+Profile_spunup = gemb_spinup(Profile, ClimateForcingSpinup, ModelParam, 100);
+
+% Run GEMB with a spun-up profile: 
+OutData = gemb(Profile_spunup, ClimateForcing, ModelParam);
 
 figure
 plot(OutData.time, OutData.albedo_surface, LineWidth=2)
@@ -149,7 +142,8 @@ figure
 scatter(OutData.temperature_air, temperature_surface, 2, ...
     day(OutData.time,"dayofyear"), "filled")
 
-axis image
+axis equal
+axis([210 280 210 280])
 hold on
 plot(xlim,xlim,'k',LineWidth=1)
 xlabel '2 m air temperature (K) forcing from ERA5'
@@ -254,17 +248,17 @@ end
 % https://doi.org/10.5281/zenodo.7430469 
 
 % Regrid the default "Sturm" solution to the original profile spacing: 
-T_Sturm = gemb_interp(z_center, OutData.temperature ,Profile); 
+T_Sturm = gemb_interp(z_center, OutData.temperature ,Profile_spunup); 
 
 % Rerun gemb with "Calonne" thermal conductivity method: 
 ModelParam.thermal_conductivity_method = "Calonne"; 
-OutData_Calonne = gemb(Profile,ClimateForcing,ModelParam); 
+OutData_Calonne = gemb(Profile_spunup,ClimateForcing,ModelParam); 
 
 % Get center locations of Calonne grid cells: 
 z_center_calonne = dz2z(OutData_Calonne.dz); 
 
 % Regrid the "Calonne" solution to the original profile spacing: 
-T_Calonne = gemb_interp(z_center_calonne, OutData_Calonne.temperature ,Profile); 
+T_Calonne = gemb_interp(z_center_calonne, OutData_Calonne.temperature ,Profile_spunup); 
 
 %%
 
@@ -275,7 +269,7 @@ G = load('GEMB_final_SummitStationProfile.mat');
 time_decimalyear = year(OutData.time) + day(OutData.time,'dayofyear')/365.25;
 
 % Create 2D grids of query points for interpolation: 
-[time_decimalyear_2D,z_center_2D] = meshgrid(time_decimalyear,Profile.z_center); 
+[time_decimalyear_2D,z_center_2D] = meshgrid(time_decimalyear,Profile_spunup.z_center); 
 
 % Interpolate observed temperatures to our Profile grid: 
 T_Obs = interp2(G.X,G.Y,G.T_Obs,time_decimalyear_2D,-z_center_2D);
@@ -306,7 +300,7 @@ legend('dsw','dlw','location','best')
 legend boxoff
 
 subplot(3,2,3)
-pcolor(OutData.time,Profile.z_center,T_Sturm)
+pcolor(OutData.time,Profile_spunup.z_center,T_Sturm)
 shading interp
 cmocean thermal       
 xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
@@ -315,7 +309,7 @@ clim([225 265])
 text(min(xlim),max(ylim),' c) Sturm','vert','top')
 
 subplot(3,2,4)
-pcolor(OutData.time,Profile.z_center,T_Sturm-T_Obs)
+pcolor(OutData.time,Profile_spunup.z_center,T_Sturm-T_Obs)
 shading interp
 cb = colorbar('east'); 
 cmocean balance           
@@ -325,7 +319,7 @@ clim([-5 5])
 text(min(xlim),max(ylim),' d) Sturm - observed','vert','top','backgroundcolor','w')
 
 subplot(3,2,5)
-pcolor(OutData.time,Profile.z_center,T_Calonne)
+pcolor(OutData.time,Profile_spunup.z_center,T_Calonne)
 shading interp
 cmocean thermal       
 xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
@@ -334,7 +328,7 @@ clim([225 265])
 text(min(xlim),max(ylim),' e) Calonne','vert','top')
 
 subplot(3,2,6)
-pcolor(OutData.time,Profile.z_center,T_Calonne-T_Obs)
+pcolor(OutData.time,Profile_spunup.z_center,T_Calonne-T_Obs)
 shading interp
 cmocean balance           
 xlim(datetime([2013 2014],7,1)) % July 1 2013 and 2014
@@ -358,17 +352,17 @@ T_Calonne_rmse =  rms(T_Calonne - T_Obs, 2, 'omitnan');
 
 figure
 subplot(1,2,1)
-plot(T_Sturm_bias,Profile.z_center,'linewidth',1)
+plot(T_Sturm_bias,Profile_spunup.z_center,'linewidth',1)
 hold on
-plot(T_Calonne_bias,Profile.z_center,'linewidth',1)
+plot(T_Calonne_bias,Profile_spunup.z_center,'linewidth',1)
 ylim([-2 -0.2])
 ylabel 'depth [m]'
 xlabel 'bias [K]'
 
 subplot(1,2,2)
-plot(T_Sturm_rmse,Profile.z_center,'linewidth',1)
+plot(T_Sturm_rmse,Profile_spunup.z_center,'linewidth',1)
 hold on
-plot(T_Calonne_rmse,Profile.z_center,'linewidth',1)
+plot(T_Calonne_rmse,Profile_spunup.z_center,'linewidth',1)
 ylim([-2 -0.2])
 legend('Sturm','Calonne','Location','best')
 legend boxoff

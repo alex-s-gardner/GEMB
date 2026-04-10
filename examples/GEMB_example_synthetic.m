@@ -9,23 +9,18 @@ time_step_hours = 3;
 ClimateForcing = simulate_climate_forcing("test_1", time_step_hours);
 
 % Initialize model parameters:
-ModelParam = model_initialize_parameters();
+ModelParam = model_initialize_parameters(output_frequency="daily");
 
 % Initialize a column:
 Profile = model_initialize_profile(ModelParam, ClimateForcing);
 
-% Spinup model (i.e. allow profile state to equilibrate to climate)
-ModelParam.output_frequency = "last";
-spinup_cycles = 3;
-for i = 1:spinup_cycles
-    OutData = gemb(Profile, ClimateForcing, ModelParam);
-    Profile = gemb_profile(OutData);
-end
+% Create a climatological average time series: 
+ClimateForcingClimatology = forcing_climatology(ClimateForcing); 
 
-% Run GEMB using equilibrated Profile (Takes a minute):
-ModelParam.output_frequency = "daily";
-Profile = gemb_profile(OutData);
-OutData = gemb(Profile, ClimateForcing, ModelParam);
+% Spinup a profile for 75 years of average forcing:: 
+Profile_spunup = gemb_spinup(Profile, ClimateForcingClimatology, ModelParam, 75); 
+
+OutData = gemb(Profile_spunup, ClimateForcing, ModelParam);
 
 %% Plot results: 
 
