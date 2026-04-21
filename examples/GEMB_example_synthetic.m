@@ -17,7 +17,7 @@ Profile = model_initialize_profile(ModelParam, ClimateForcing);
 % Create a climatological average time series: 
 ClimateForcingClimatology = forcing_climatology(ClimateForcing); 
 
-% Spinup a profile for 75 years of average forcing:: 
+% Spinup a profile for 75 years of average forcing: 
 Profile_spunup = gemb_spinup(Profile, ClimateForcingClimatology, ModelParam, 75); 
 
 OutData = gemb(Profile_spunup, ClimateForcing, ModelParam);

@@ -114,7 +114,7 @@ else % sw radation is absorbed at depth within the glacier
         % 1.5 - 2.8um
         a3 = max(0.127, 0.88 + 346.3 * gsz(1) - 32.31 * gsz(1)^0.5);
         
-        % seperate net shortwave radiative flux into spectral ranges
+        % separate net shortwave radiative flux into spectral ranges
         swfS = (sF * ClimateForcingStep.shortwave_downward) .* (1 - [a1; a2; a3]);
         
         % absorption coefficient for spectral range:
