@@ -34,7 +34,7 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 % produces time series of snow, firn, and ice properties OutData from input
 % vectors of the initial column temperature, dz, density, water, grain_radius, grain_dendricity, grain_sphericity, and albedo, albedo_diffuse.
 % Input ClimateForcing is a timetable containing time series of surface
-% forcing parameters descibed below. Input ModelParam is from the function
+% forcing parameters described below. Input ModelParam is from the function
 % model_initialize_parameters.m. 
 %
 %   Profile                  : Table containing initial column state variables. Must include:
@@ -57,11 +57,11 @@ function OutData = gemb(Profile, ClimateForcing, ModelParam, display_options)
 %     .vapor_pressure        : Pa           Vapor pressure.
 %     .wind_speed            : m s^-1       Wind speed.
 %     .precipitation         : kg m^-2      Precipitation.
-%     .wind_observation_height         : 
-%     .temperature_observation_height         : 
-%     .temperature_air_mean  : 
-%     .wind_speed_mean       : 
-%     .precipitation_mean    : 
+%     .wind_observation_height         : m            Height above surface where wind is measured
+%     .temperature_observation_height  : m            Height above surface where temperature is measured
+%     .temperature_air_mean  : K            Climatological mean temperature
+%     .wind_speed_mean       : m s^-1       Climatological mean wind speed
+%     .precipitation_mean    : kg m^-2      Climatological mean precipitation per time step 
 %   ModelParam     : Structure containing model configuration parameters.
 %                    Must include 'run_prefix'. See
 %                    model_initialize_parameters for more information.

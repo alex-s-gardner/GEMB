@@ -8,7 +8,7 @@ Using GEMB requires four basic steps:
 1. **Define Climate Forcing:** Use [`model_initialize_forcing`](model_initialize_forcing_documentation.md) to create a timetable of surface forcing from modeled or observed time series, or use [`simulate_climate_forcing`](simulate_climate_forcing_documentation.md) to create synthetic data for testing. 
 2. **Define Model Parameters:** Use [`model_initialize_parameters`](model_initialize_parameters_documentation.md) to set model parameters such as the densification model or albedo method.
 3. **Initialize a Column:** Use [`model_initialize_profile`](model_initialize_profile_documentation.md) to create an initial profile of temperature, density, grid spacing, and other column properties. 
-4. **Run GEMB:** Enter the Climate Forcing, Model Parameters, and initial Profile into the [`gemb`](docs/gemb_documentation.md) function.
+4. **Run GEMB:** Enter the Climate Forcing, Model Parameters, and initial Profile into the [`gemb`](gemb_documentation.md) function.
 
 After climate forcing, model parameters, and the initial state of the column defined, the `gemb` function calls `gemb_core` for each time step of the climate forcing. At each time step, `gemb_core` calls a series of functions that update the column grain size, albedo, shortwave radiation, temperature, accumulation, meltwater, and density. In this process, the `manage_layers` function adjusts the depth and number of vertical layers in the model to ensure that the thickness of any single layer does not exceed thresholds set for the minimum and maximum allowable layer thickness. 
 
@@ -117,7 +117,7 @@ For a complete list of variables and descriptions, see [GEMB variables](GEMB_var
 We keep some test data that we use for examples in the documentation [here](https://chadagreene.com/GEMB_data/).
 
 ### ERA5 time series
-If you would like to know where we got our example data and learn how you can some of your own, check out the [ERA5 time series data page](ERA5_time_series_data). 
+If you would like to know where we got our example data and learn how you can get some of your own, check out the [ERA5 time series data page](ERA5_time_series_data). 
 
 ## Author Information
 The Glacier Energy and Mass Balance (GEMB) was created by Alex Gardner, with contributions
