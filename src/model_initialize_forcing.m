@@ -104,8 +104,8 @@ if isnan(options.wind_speed_mean)
 end
 
 if isnan(options.precipitation_mean)
-    warning("Undeclared precipitation_mean. Assuming mean(precipitation_mean) represents the climatological mean precipitation per timestep.")
-    options.precipitation_mean = mean(precipitation_mean);
+    warning("Undeclared precipitation_mean.")
+    options.precipitation_mean = mean(precipitation)*365.25/days(diff(ClimateForcing.time(1:2)));
 end
 
 if isnan(options.temperature_observation_height)

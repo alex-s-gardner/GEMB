@@ -24,7 +24,7 @@ if verbose
     M               = dz .* density;
     M_total_initial = sum(M) + sum(water);        % total mass [kg]
     E_total_initial = sum(M .* temperature * C_ice) + ...
-        sum(water .* (LF + CtoK * C_ice));           % total energy [J] = initial enegy of snow/ice + initial enegy of water
+        sum(water .* (LF + CtoK * C_ice));           % total energy [J] = initial enegy of snow/ice + initial energy of water
     T_bottom        = temperature(end);
 
     % Determine initial energy [kg]:
