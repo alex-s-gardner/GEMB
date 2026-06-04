@@ -241,9 +241,7 @@ end
 
 if verbose
     % Display cycle completed and time to screen:
-    disp([num2str(ModelParam.run_prefix) ', cpu time: ' num2str(round(toc)) ' sec,'...
-        ' avg melt: ' num2str(round(melt_cumulative/(dates(end)-dates(1))*365.25)) ...
-        ' kg/m2/yr']);
+    disp([num2str(ModelParam.run_prefix) ', cpu time: ' num2str(round(toc)) ' sec']);
 end
 
 

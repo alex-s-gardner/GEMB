@@ -218,10 +218,6 @@ longwave_downward = ClimateForcingStep.longwave_downward * dt;
 % temperature change due to longwave_downward_surf
 T_delta_longwave_downward = longwave_downward / TCs;
 
-% only update turbulent head flux every thf_trigger_threshold
-thf_trigger_threshold = 1 * 60 * 60; % this will update thf every simulation hour
-thf_trigger           = thf_trigger_threshold;
-
 %% PREALLOCATE ARRAYS BEFORE LOOP FOR IMPROVED PERFORMANCE
 
 Tu = zeros(m,1);
@@ -247,10 +243,7 @@ for i = 1:dt:ClimateForcingStep.dt
     T_surface = min(273.15, T_surface);    % don't allow T_surface to exceed 273.15 K (0 deg C)
 
     % TURBULENT HEAT FLUX
-    if thf_trigger >= thf_trigger_threshold
-        [heat_flux_sensible, heat_flux_latent, latent_heat] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
-        thf_trigger = 0;
-    end
+    [heat_flux_sensible, heat_flux_latent, latent_heat] = turbulent_heat_flux(T_surface, density_air, z0, zT, zQ, ClimateForcingStep);
 
     lhf_cumulative = lhf_cumulative + heat_flux_latent * dt;
     shf_cumulative = shf_cumulative + heat_flux_sensible * dt;
@@ -331,7 +324,7 @@ for i = 1:dt:ClimateForcingStep.dt
             error('temperature of bottom grid cell changed inside of thermal function: original = %0.10g J, updated = %0.10g J',T_bottom,temperature(end))
         end
     end
-    thf_trigger = thf_trigger + dt;
+
 end
 
 heat_flux_latent = lhf_cumulative / ClimateForcingStep.dt; % J -> W/m2

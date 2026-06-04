@@ -49,7 +49,7 @@ ClimateForcing = model_initialize_forcing(time_vector,... % time
     vapor_pressure,...
     temperature_air_mean = mean(temperature_air),...
     wind_speed_mean = mean(wind_speed),...
-    precipitation_mean = mean(precipitation),...
+    precipitation_mean = mean(precipitation)*24*325.25,... % annual mean 
     temperature_observation_height = 2,...
     wind_observation_height = 10); 
 
@@ -234,7 +234,7 @@ box off
 ylabel('Column depth (m) or daily surface melt (kg m^{-2})')
 cb = colorbar; 
 ylabel(cb,'Column density (kg m^{-3})')
-clim([350 400])
+clim([350 600])
 cmocean dense % optional colormap
 
 hold on

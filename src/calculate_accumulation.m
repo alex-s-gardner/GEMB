@@ -33,7 +33,6 @@ function [temperature, dz, density, water, grain_radius, grain_dendricity, grain
 T_tolerance    = 1e-10;
 d_tolerance    = 1e-11;
 gdn_tolerance  = 1e-10;
-P_tolerance    = 1e-6;
 
 % Specify constants:
 CtoK              = 273.15;    % Kelvin to Celsius conversion
@@ -79,7 +78,7 @@ end
 
 M_surface = dz(1) * density(1);
 
-if ClimateForcingStep.precipitation > (0 + P_tolerance)
+if ClimateForcingStep.precipitation > 0
     % Determine initial mass
 
     % if snow
