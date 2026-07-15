@@ -112,7 +112,7 @@ if ClimateForcingStep.precipitation > 0
             temperature(1) = ((ClimateForcingStep.temperature_air * ClimateForcingStep.precipitation) + (temperature(1) * M_surface)) / M_surface_new;
 
             % adjust albedo, grain_radius, grain_dendricity & grain_sphericity
-            if ModelParam.albedo_method ~= "150kgm2"
+            if ModelParam.new_snow_method ~= "150kgm2"
                 albedo(1) = (ModelParam.albedo_snow * ClimateForcingStep.precipitation + albedo(1) * M_surface) / M_surface_new;
             end
 
