@@ -194,7 +194,7 @@ grain_sphericity = grain_sphericity(fs);
 % Calculate total model depth:
 z_total = sum(dz);
 
-if z_total < (ModelParam.column_zmax - d_tolerance)
+if z_total < (ModelParam.column_zmin - d_tolerance)
 
     % Mass and energy to be added:
     mass_added   = (dz(end) * density(end)) + water(end);
