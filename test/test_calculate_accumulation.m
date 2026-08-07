@@ -161,9 +161,11 @@ classdef test_calculate_accumulation < matlab.unittest.TestCase
             expected_t = (CF.temperature_air * CF.precipitation + tcase.t_vec(1) * old_mass) / new_mass;
             tcase.verifyEqual(t_out(1), expected_t, 'AbsTol', 1e-10, 'Temperature should be weighted average');
             
-            % Verify Albedo update
-            expected_a = (tcase.alb_snow * CF.precipitation + tcase.albedo_in(1) * old_mass) / new_mass;
-            tcase.verifyEqual(a_out(1), expected_a, 'AbsTol', 1e-10, 'Albedo should be weighted average');
+            % Verify Albedo update. For new_snow_method == "150kgm2" the albedo
+            % is intentionally NOT mixed (the merge-path albedo weighting is
+            % skipped for this scheme), so the surface albedo is left unchanged.
+            expected_a = tcase.albedo_in(1);
+            tcase.verifyEqual(a_out(1), expected_a, 'AbsTol', 1e-10, 'Albedo unchanged for "150kgm2" scheme');
         end
         
         function test_rain_event(tcase)
