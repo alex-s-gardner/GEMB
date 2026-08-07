@@ -1,2 +1,7 @@
 .DS_Store
 CLAUDE.md
+.claude/settings.local.json
+examples/benchmark_matlab.m
+examples/benchmark_total.m
+examples/compare_synthetic_output.m
+examples/run_and_save_synthetic.m
