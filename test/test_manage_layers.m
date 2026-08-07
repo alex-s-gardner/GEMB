@@ -124,10 +124,11 @@ classdef test_manage_layers < matlab.unittest.TestCase
         end
         
         function test_add_bottom_layer(tcase)
-            % Case: Total column depth < zmax.
-            
+            % Case: Total column depth < zmin -> add a bottom layer.
+
             tcase.dz = 0.1 * ones(5, 1); % Total 0.5m
-            tcase.MP.column_zmax = 1.0;  % Target is 1.0m -> Adds padding
+            tcase.MP.column_zmax = 1.0;
+            tcase.MP.column_zmin = 1.0;  % Depth (0.5m) < zmin -> adds padding
             
             [t_out, dz_out, ~, ~, ~, ~, ~, ~, ~, m_add, ~] = manage_layers(...
                 tcase.t_vec(1:5), tcase.dz, tcase.density(1:5), tcase.water(1:5), tcase.grain_radius(1:5), ...

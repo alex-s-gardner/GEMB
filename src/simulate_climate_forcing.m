@@ -65,9 +65,13 @@ else
     time_step_hours_val = time_step_hours;
 end
 
-% create datetime time vector directly
+% create datetime time vector directly. The interval is half-open:
+% [start_date-01-01, (end_date+1)-01-01), i.e. the trailing boundary instant
+% (end_date+1)-01-01 00:00 is excluded. Including it would append a lone orphan
+% step in a new day/year that pollutes daily output binning; dropping it yields
+% whole days only (e.g. 32 years * 365.25 d * 8 steps).
 time_vec = datetime(location_parameters.start_date, 1, 1) : hours(time_step_hours_val) : ...
-           datetime(location_parameters.end_date + 1, 1, 1);
+           datetime(location_parameters.end_date + 1, 1, 1) - hours(time_step_hours_val);
 time_vec = time_vec(:);
 
 % convert datetime to decimal year for internal simulation functions
